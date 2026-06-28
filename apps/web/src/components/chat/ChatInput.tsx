@@ -5,13 +5,16 @@ import { Paperclip, Send } from "lucide-react";
 
 export default function ChatInput({
   onSend,
+  onUpload,
   disabled,
 }: {
   onSend: (text: string) => void;
+  onUpload?: (file: File) => void;
   disabled?: boolean;
 }) {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -46,9 +49,22 @@ export default function ChatInput({
           background: "var(--bg-primary)",
         }}
       >
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={(e) => {
+            if (e.target.files?.[0] && onUpload) {
+              onUpload(e.target.files[0]);
+            }
+            e.target.value = "";
+          }}
+        />
         <button
-          className="transition-colors shrink-0 mb-0.5"
+          className="transition-colors shrink-0 mb-0.5 hover:text-blue-500"
           style={{ color: "var(--text-muted)" }}
+          onClick={() => fileInputRef.current?.click()}
         >
           <Paperclip size={18} />
         </button>
@@ -74,8 +90,8 @@ export default function ChatInput({
           <Send size={15} />
         </button>
       </div>
-      <p className="text-center text-xs py-2" style={{ color: "var(--text-muted)" }}>
-        MediQ can make mistakes. Please verify medical information.
+      <p className="text-center text-xs py-2 mt-1" style={{ color: "var(--text-muted)" }}>
+        MediQ can make mistakes. Please verify important information.
       </p>
     </div>
   );

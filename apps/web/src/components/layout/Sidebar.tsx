@@ -65,7 +65,7 @@ export default function Sidebar({
       {/* New Session Button */}
       <div className="px-3 pb-3">
         <Link
-          href="/"
+          href="/chat/new"
           className="flex items-center justify-center gap-2 w-full rounded-lg py-2 text-sm font-medium text-white transition-colors"
           style={{ background: "var(--brand-primary)" }}
           onMouseEnter={(e) =>

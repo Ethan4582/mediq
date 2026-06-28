@@ -9,10 +9,16 @@ import ChatInput from "./ChatInput";
 import type { Message } from "@/types/app";
 import Link from "next/link";
 
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
 export default function ChatPanel({ sessionId }: { sessionId: string }) {
-  const { session, loading: sessionLoading } = useSession(sessionId);
-  const { messages, loading: messagesLoading } = useMessages(sessionId);
+  const isNew = sessionId === "new";
+  const { session, loading: sessionLoading } = useSession(isNew ? "" : sessionId);
+  const { messages, loading: messagesLoading } = useMessages(isNew ? "" : sessionId);
   const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
+  const router = useRouter();
+  const supabase = createClient();
 
   const allMessages = [...messages, ...optimisticMessages];
 
@@ -44,7 +50,36 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     }
   };
 
-  if (!sessionLoading && !session) {
+  const handleUpload = async (file: File) => {
+    if (!isNew) {
+      // In existing session, you'd upload to storage and attach to next message
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    sessionStorage.setItem("mediq_pending_upload", JSON.stringify({
+      fileName: file.name,
+      fileSize: file.size,
+    }));
+
+    const { data, error: dbError } = await supabase
+      .from("sessions")
+      .insert({
+        user_id: user.id,
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (!dbError && data) {
+      router.push(`/chat/${data.id}`);
+    }
+  };
+
+  if (!isNew && !sessionLoading && !session) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3">
         <p className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
@@ -59,10 +94,11 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <TopBar session={session} loading={sessionLoading} />
-      <MessageList messages={allMessages} loading={messagesLoading} />
+      <TopBar session={session} loading={sessionLoading && !isNew} />
+      <MessageList messages={allMessages} loading={messagesLoading && !isNew} />
       <ChatInput
         onSend={handleSend}
+        onUpload={handleUpload}
         disabled={session?.status === "processing"}
       />
     </div>

@@ -15,13 +15,14 @@ export default function AppShell({
 
   return (
     <div className="flex h-screen w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
-      {/* Sidebar — always visible on desktop, toggled on mobile */}
+      {/* Sidebar — toggled via margin on desktop, transform on mobile */}
       <div
         className={`
-          fixed inset-y-0 left-0 z-50 transition-transform duration-200 ease-in-out
+          fixed inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out shrink-0
           md:relative md:translate-x-0
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:!ml-[-240px]"}
         `}
+        style={{ width: "240px" }}
       >
         <Sidebar user={user} />
       </div>

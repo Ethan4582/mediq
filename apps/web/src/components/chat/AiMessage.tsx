@@ -24,10 +24,10 @@ export default function AiMessage({
     <div className="flex gap-3 px-6 py-2">
       {/* MediQ AI avatar */}
       <div
-        className="w-9 h-9 rounded-full flex items-center justify-center text-white shrink-0 mt-0.5"
-        style={{ background: "var(--brand-primary)" }}
+        className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 overflow-hidden border border-gray-100"
+        style={{ background: "#ffffff" }}
       >
-        <Plus size={14} />
+        <img src="/logo.png" alt="MediQ" className="w-6 h-6 object-contain" />
       </div>
 
       <div className="flex-1 min-w-0">
