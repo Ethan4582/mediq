@@ -43,7 +43,7 @@ export default function ChatInput({
       style={{ borderColor: "var(--border-default)", background: "var(--bg-primary)" }}
     >
       <div
-        className={`flex items-end gap-3 rounded-xl border px-4 py-3 transition-all ${disabled ? "opacity-50 pointer-events-none" : ""}`}
+        className={`flex items-end gap-3 rounded-3xl border px-4 py-3 shadow-sm transition-all focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 ${disabled ? "opacity-50 pointer-events-none" : ""}`}
         style={{
           borderColor: "var(--border-default)",
           background: "var(--bg-primary)",
