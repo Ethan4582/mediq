@@ -52,7 +52,7 @@ export default function MessageList({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto py-4 space-y-4 px-4 sm:px-6" ref={scrollRef}>
+    <div className="flex-1 overflow-y-auto flex flex-col gap-6 px-6 py-6" ref={scrollRef}>
       {messages.map((m, i) => {
         if (m.role === "user") {
           return <MessageBubble key={m.id ?? i} message={m} />;

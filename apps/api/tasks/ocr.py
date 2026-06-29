@@ -136,6 +136,16 @@ def process_document(self, document_id: str, session_id: str, mistral_api_key: s
             content_type = "image/jpeg" if file_name.lower().endswith(".jpg") or file_name.lower().endswith(".jpeg") else "image/png"
             extracted_text = _ocr_image(file_bytes, content_type, mistral_api_key)
 
+        def clean_ocr_text(text: str) -> str:
+            # Strip mistral markdown headers, normalize newlines, trim trailing whitespace
+            import re
+            text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
+            text = '\n'.join([line.rstrip() for line in text.split('\n')])
+            text = re.sub(r'\n{3,}', '\n\n', text)
+            return text.strip()
+            
+        extracted_text = clean_ocr_text(extracted_text)
+
         db.table("documents").update({"raw_text": extracted_text, "ocr_status": "done"}).eq("id", document_id).execute()
         set_job_progress(task_id, "processing", 65, "chunking")
 

@@ -21,25 +21,23 @@ export default function AiMessage({
   const hasBullets = lines.some((l) => l.startsWith("- ") || l.startsWith("• "));
 
   return (
-    <div className="flex gap-3 px-6 py-3">
-      {/* MediQ AI avatar */}
-      <div
-        className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 overflow-hidden border border-gray-100"
-        style={{ background: "#ffffff" }}
-      >
-        <img src="/logo.png" alt="MediQ" className="w-6 h-6 object-contain" />
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <span className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>
+    <div className="flex flex-col w-full max-w-[780px]">
+      <div className="flex items-center gap-3 mb-3">
+        {/* MediQ AI avatar */}
+        <div className="w-9 h-9 rounded-full bg-[#2563eb] flex items-center justify-center shrink-0">
+          <Plus className="w-4 h-4 text-white stroke-[2.5]" />
+        </div>
+        <div className="flex items-center">
+          <span className="text-sm font-semibold text-[#111827]">
             MediQ AI
           </span>
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+          <span className="text-xs text-[#9ca3af] ml-2">
             {time}
           </span>
         </div>
+      </div>
 
+      <div className="flex-1 min-w-0 pl-1">
         {children ? (
           children
         ) : hasBullets ? (

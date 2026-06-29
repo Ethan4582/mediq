@@ -1,6 +1,5 @@
-import { FileCheck, ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
-import Image from "next/image";
+import { Plus, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
+import SummaryCard from "./SummaryCard";
 
 export interface OcrResultMessageProps {
   rawText: string;
@@ -15,57 +14,42 @@ export default function OcrResultMessage({
   pageCount,
   chunkCount,
 }: OcrResultMessageProps) {
-  const [expanded, setExpanded] = useState(false);
-  
-  const isLong = rawText.length > 1500;
-  const displayText = expanded ? rawText : rawText.substring(0, 1500);
+  const formattedTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="flex gap-4 w-full">
-      {/* AI Avatar */}
-      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 overflow-hidden">
-        <Image src="/logo.png" alt="MediQ" width={24} height={24} className="object-contain" />
+    <div className="flex gap-3 px-0 py-2 w-full">
+      {/* MediQ Avatar */}
+      <div className="w-9 h-9 rounded-full bg-[#2563eb] flex items-center justify-center shrink-0 mt-0.5">
+        <Plus className="w-4 h-4 text-white stroke-[2.5]" />
       </div>
-
-      <div className="flex-1 max-w-2xl border border-[#e5e7eb] rounded-2xl bg-white shadow-sm overflow-hidden mt-1">
-        <div className="bg-[#f9fafb] border-b border-[#e5e7eb] px-5 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileCheck className="text-[#2563eb]" size={16} />
-            <span className="font-medium text-sm text-[--text-primary]">Document Extracted</span>
-          </div>
-          <span className="text-xs text-[--text-muted]">
-            {pageCount} pages · {chunkCount} chunks indexed
-          </span>
+      
+      {/* Content column */}
+      <div className="flex-1 min-w-0">
+        {/* Header row */}
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm font-semibold text-[#111827]">MediQ AI</span>
+          <span className="text-xs text-[#9ca3af]">{formattedTime}</span>
         </div>
-
-        <div className="px-5 py-4 relative">
-          <p className="text-xs font-medium tracking-wide text-[--text-muted] uppercase mb-3">Extracted content</p>
-          <pre className={`text-sm text-[--text-primary] leading-relaxed whitespace-pre-wrap font-sans overflow-hidden transition-all duration-300 ${!expanded && isLong ? "max-h-[300px]" : ""}`}>
-            {displayText}
-          </pre>
-          
-          {!expanded && isLong && (
-            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
-          )}
-          
-          {isLong && (
-            <button 
-              onClick={() => setExpanded(!expanded)}
-              className="mt-2 text-xs text-[#2563eb] font-medium flex items-center gap-1 hover:underline relative z-10 bg-white/80 px-2 py-1 rounded"
-            >
-              {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              {expanded ? "Show less" : "Show more"}
-            </button>
-          )}
-        </div>
-
-        <div className="px-5 py-3 bg-[#f9fafb] border-t border-[#e5e7eb] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <span className="text-xs text-[--text-muted]">
-            Text indexed and ready for questions. AI summary generation coming soon.
-          </span>
-          <span className="text-xs font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full whitespace-nowrap border border-blue-100 shrink-0">
-            Ask a question below ↓
-          </span>
+        
+        {/* Summary card — full width */}
+        <SummaryCard
+          rawText={rawText}
+          fileName={fileName}
+          pageCount={pageCount}
+          chunkCount={chunkCount}
+        />
+        
+        {/* Action row below card */}
+        <div className="flex items-center gap-3 mt-2.5 ml-1">
+          <button className="w-7 h-7 rounded-md hover:bg-[#f4f6f8] flex items-center justify-center text-[#9ca3af] hover:text-[#374151] transition-colors">
+            <Copy className="w-3.5 h-3.5" />
+          </button>
+          <button className="w-7 h-7 rounded-md hover:bg-[#f4f6f8] flex items-center justify-center text-[#9ca3af] hover:text-[#374151] transition-colors">
+            <ThumbsUp className="w-3.5 h-3.5" />
+          </button>
+          <button className="w-7 h-7 rounded-md hover:bg-[#f4f6f8] flex items-center justify-center text-[#9ca3af] hover:text-[#374151] transition-colors">
+            <ThumbsDown className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </div>
