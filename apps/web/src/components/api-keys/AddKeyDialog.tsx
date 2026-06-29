@@ -151,9 +151,19 @@ export default function AddKeyDialog({
           <div className="space-y-4 py-2">
             <button onClick={() => setStep(keyType === "ocr" ? 1 : 2)} className="text-xs text-blue-600 hover:underline">← Back</button>
             <div>
-              <p className="text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
-                {keyType === "ocr" ? "Mistral API Key" : `${PROVIDERS[effectiveProvider].name} API Key`}
-              </p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                  {keyType === "ocr" ? "Mistral API Key" : `${PROVIDERS[effectiveProvider].name} API Key`}
+                </p>
+                <a 
+                  href={PROVIDERS[effectiveProvider].docsUrl} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  Get key <ExternalLink size={10} />
+                </a>
+              </div>
               <div className="relative">
                 <Input
                   type={show ? "text" : "password"}

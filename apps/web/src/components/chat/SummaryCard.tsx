@@ -19,10 +19,8 @@ export default function SummaryCard({
 
   return (
     <div
-      className="rounded-xl border overflow-hidden max-w-[680px]"
+      className="rounded-2xl border border-[#e5e7eb] shadow-card overflow-hidden max-w-[680px]"
       style={{
-        borderColor: "var(--card-border)",
-        boxShadow: "var(--card-shadow)",
         background: "var(--card-bg)",
       }}
     >
@@ -43,16 +41,16 @@ export default function SummaryCard({
       </div>
 
       {/* Three-column grid */}
-      <div className="grid grid-cols-3 divide-x" style={{ borderColor: "var(--border-default)" }}>
+      <div className="grid grid-cols-3 divide-x divide-[#f0f2f5] gap-0">
         {/* Col 1: Patient / Dates */}
         <div className="px-5 py-4 space-y-3">
           <div>
-            <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Patient</p>
+            <p className="text-xs font-medium tracking-wide text-[#6b7280] uppercase mb-1">Patient</p>
             <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{patientName}</p>
           </div>
           {admission?.fields.admission_date && (
             <div>
-              <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Admission Date</p>
+              <p className="text-xs font-medium tracking-wide text-[#6b7280] uppercase mb-1">Admission Date</p>
               <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
                 {String(admission.fields.admission_date)}
               </p>
@@ -60,7 +58,7 @@ export default function SummaryCard({
           )}
           {admission?.fields.discharge_date && (
             <div>
-              <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Discharge Date</p>
+              <p className="text-xs font-medium tracking-wide text-[#6b7280] uppercase mb-1">Discharge Date</p>
               <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
                 {String(admission.fields.discharge_date)}
               </p>
@@ -72,7 +70,7 @@ export default function SummaryCard({
         <div className="px-5 py-4 space-y-3">
           {diagnosis?.fields.principal && (
             <div>
-              <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Principal Diagnosis</p>
+              <p className="text-xs font-medium tracking-wide text-[#6b7280] uppercase mb-1">Principal Diagnosis</p>
               <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
                 {String(diagnosis.fields.principal)}
               </p>
@@ -80,7 +78,7 @@ export default function SummaryCard({
           )}
           {Array.isArray(diagnosis?.fields.secondary) && (
             <div>
-              <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Secondary Diagnoses</p>
+              <p className="text-xs font-medium tracking-wide text-[#6b7280] uppercase mb-1">Secondary Diagnoses</p>
               <ul className="list-disc pl-4 space-y-0.5">
                 {(diagnosis!.fields.secondary as string[]).map((d, i) => (
                   <li key={i} className="text-sm" style={{ color: "var(--text-primary)" }}>
@@ -94,7 +92,7 @@ export default function SummaryCard({
 
         {/* Col 3: Hospital Course */}
         <div className="px-5 py-4">
-          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Hospital Course</p>
+          <p className="text-xs font-medium tracking-wide text-[#6b7280] uppercase mb-1">Hospital Course</p>
           <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
             {course?.fields.summary
               ? String(course.fields.summary)
@@ -105,11 +103,8 @@ export default function SummaryCard({
 
       {/* Footer */}
       <div
-        className="flex items-center justify-between px-5 py-3 border-t"
-        style={{
-          borderColor: "var(--border-default)",
-          background: "var(--bg-secondary)",
-        }}
+        className="flex items-center justify-between px-5 py-3 border-t bg-[#f9fafb] rounded-b-2xl"
+        style={{ borderColor: "var(--border-default)" }}
       >
         <div className="flex items-center gap-3">
           <FlagChip type="confidence" label="Confidence: High" />

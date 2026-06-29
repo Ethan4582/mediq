@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   },
 };
 
+import { Toaster } from "@/components/ui/sonner";
+import { GlobalSearch } from "@/components/layout/GlobalSearch";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -22,7 +25,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <body className={inter.className}>
-        <SupabaseProvider>{children}</SupabaseProvider>
+        <SupabaseProvider>
+          {children}
+          <GlobalSearch />
+        </SupabaseProvider>
+        <Toaster />
       </body>
     </html>
   );

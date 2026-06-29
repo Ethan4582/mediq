@@ -21,7 +21,7 @@ async def get_current_user(request: Request) -> dict:
         .maybe_single()
         .execute()
     )
-    data = profile.data or {}
+    data = profile.data if profile else {}
     return {
         "user_id": str(user.id),
         "has_mistral_key": bool(data.get("has_mistral_key")),

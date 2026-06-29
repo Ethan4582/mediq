@@ -39,15 +39,11 @@ export default function ChatInput({
 
   return (
     <div
-      className="border-t px-4 py-3 shrink-0"
-      style={{ borderColor: "var(--border-default)", background: "var(--bg-primary)" }}
+      className="px-4 pb-4 shrink-0"
+      style={{ background: "var(--bg-primary)" }}
     >
       <div
-        className={`flex items-end gap-3 rounded-3xl border px-4 py-3 shadow-sm transition-all focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 ${disabled ? "opacity-50 pointer-events-none" : ""}`}
-        style={{
-          borderColor: "var(--border-default)",
-          background: "var(--bg-primary)",
-        }}
+        className={`flex items-end gap-3 rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 shadow-card transition-all focus-within:ring-2 focus-within:ring-[#2563eb]/20 focus-within:border-[#2563eb] ${disabled ? "opacity-50 pointer-events-none" : ""}`}
       >
         <input
           type="file"

@@ -25,6 +25,14 @@ export interface AppSession {
   patient_name: string | null
   status: SessionStatus
   created_at: string
+  is_pinned?: boolean
+  folder_id?: string | null
+}
+
+export interface Folder {
+  id: string
+  name: string
+  created_at: string
 }
 
 export interface Message {

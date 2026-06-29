@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { API_URL } from "@/lib/constants";
 
+import { useSessionStore } from "@/stores/sessionStore";
+
 type UploadState = {
   status: "idle" | "uploading" | "processing" | "done" | "error";
   progress: number;
@@ -12,6 +14,7 @@ type UploadState = {
 };
 
 export function useUpload(onComplete?: (sessionId: string) => void) {
+  const { triggerRefresh } = useSessionStore();
   const [state, setState] = useState<UploadState>({
     status: "idle",
     progress: 0,
@@ -49,6 +52,8 @@ export function useUpload(onComplete?: (sessionId: string) => void) {
       }
 
       const { session_id, job_id } = await res.json();
+      
+      triggerRefresh();
 
       // Poll SSE stream
       const es = new EventSource(`${API_URL}/api/upload/${job_id}/status`);
@@ -73,7 +78,7 @@ export function useUpload(onComplete?: (sessionId: string) => void) {
         setState((s) => ({ ...s, status: "error", error: "Connection lost" }));
       };
     },
-    [onComplete]
+    [onComplete, triggerRefresh]
   );
 
   return { upload, ...state };

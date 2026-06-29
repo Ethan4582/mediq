@@ -14,7 +14,7 @@ export default function AppShell({
   const { isSidebarOpen, closeSidebar } = useSessionStore();
 
   return (
-    <div className="flex h-screen w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
+    <div className="flex h-screen w-full overflow-hidden bg-[#f0f2f5] p-3 gap-3">
       {/* Sidebar — toggled via margin on desktop, transform on mobile */}
       <div
         className={`

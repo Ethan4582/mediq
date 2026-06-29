@@ -21,7 +21,7 @@ export default function AiMessage({
   const hasBullets = lines.some((l) => l.startsWith("- ") || l.startsWith("• "));
 
   return (
-    <div className="flex gap-3 px-6 py-2">
+    <div className="flex gap-3 px-6 py-3">
       {/* MediQ AI avatar */}
       <div
         className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 overflow-hidden border border-gray-100"

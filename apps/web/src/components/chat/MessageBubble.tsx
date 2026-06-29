@@ -7,7 +7,7 @@ export default function MessageBubble({ message }: { message: Message }) {
     : "";
 
   return (
-    <div className="flex justify-end px-6 py-2">
+    <div className="flex justify-end px-6 py-3">
       <div className="max-w-[65%]">
         <div
           className="rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm"

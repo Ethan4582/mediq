@@ -12,13 +12,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+import { useUpload } from "@/hooks/useUpload";
+
 export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const isNew = sessionId === "new";
   const { session, loading: sessionLoading } = useSession(isNew ? "" : sessionId);
   const { messages, loading: messagesLoading } = useMessages(isNew ? "" : sessionId);
   const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const router = useRouter();
-  const supabase = createClient();
+  
+  const { upload, status: uploadStatus } = useUpload((newSessionId) => {
+    router.push(`/chat/${newSessionId}`);
+  });
 
   const allMessages = [...messages, ...optimisticMessages];
 
@@ -53,30 +58,11 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const handleUpload = async (file: File) => {
     if (!isNew) {
       // In existing session, you'd upload to storage and attach to next message
+      // For now, if we support multiple docs, we call upload here too but without redirect
+      await upload([file]);
       return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    sessionStorage.setItem("mediq_pending_upload", JSON.stringify({
-      fileName: file.name,
-      fileSize: file.size,
-    }));
-
-    const { data, error: dbError } = await supabase
-      .from("sessions")
-      .insert({
-        user_id: user.id,
-        title: file.name.replace(/\.[^/.]+$/, ""),
-        status: "pending",
-      })
-      .select("id")
-      .single();
-
-    if (!dbError && data) {
-      router.push(`/chat/${data.id}`);
-    }
+    await upload([file]);
   };
 
   if (!isNew && !sessionLoading && !session) {
@@ -93,7 +79,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden rounded-2xl bg-white shadow-panel">
       <TopBar session={session} loading={sessionLoading && !isNew} />
       <MessageList messages={allMessages} loading={messagesLoading && !isNew} />
       <ChatInput

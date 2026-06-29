@@ -22,7 +22,7 @@ _redis_url = (
 )
 # Simpler: use token in URL format for Upstash
 _host = settings.UPSTASH_REDIS_REST_URL.replace("https://", "")
-_redis_broker = f"rediss://:{settings.UPSTASH_REDIS_REST_TOKEN}@{_host}:6379"
+_redis_broker = f"rediss://:{settings.UPSTASH_REDIS_REST_TOKEN}@{_host}:6379?ssl_cert_reqs=CERT_NONE"
 
 celery_app = Celery("mediq", broker=_redis_broker, backend=_redis_broker)
 celery_app.conf.update(
@@ -91,8 +91,20 @@ def _chunk_text(text: str) -> list[str]:
 
 @celery_app.task(bind=True, name="tasks.ocr.process_document")
 def process_document(self, document_id: str, session_id: str, mistral_api_key: str):
+    print(f"=== OCR TASK START ===")
+    print(f"document_id: {document_id}")
+    print(f"session_id: {session_id}")
+    print(f"mistral_api_key present: {bool(mistral_api_key)}")
+    print(f"mistral_api_key last4: {mistral_api_key[-4:] if mistral_api_key else 'NONE'}")
+    
     task_id = self.request.id
     try:
+        if not mistral_api_key:
+            set_job_progress(task_id, "error", 0, "error", error="Mistral API key is missing")
+            db.table("documents").update({"ocr_status": "failed"}).eq("id", document_id).execute()
+            db.table("sessions").update({"status": "error"}).eq("id", session_id).execute()
+            return
+
         doc_row = db.table("documents").select("*").eq("id", document_id).single().execute()
         doc = doc_row.data
 

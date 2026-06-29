@@ -16,8 +16,8 @@ export default function TopBar({
 
   return (
     <div
-      className="flex items-center justify-between px-6 py-3 border-b shrink-0 transition-all duration-300"
-      style={{ borderColor: "var(--border-default)", background: "var(--bg-primary)" }}
+      className="flex items-center justify-between px-6 py-4 border-b border-[#f0f2f5] shrink-0 transition-all duration-300"
+      style={{ background: "var(--bg-primary)" }}
     >
       <div className="flex items-center gap-4 min-w-0">
         {!isSidebarOpen && (
@@ -36,7 +36,7 @@ export default function TopBar({
             </>
           ) : !session ? (
             <>
-              <span className="font-semibold text-base truncate" style={{ color: "var(--text-primary)" }}>
+              <span className="font-semibold text-base tracking-tight truncate" style={{ color: "var(--text-primary)" }}>
                 New Case
               </span>
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -47,7 +47,7 @@ export default function TopBar({
             <>
               <div className="flex items-center gap-2.5">
                 <span
-                  className="font-semibold text-base truncate"
+                  className="font-semibold text-base tracking-tight truncate"
                   style={{ color: "var(--text-primary)" }}
                 >
                   {session.patient_name ?? session.title ?? "Unnamed Case"}

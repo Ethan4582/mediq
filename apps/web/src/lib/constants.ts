@@ -12,7 +12,7 @@ export const ROUTES = {
 export const PROVIDERS = {
   groq:      { name: "Groq",      type: "llm",  docsUrl: "https://console.groq.com/keys" },
   openai:    { name: "OpenAI",    type: "llm",  docsUrl: "https://platform.openai.com/api-keys" },
-  anthropic: { name: "Anthropic", type: "llm",  docsUrl: "https://console.anthropic.com/keys" },
+  anthropic: { name: "Anthropic", type: "llm",  docsUrl: "https://platform.claude.com/dashboard" },
   mistral:   { name: "Mistral",   type: "both", docsUrl: "https://console.mistral.ai/api-keys" },
 } as const
 
