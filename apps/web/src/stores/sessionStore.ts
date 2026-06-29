@@ -10,7 +10,7 @@ interface SessionState {
 
 export const useSessionStore = create<SessionState>((set) => ({
   activeSessionId: null,
-  isSidebarOpen: false,
+  isSidebarOpen: true,
   setActiveSession: (id) => set({ activeSessionId: id }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   closeSidebar: () => set({ isSidebarOpen: false }),

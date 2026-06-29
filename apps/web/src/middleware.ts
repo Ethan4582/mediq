@@ -17,6 +17,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // If user is logged in and tries to access /auth, redirect to /chat
+  if (user && pathname.startsWith('/auth')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/chat'
+    return NextResponse.redirect(url)
+  }
+
   return supabaseResponse
 }
 
