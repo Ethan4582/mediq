@@ -8,7 +8,7 @@ export function useMessages(sessionId: string) {
   const supabase = createClient();
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || sessionId === "new") return;
 
     const fetchMessages = async () => {
       setLoading(true);

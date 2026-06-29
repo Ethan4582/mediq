@@ -10,9 +10,7 @@ import type { Message } from "@/types/app";
 import Link from "next/link";
 
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-
-import { useUpload } from "@/hooks/useUpload";
+import { useDocumentUpload } from "@/hooks/useDocumentUpload";
 
 export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const isNew = sessionId === "new";
@@ -21,8 +19,10 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const router = useRouter();
   
-  const { upload, status: uploadStatus } = useUpload((newSessionId) => {
-    router.push(`/chat/${newSessionId}`);
+  const { upload, pendingUpload, ocrResult } = useDocumentUpload(sessionId, (newSessionId) => {
+    if (isNew) {
+      router.replace(`/chat/${newSessionId}`);
+    }
   });
 
   const allMessages = [...messages, ...optimisticMessages];
@@ -56,13 +56,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   };
 
   const handleUpload = async (file: File) => {
-    if (!isNew) {
-      // In existing session, you'd upload to storage and attach to next message
-      // For now, if we support multiple docs, we call upload here too but without redirect
-      await upload([file]);
-      return;
-    }
-    await upload([file]);
+    await upload(file);
   };
 
   if (!isNew && !sessionLoading && !session) {
@@ -81,11 +75,17 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   return (
     <div className="flex flex-col h-full overflow-hidden rounded-2xl bg-white shadow-panel">
       <TopBar session={session} loading={sessionLoading && !isNew} />
-      <MessageList messages={allMessages} loading={messagesLoading && !isNew} />
+      <MessageList 
+        messages={allMessages} 
+        loading={messagesLoading && !isNew} 
+        pendingUpload={pendingUpload}
+        ocrResult={ocrResult}
+      />
       <ChatInput
         onSend={handleSend}
         onUpload={handleUpload}
         disabled={session?.status === "processing"}
+        pendingUpload={pendingUpload}
       />
     </div>
   );

@@ -10,12 +10,20 @@ import SkeletonCard from "@/components/shared/SkeletonCard";
 import SkeletonLine from "@/components/shared/SkeletonLine";
 import type { DraftContent } from "@/types/app";
 
+import type { PendingUpload, OcrResult } from "@/hooks/useDocumentUpload";
+import DocumentCard from "./DocumentCard";
+import OcrResultMessage from "./OcrResultMessage";
+
 export default function MessageList({
   messages,
   loading,
+  pendingUpload,
+  ocrResult,
 }: {
   messages: Message[];
   loading: boolean;
+  pendingUpload?: PendingUpload | null;
+  ocrResult?: OcrResult | null;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -23,7 +31,7 @@ export default function MessageList({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, pendingUpload, ocrResult]);
 
   if (loading) {
     return (
@@ -35,7 +43,7 @@ export default function MessageList({
     );
   }
 
-  if (messages.length === 0) {
+  if (messages.length === 0 && !pendingUpload && !ocrResult) {
     return (
       <div className="flex-1 flex overflow-y-auto" ref={scrollRef}>
         <EmptyChat />
@@ -44,7 +52,7 @@ export default function MessageList({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto py-4" ref={scrollRef}>
+    <div className="flex-1 overflow-y-auto py-4 space-y-4 px-4 sm:px-6" ref={scrollRef}>
       {messages.map((m, i) => {
         if (m.role === "user") {
           return <MessageBubble key={m.id ?? i} message={m} />;
@@ -65,6 +73,31 @@ export default function MessageList({
           </AiMessage>
         );
       })}
+
+      {pendingUpload && (
+        <div className="flex justify-center w-full my-6">
+          <DocumentCard
+            fileName={pendingUpload.fileName}
+            fileSize={pendingUpload.fileSize}
+            pageCount={pendingUpload.pageCount}
+            status={pendingUpload.status}
+            progress={pendingUpload.progress}
+            stage={pendingUpload.stage}
+            errorMessage={pendingUpload.errorMessage}
+          />
+        </div>
+      )}
+
+      {ocrResult && (
+        <div className="w-full">
+          <OcrResultMessage
+            rawText={ocrResult.rawText}
+            fileName={ocrResult.fileName}
+            pageCount={ocrResult.pageCount}
+            chunkCount={ocrResult.chunkCount}
+          />
+        </div>
+      )}
     </div>
   );
 }

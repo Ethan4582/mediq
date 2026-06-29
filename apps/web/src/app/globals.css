@@ -175,6 +175,39 @@
   color: #6b7280;
 }
 
+/* Hero Typography */
+.hero-headline-blue {
+  font-size: clamp(2.8rem, 6vw, 4.5rem);
+  font-weight: 800;
+  color: #2563eb;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.hero-headline-dark {
+  font-size: clamp(2.8rem, 6vw, 4.5rem);
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.hero-sub {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: #475569;
+  line-height: 1.7;
+  max-width: 480px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .hero-headline-blue,
+  .hero-headline-dark {
+    font-size: clamp(2.2rem, 6vw, 2.8rem);
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

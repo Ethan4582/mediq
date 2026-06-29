@@ -124,3 +124,5 @@ async def job_status_stream(job_id: str):
             await asyncio.sleep(1)
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+

@@ -2,15 +2,25 @@
 
 import { useRef, useEffect, useState } from "react";
 import { Paperclip, Send } from "lucide-react";
+import Spinner from "@/components/shared/Spinner";
+
+const STAGE_LABELS: Record<string, string> = {
+  uploading: "Uploading document to secure storage…",
+  ocr:       "Reading and extracting document content…",
+  chunking:  "Indexing content for AI search…",
+  ready:     "Document ready",
+};
 
 export default function ChatInput({
   onSend,
   onUpload,
   disabled,
+  pendingUpload,
 }: {
   onSend: (text: string) => void;
   onUpload?: (file: File) => void;
   disabled?: boolean;
+  pendingUpload?: { stage: string; status: string } | null;
 }) {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -37,11 +47,19 @@ export default function ChatInput({
     }
   };
 
+  const isUploading = pendingUpload?.status === "uploading" || pendingUpload?.status === "processing";
+
   return (
     <div
       className="px-4 pb-4 shrink-0"
       style={{ background: "var(--bg-primary)" }}
     >
+      {pendingUpload && pendingUpload.status !== "done" && pendingUpload.status !== "error" && (
+        <div className="flex items-center gap-2 px-4 py-2 text-xs" style={{ color: "var(--text-secondary)" }}>
+          <Spinner className="w-3 h-3" />
+          {STAGE_LABELS[pendingUpload.stage] || STAGE_LABELS.uploading}
+        </div>
+      )}
       <div
         className={`flex items-end gap-3 rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 shadow-card transition-all focus-within:ring-2 focus-within:ring-[#2563eb]/20 focus-within:border-[#2563eb] ${disabled ? "opacity-50 pointer-events-none" : ""}`}
       >
@@ -58,11 +76,16 @@ export default function ChatInput({
           }}
         />
         <button
-          className="transition-colors shrink-0 mb-0.5 hover:text-blue-500"
+          className="transition-colors shrink-0 mb-0.5 hover:text-blue-500 disabled:opacity-50 disabled:hover:text-inherit"
           style={{ color: "var(--text-muted)" }}
           onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
         >
-          <Paperclip size={18} />
+          {isUploading ? (
+             <Spinner className="w-[18px] h-[18px]" />
+          ) : (
+             <Paperclip size={18} />
+          )}
         </button>
 
         <textarea
@@ -71,7 +94,7 @@ export default function ChatInput({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder={disabled ? "Processing documents…" : "Ask about this case…"}
+          placeholder={disabled ? "Processing document…" : "Ask about this case…"}
           className="flex-1 resize-none outline-none text-sm bg-transparent min-h-[22px] max-h-[120px]"
           style={{ color: "var(--text-primary)" }}
           rows={1}
