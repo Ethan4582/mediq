@@ -51,7 +51,7 @@ export default function ChatInput({
 
   return (
     <div
-      className="px-4 pb-4 shrink-0 flex flex-col items-center"
+      className="px-4 pb-8 shrink-0 flex flex-col items-center"
       style={{ background: "var(--bg-primary)" }}
     >
       <div className="w-full max-w-[780px]">

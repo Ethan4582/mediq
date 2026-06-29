@@ -1,5 +1,12 @@
-import { FileText, MoreHorizontal, Info, ChevronDown, Activity, FlaskConical, Pill, Calendar } from "lucide-react";
+import { FileText, MoreHorizontal, Info, ChevronDown, Activity, FlaskConical, Pill, Calendar, Share, Download, MessageSquare } from "lucide-react";
 import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Parse raw OCR text into structured sections
 function parseOcrText(raw: string) {
@@ -98,6 +105,34 @@ export default function SummaryCard({
 }: SummaryCardProps) {
   const parsed = parseOcrText(rawText);
 
+  const handleDownloadPdf = () => {
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Discharge Summary</title>
+          <style>
+            body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; padding: 40px; color: #111827; max-width: 800px; margin: 0 auto; }
+            pre { white-space: pre-wrap; font-family: inherit; margin-top: 20px; }
+            h2 { color: #2563eb; }
+          </style>
+        </head>
+        <body>
+          <h2>Discharge Summary (Draft)</h2>
+          <hr />
+          <pre>${rawText}</pre>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
   return (
     <div className="rounded-2xl border border-[#e5e7eb] shadow-[0_1px_4px_rgba(0,0,0,0.08)] bg-white overflow-hidden w-full">
       
@@ -109,9 +144,28 @@ export default function SummaryCard({
             Discharge Summary (Draft)
           </span>
         </div>
-        <button className="w-8 h-8 rounded-lg hover:bg-[#f4f6f8] flex items-center justify-center text-[#9ca3af]">
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="w-8 h-8 rounded-lg hover:bg-[#f4f6f8] flex items-center justify-center text-[#9ca3af]">
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem>
+              <Share className="mr-2 h-4 w-4" />
+              <span>Share</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDownloadPdf}>
+              <Download className="mr-2 h-4 w-4" />
+              <span>Download Summary PDF</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              <span>Suggest Improvements</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Grid */}

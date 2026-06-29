@@ -269,7 +269,7 @@ export default function Sidebar({
       {/* Search Bar */}
       <div className="px-1 pb-2">
         <div
-          className="flex items-center gap-2 rounded-md px-3 py-1.5 focus-within:ring-1 focus-within:ring-blue-500 transition-all"
+          className="relative flex items-center gap-2 rounded-md px-3 py-1.5 focus-within:ring-1 focus-within:ring-blue-500 transition-all"
           style={{ background: "var(--bg-hover)" }}
         >
           <Search size={14} style={{ color: "var(--text-muted)" }} />
@@ -278,11 +278,11 @@ export default function Sidebar({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search sessions"
-            className="flex-1 text-sm bg-transparent outline-none"
+            className="flex-1 text-sm bg-transparent outline-none pr-8"
             style={{ color: "var(--text-primary)" }}
           />
           <span
-            className="text-[10px] px-1.5 py-0.5 rounded border font-mono"
+            className="absolute right-2 text-[10px] px-1.5 py-0.5 rounded border font-mono pointer-events-none"
             style={{ color: "var(--text-muted)", borderColor: "var(--border-default)" }}
           >
             ⌘K

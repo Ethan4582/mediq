@@ -14,13 +14,11 @@ export default function OcrResultMessage({
   pageCount,
   chunkCount,
 }: OcrResultMessageProps) {
-  const formattedTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
   return (
     <div className="flex gap-3 px-0 py-2 w-full">
       {/* MediQ Avatar */}
-      <div className="w-9 h-9 rounded-full bg-[#2563eb] flex items-center justify-center shrink-0 mt-0.5">
-        <Plus className="w-4 h-4 text-white stroke-[2.5]" />
+      <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 border border-gray-100 bg-white overflow-hidden">
+        <img src="/logo.png" alt="MediQ" className="w-6 h-6 object-contain" />
       </div>
       
       {/* Content column */}
@@ -28,7 +26,6 @@ export default function OcrResultMessage({
         {/* Header row */}
         <div className="flex items-center gap-2 mb-3">
           <span className="text-sm font-semibold text-[#111827]">MediQ AI</span>
-          <span className="text-xs text-[#9ca3af]">{formattedTime}</span>
         </div>
         
         {/* Summary card — full width */}

@@ -24,15 +24,12 @@ export default function AiMessage({
     <div className="flex flex-col w-full max-w-[780px]">
       <div className="flex items-center gap-3 mb-3">
         {/* MediQ AI avatar */}
-        <div className="w-9 h-9 rounded-full bg-[#2563eb] flex items-center justify-center shrink-0">
-          <Plus className="w-4 h-4 text-white stroke-[2.5]" />
+        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 border border-gray-100 bg-white overflow-hidden">
+          <img src="/logo.png" alt="MediQ" className="w-6 h-6 object-contain" />
         </div>
         <div className="flex items-center">
           <span className="text-sm font-semibold text-[#111827]">
             MediQ AI
-          </span>
-          <span className="text-xs text-[#9ca3af] ml-2">
-            {time}
           </span>
         </div>
       </div>
