@@ -1,7 +1,8 @@
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter(tags=["chat"])
 
-@router.post("/")
-def send_message():
-    return {"detail": "Not implemented"}
+@router.post("/chat")
+async def chat():
+    return JSONResponse({"error": "not_implemented"}, status_code=501)

@@ -1,5 +1,5 @@
-import UsageStats from "@/components/api-keys/UsageStats";
-import KeyTable from "@/components/api-keys/KeyTable";
+import KeyStatusCards from "@/components/api-keys/KeyStatusCards";
+import KeyTableClient from "@/components/api-keys/KeyTableClient";
 import { BookOpen, Info } from "lucide-react";
 
 export default function ApiKeysPage() {
@@ -17,20 +17,26 @@ export default function ApiKeysPage() {
               Manage your API keys and usage
             </p>
           </div>
-          <button className="flex items-center gap-2 border rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm bg-white" style={{ borderColor: "var(--border-default)", color: "var(--text-primary)" }}>
+          <a
+            href="https://console.mistral.ai/api-keys"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 border rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm bg-white"
+            style={{ borderColor: "var(--border-default)", color: "var(--text-primary)" }}
+          >
             <BookOpen size={16} className="text-gray-500" />
             Docs
-          </button>
+          </a>
         </div>
 
-        {/* Stats Row */}
-        <UsageStats />
+        {/* Key Status Cards (replaces old stat cards) */}
+        <KeyStatusCards />
 
         {/* API Keys Table */}
-        <KeyTable keys={[]} />
+        <KeyTableClient />
 
         {/* About BYOK Card */}
-        <div className="rounded-xl border p-5 flex items-start gap-4 mt-8 bg-white shadow-sm" style={{ borderColor: "var(--card-border)" }}>
+        <div className="rounded-xl border p-5 flex items-start gap-4 bg-white shadow-sm" style={{ borderColor: "var(--card-border)" }}>
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "#eff6ff", color: "var(--brand-primary)" }}>
             <Info size={16} />
           </div>
@@ -38,8 +44,9 @@ export default function ApiKeysPage() {
             <h3 className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>About BYOK</h3>
             <p className="text-sm text-gray-500">
               Bring Your Own Key (BYOK) lets you use your own API keys from supported providers.
+              Mistral is required for OCR. At least one LLM provider key is required to generate summaries.
             </p>
-            <a href="#" className="inline-block text-sm font-medium mt-1 hover:underline" style={{ color: "var(--brand-primary)" }}>
+            <a href="https://docs.mistral.ai" target="_blank" rel="noreferrer" className="inline-block text-sm font-medium mt-1 hover:underline" style={{ color: "var(--brand-primary)" }}>
               Learn more about BYOK &rarr;
             </a>
           </div>
