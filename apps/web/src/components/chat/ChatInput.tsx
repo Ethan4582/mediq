@@ -7,7 +7,8 @@ import Spinner from "@/components/shared/Spinner";
 const STAGE_LABELS: Record<string, string> = {
   uploading: "Uploading document to secure storage…",
   ocr:       "Reading and extracting document content…",
-  chunking:  "Indexing content for AI search…",
+  chunking:  "Indexing content for search…",
+  embedding: "Generating semantic embeddings…",
   ready:     "Document ready",
 };
 

@@ -4,6 +4,7 @@ const STEPS = [
   { key: "uploading", label: "Uploading file" },
   { key: "ocr",       label: "Reading document" },
   { key: "chunking",  label: "Processing text" },
+  { key: "embedding", label: "Generating embeddings" },
   { key: "ready",     label: "Complete" },
 ];
 
@@ -11,7 +12,8 @@ const stageToStep: Record<string, number> = {
   uploading: 0,
   ocr: 1,
   chunking: 2,
-  ready: 3,
+  embedding: 3,
+  ready: 4,
 };
 
 export default function OcrProgressSteps({ stage }: { stage: string }) {

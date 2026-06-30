@@ -71,7 +71,7 @@ export default function ActivityChart({
             <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }}
-              formatter={(val: number, name: string) => [val, name === "runs" ? "Runs" : "Pages"]}
+              formatter={(val: any, name: any) => [val, name === "runs" ? "Runs" : "Pages"]}
             />
             <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
             <Area type="monotone" dataKey="runs" stroke="#3b82f6" strokeWidth={2} fill="url(#runsGrad)" name="Runs" />

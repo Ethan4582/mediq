@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, Sparkles, Plus, ChevronDown, Mic, ArrowUp, ShieldCheck, Brain, Lock } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { ImpactSection } from "@/components/ImpactSection";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -183,6 +184,9 @@ export default function LandingPage() {
 
         </div>
       </section>
+
+      {/* Impact Section */}
+      <ImpactSection />
     </main>
   );
 }

@@ -164,6 +164,27 @@ def process_document(self, document_id: str, session_id: str, mistral_api_key: s
         if chunk_rows:
             db.table("chunks").insert(chunk_rows).execute()
 
+            set_job_progress(task_id, "processing", 75, "embedding")
+            
+            from core.embeddings import generate_embeddings
+            chunk_texts = [c["text"] for c in chunk_rows]
+            embeddings = generate_embeddings(chunk_texts, mistral_api_key)
+            
+            inserted = db.table("chunks")\
+                .select("id, chunk_index")\
+                .eq("session_id", session_id)\
+                .eq("document_id", document_id)\
+                .order("chunk_index")\
+                .execute()
+            
+            chunk_ids = [row["id"] for row in inserted.data]
+            
+            for chunk_id, embedding in zip(chunk_ids, embeddings):
+                db.table("chunks")\
+                    .update({"embedding": embedding})\
+                    .eq("id", chunk_id)\
+                    .execute()
+
         set_job_progress(task_id, "done", 100, "ready")
         db.table("sessions").update({"status": "done", "updated_at": datetime.now(timezone.utc).isoformat()}).eq("id", session_id).execute()
         db.table("documents").update({"ocr_status": "done"}).eq("id", document_id).execute()
