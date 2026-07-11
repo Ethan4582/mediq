@@ -31,12 +31,20 @@ export default function MessageList({
   agentStatus?: string;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef(true);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 30;
+    }
+  };
 
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && isAtBottomRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, pendingUpload, ocrResult]);
+  }, [messages, pendingUpload, ocrResult, draft]);
 
   if (loading) {
     return (
@@ -57,7 +65,11 @@ export default function MessageList({
   }
 
   return (
-    <div className="absolute inset-0 overflow-y-auto flex flex-col pt-10 pb-28 px-8 items-center" ref={scrollRef}>
+    <div 
+      className="absolute inset-0 overflow-y-auto flex flex-col pt-10 pb-28 px-8 items-center" 
+      ref={scrollRef}
+      onScroll={handleScroll}
+    >
       <div className="w-full max-w-[860px] flex flex-col gap-8">
         {messages.map((m, i) => {
           if (m.role === "user") {

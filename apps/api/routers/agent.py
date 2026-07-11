@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from core.supabase import db
+from core.encryption import decrypt
 
 router = APIRouter(tags=["agent"])
 
@@ -31,21 +32,23 @@ class RunAgentRequest(BaseModel):
 
 @router.post("/patient/{session_id}/run")
 async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(get_current_user)):
-    user_id = user["id"]
+    user_id = user["user_id"]
     
     # 1. Fetch keys
     keys_res = db.table("api_keys").select("*").eq("user_id", user_id).execute()
     keys = keys_res.data
-    mistral_key = next((k["key_value"] for k in keys if k["key_type"] == "ocr" and k.get("is_active")), None)
+    mistral_key_obj = next((k for k in keys if k["key_type"] == "ocr" and k.get("is_active")), None)
+    mistral_key = decrypt(mistral_key_obj["key_encrypted"]) if mistral_key_obj else None
     
     # Find requested LLM key
-    llm_key = next((k["key_value"] for k in keys if k["key_type"] == "llm" and k["provider"] == req.llm_provider), None)
+    llm_key_obj_req = next((k for k in keys if k["key_type"] == "llm" and k["provider"] == req.llm_provider), None)
+    llm_key = decrypt(llm_key_obj_req["key_encrypted"]) if llm_key_obj_req else None
     
     # Fallback
     if not llm_key:
         llm_key_obj = next((k for k in keys if k["key_type"] == "llm" and k.get("is_active")), None)
         if llm_key_obj:
-            llm_key = llm_key_obj["key_value"]
+            llm_key = decrypt(llm_key_obj["key_encrypted"])
             req.llm_provider = llm_key_obj["provider"]
     
     if not mistral_key or not llm_key:

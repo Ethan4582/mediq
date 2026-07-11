@@ -11,20 +11,34 @@ function parseMarkdown(text: string) {
     if (block.startsWith("### ")) {
       return <h3 key={i} className="text-[17px] font-bold mt-6 mb-2 text-[#111827]">{parseInline(block.replace("### ", ""))}</h3>;
     } else if (block.startsWith("## ")) {
-      return <h2 key={i} className="text-[19px] font-bold mt-8 mb-3 text-[#111827]">{parseInline(block.replace("## ", ""))}</h2>;
+      return <h2 key={i} className="text-[20px] font-bold mt-8 mb-3 text-[#111827]">{parseInline(block.replace("## ", ""))}</h2>;
     } else if (block.startsWith("# ")) {
-      return <h1 key={i} className="text-[22px] font-bold mt-8 mb-4 text-[#111827]">{parseInline(block.replace("# ", ""))}</h1>;
+      return <h1 key={i} className="text-[24px] font-bold mt-8 mb-4 text-[#111827]">{parseInline(block.replace("# ", ""))}</h1>;
     }
 
     const lines = block.split("\n");
-    if (lines.every(l => l.trim().startsWith("- ") || l.trim().startsWith("• ") || l.trim().startsWith("* "))) {
+    const isList = lines.some(l => /^\s*[-•*]\s/.test(l));
+    if (isList) {
       return (
-        <ul key={i} className="space-y-2 mt-3 mb-4 text-[#111827]" style={{ paddingLeft: "1.2rem", listStyleType: "disc" }}>
-          {lines.map((l, j) => (
-            <li key={j} className="pl-1 text-[15px] leading-relaxed">
-              {parseInline(l.replace(/^[-•*]\s/, ""))}
-            </li>
-          ))}
+        <ul key={i} className="my-4 space-y-3 text-[#111827] pl-5 list-disc marker:text-[#2563eb]">
+          {lines.map((line, j) => {
+            const match = line.match(/^(\s*)([-•*]\s)(.*)/);
+            if (match) {
+              const indent = match[1].length;
+              const content = match[3];
+              const plClass = indent > 0 ? "pl-6 list-[circle] mt-1 text-[#374151]" : "pl-1";
+              return (
+                <li key={j} className={`${plClass} text-[15px] leading-relaxed`}>
+                  {parseInline(content)}
+                </li>
+              );
+            }
+            return (
+              <p key={j} className="text-[15px] leading-relaxed text-[#374151] mt-1">
+                {parseInline(line)}
+              </p>
+            );
+          })}
         </ul>
       );
     }
@@ -55,11 +69,19 @@ export default function AiMessage({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="w-full mb-2">
+    <div className="w-full mb-2 relative group">
+      
+      {/* Action buttons at the top right, visible on hover */}
+      {!children && (
+        <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-30">
+          <MessageActions content={message.content} />
+        </div>
+      )}
+
       {children ? (
         <div className="w-full">{children}</div>
       ) : (
-        <div className="ai-content-wrapper">
+        <div className="ai-content-wrapper pr-10">
           {parseMarkdown(message.content)}
         </div>
       )}
@@ -73,7 +95,6 @@ export default function AiMessage({
             <FileText size={11} />
             Sources
           </button>
-          <MessageActions content={message.content} />
         </div>
       )}
     </div>

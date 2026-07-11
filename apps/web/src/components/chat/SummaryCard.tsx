@@ -99,85 +99,10 @@ export default function SummaryCard({
   };
 
   return (
-    <div className="w-full flex flex-col gap-6 text-[#111827] mt-2 mb-4">
+    <div className="w-full flex flex-col gap-6 text-[#111827] mt-2 mb-4 relative group pr-10">
       
-      {isFirst && (
-        <h1 className="text-[22px] font-bold tracking-tight text-[#111827] mb-2">
-          Patient summary
-        </h1>
-      )}
-
-      {/* Basic Info */}
-      <div className="flex flex-col gap-1 text-[15px] leading-relaxed">
-        <p><strong className="font-semibold text-[#111827]">Patient:</strong> <span className="text-[#374151]">Unknown</span></p>
-        <p><strong className="font-semibold text-[#111827]">Admission Date:</strong> <span className="text-[#374151]">—</span></p>
-        <p><strong className="font-semibold text-[#111827]">Discharge Date:</strong> <span className="text-[#374151]">—</span></p>
-      </div>
-
-      <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
-        <h2 className="text-[19px] font-bold text-[#111827]">Principal Diagnosis</h2>
-        {parsed.diagnoses.length > 0 ? (
-           <p className="text-[#374151]">{parsed.diagnoses[0]}</p>
-        ) : (
-           <p className="text-[#6b7280] italic">Not found in document</p>
-        )}
-
-        {parsed.diagnoses.length > 1 && (
-          <div className="mt-3">
-            <h3 className="text-[17px] font-bold text-[#111827]">Secondary Diagnoses</h3>
-            <ul className="list-disc pl-5 mt-2 space-y-1 text-[#374151]">
-              {parsed.diagnoses.slice(1).map((d, i) => (
-                <li key={i}>{d}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
-        <h2 className="text-[19px] font-bold text-[#111827]">Hospital Course</h2>
-        {parsed.course ? (
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.course}</p>
-        ) : (
-          <p className="text-[#6b7280] italic">Pending — clinician review required</p>
-        )}
-      </div>
-
-      {parsed.examinationRaw && (
-        <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
-          <h2 className="text-[19px] font-bold text-[#111827]">Physical Examination</h2>
-          {parsed.vitals && (
-            <p className="text-[#374151] mb-1">
-              <strong className="font-semibold text-[#111827]">Vitals:</strong> PR: {parsed.vitals.pr}, BP: {parsed.vitals.bp}, RR: {parsed.vitals.rr}, SpO2: {parsed.vitals.spo2}
-            </p>
-          )}
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.examinationRaw}</p>
-        </div>
-      )}
-
-      {parsed.investigations && (
-        <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
-          <h2 className="text-[19px] font-bold text-[#111827]">Investigations</h2>
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.investigations}</p>
-        </div>
-      )}
-
-      {parsed.medications && (
-        <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
-          <h2 className="text-[19px] font-bold text-[#111827]">Medications</h2>
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.medications}</p>
-        </div>
-      )}
-
-      {parsed.followUp && (
-        <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
-          <h2 className="text-[19px] font-bold text-[#111827]">Follow-up</h2>
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.followUp}</p>
-        </div>
-      )}
-
-      {/* Footer Actions (matching the user's request to put action buttons at bottom) */}
-      <div className="flex items-center justify-start gap-1 mt-2">
+      {/* Action buttons at the top right, visible on hover */}
+      <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-30 flex items-center gap-1">
         <button 
           onClick={() => navigator.clipboard.writeText(rawText)}
           className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-[#f4f6f8] transition-colors"
@@ -192,7 +117,7 @@ export default function SummaryCard({
                <MoreHorizontal size={15} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={handleDownloadPdf}>
               <Download className="mr-2 h-4 w-4" />
               <span>Download PDF</span>
@@ -203,11 +128,86 @@ export default function SummaryCard({
             </DropdownMenuItem>
             <DropdownMenuItem>
               <MessageSquare className="mr-2 h-4 w-4" />
-              <span>Suggest Improvements</span>
+              <span>Agent Feedback</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {isFirst && (
+        <h1 className="text-[26px] font-extrabold tracking-tight text-[#111827] mb-2">
+          Patient summary
+        </h1>
+      )}
+
+      {/* Basic Info */}
+      <div className="flex flex-col gap-1.5 text-[15px] leading-relaxed">
+        <p><strong className="font-semibold text-[#111827]">Patient:</strong> <span className="text-[#374151]">Unknown</span></p>
+        <p><strong className="font-semibold text-[#111827]">Admission Date:</strong> <span className="text-[#374151]">—</span></p>
+        <p><strong className="font-semibold text-[#111827]">Discharge Date:</strong> <span className="text-[#374151]">—</span></p>
+      </div>
+
+      <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+        <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Principal Diagnosis</h2>
+        {parsed.diagnoses.length > 0 ? (
+           <p className="text-[#374151]">{parsed.diagnoses[0]}</p>
+        ) : (
+           <p className="text-[#6b7280] italic">Not found in document</p>
+        )}
+
+        {parsed.diagnoses.length > 1 && (
+          <div className="mt-4">
+            <h3 className="text-[17px] font-semibold text-[#111827]">Secondary Diagnoses</h3>
+            <ul className="list-disc pl-5 mt-2.5 space-y-2 text-[#374151] marker:text-[#2563eb]">
+              {parsed.diagnoses.slice(1).map((d, i) => (
+                <li key={i}>{d}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+        <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Hospital Course</h2>
+        {parsed.course ? (
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.course}</p>
+        ) : (
+          <p className="text-[#6b7280] italic">Pending — clinician review required</p>
+        )}
+      </div>
+
+      {parsed.examinationRaw && (
+        <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+          <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Physical Examination</h2>
+          {parsed.vitals && (
+            <p className="text-[#374151] mb-1">
+              <strong className="font-semibold text-[#111827]">Vitals:</strong> PR: {parsed.vitals.pr}, BP: {parsed.vitals.bp}, RR: {parsed.vitals.rr}, SpO2: {parsed.vitals.spo2}
+            </p>
+          )}
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.examinationRaw}</p>
+        </div>
+      )}
+
+      {parsed.investigations && (
+        <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+          <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Investigations</h2>
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.investigations}</p>
+        </div>
+      )}
+
+      {parsed.medications && (
+        <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+          <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Medications</h2>
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.medications}</p>
+        </div>
+      )}
+
+      {parsed.followUp && (
+        <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+          <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Follow-up</h2>
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.followUp}</p>
+        </div>
+      )}
 
     </div>
   );

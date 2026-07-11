@@ -29,7 +29,6 @@ def route_extractor(state: AgentState) -> str:
                  if s not in state.get("extracted_fields", {})]
                  
     if remaining:
-        state["current_section"] = remaining[0]
         print(f"Routing to next_section: {remaining[0]}")
         return "next_section"
         

@@ -110,19 +110,9 @@ export default function ChatInput({
               <div className="h-4 w-px bg-gray-300 mx-1 shrink-0 hidden sm:block"></div>
 
               {/* Toolbar Buttons */}
-              <button 
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:bg-black/5 hover:text-gray-800 transition-colors shrink-0"
-              >
-                <Zap size={14} />
-                <span className="hidden sm:inline">Instant</span>
-              </button>
+             
               
-              <button 
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:bg-black/5 hover:text-gray-800 transition-colors shrink-0"
-              >
-                <Search size={14} />
-                <span className="hidden sm:inline">Search</span>
-              </button>
+
 
               <input
                 type="file"

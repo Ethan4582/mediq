@@ -11,6 +11,7 @@ import Link from "next/link";
 
 import { useRouter } from "next/navigation";
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const isNew = sessionId === "new";
@@ -36,9 +37,16 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
       const runAgent = async () => {
         setAgentStatus("running");
         try {
+          const supabase = createClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          const token = session?.access_token;
+          
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/run`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
             body: JSON.stringify({ llm_provider: selectedProvider || "openai" }),
           });
           if (res.ok) {
@@ -52,9 +60,23 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
       };
 
       const pollDraft = () => {
+        let pollCount = 0;
         const interval = setInterval(async () => {
+          pollCount++;
+          if (pollCount > 30) {
+            clearInterval(interval);
+            setAgentStatus("error");
+            return;
+          }
+          
           try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`);
+            const supabase = createClient();
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
             if (res.ok) {
               const data = await res.json();
               if (data && data.content) {
@@ -89,11 +111,18 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     setOptimisticMessages((prev) => [...prev, optimistic]);
 
     try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/chat`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({ session_id: sessionId, message: text }),
         }
       );

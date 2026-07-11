@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from agent.state import AgentState
 from agent.nodes.tracer import emit_trace
-from agent.utils import get_instructor_client, get_llm_model
+from agent.utils import get_llm_client, get_llm_model
 
 EXTRACTION_SYSTEM_PROMPT = """
 You are a clinical data extraction assistant. 
@@ -76,24 +76,32 @@ def run(state: AgentState) -> AgentState:
     chunks = state.get("_current_chunks", [])
     context = "\n---\n".join(chunks) if chunks else "No relevant information found."
     
-    client = get_instructor_client(state["llm_provider"], state["llm_key"])
+    client = get_llm_client(state["llm_provider"], state["llm_key"])
     model = get_llm_model(state["llm_provider"])
     
     model_class = SECTION_MODELS.get(section, CourseSection)
     
+    import time
+    time.sleep(2) # Prevent tripping 1-req/sec rate limits on free tiers
+    
     try:
-        response = client.chat.completions.create(
-            model=model,
-            response_model=model_class,
-            messages=[
+        kwargs = {
+            "model": model,
+            "response_model": model_class,
+            "max_retries": 3,
+            "messages": [
                 {"role": "system", "content": EXTRACTION_SYSTEM_PROMPT},
                 {"role": "user", "content": f"Context:\n{context}\n\nExtract the {section} section."}
             ]
-        )
+        }
+        response = client.chat.completions.create(**kwargs)
         extracted = response.model_dump()
     except Exception as e:
         print(f"Extractor LLM failed for {section}: {e}")
-        extracted = {"error": str(e), "status": "MISSING — clinician review required"}
+        extracted = {
+            field: "MISSING — clinician review required"
+            for field in model_class.model_fields.keys()
+        }
         
     if "extracted_fields" not in state:
         state["extracted_fields"] = {}
@@ -134,4 +142,11 @@ def run(state: AgentState) -> AgentState:
         next_node="route_extractor"
     )
     state["trace"].append(trace)
+    
+    # Advance to next section to avoid infinite loops since edges can't mutate state
+    remaining = [s for s in state.get("sections_to_extract", []) 
+                 if s not in state.get("extracted_fields", {})]
+    if remaining:
+        state["current_section"] = remaining[0]
+        
     return state
