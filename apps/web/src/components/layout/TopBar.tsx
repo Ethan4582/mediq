@@ -59,7 +59,7 @@ export default function TopBar({
             }}
           >
             <Share2 size={14} />
-            Start new session or branch
+             Branch
           </button>
           <button
             className="border rounded-lg p-1.5 transition-colors hover:bg-[var(--bg-hover)]"

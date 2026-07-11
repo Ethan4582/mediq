@@ -27,23 +27,23 @@ export default function DocumentCard({
   const isProcessing = status === "uploading" || status === "processing";
 
   return (
-    <div className={`w-full max-w-md rounded-2xl border bg-white shadow-sm overflow-hidden p-5 ${isError ? "border-red-200" : "border-[#e5e7eb]"}`}>
-      <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-[#eff6ff] text-[#2563eb] flex items-center justify-center shrink-0">
-          <FileText size={20} />
+    <div className={`w-full max-w-sm rounded-2xl border ${isError ? "border-red-200 bg-red-50/30" : "border-gray-200/60 bg-white"} shadow-sm overflow-hidden p-4`}>
+      <div className="flex items-start gap-3">
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isError ? "bg-red-100 text-red-500" : "bg-[#f3f4f6] text-[#4b5563]"}`}>
+          <FileText size={18} />
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate" title={fileName}>
-            {fileName.length > 32 ? fileName.substring(0, 30) + "..." : fileName}
+        <div className="flex-1 min-w-0 pt-0.5">
+          <p className="text-[14px] font-semibold text-gray-900 leading-tight truncate" title={fileName}>
+            {fileName}
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-[11px] font-medium text-gray-400 mt-1">
             {pageCount ? `${pageCount} pages` : "Processing"} {fileSize && `· ${fileSize}`}
           </p>
         </div>
-        <div className="shrink-0 flex items-center justify-center">
-          {isProcessing && <Loader2 size={20} className="animate-[spin_1.5s_linear_infinite] text-[#2563eb]" />}
-          {isDone && <CheckCircle2 size={20} className="text-green-600" />}
-          {isError && <XCircle size={20} className="text-red-500" />}
+        <div className="shrink-0 flex items-center justify-center pt-1">
+          {isProcessing && <Loader2 size={16} className="animate-[spin_1.5s_linear_infinite] text-[#2563eb]" />}
+          {isDone && <CheckCircle2 size={16} className="text-green-500" />}
+          {isError && <XCircle size={16} className="text-red-500" />}
         </div>
       </div>
 

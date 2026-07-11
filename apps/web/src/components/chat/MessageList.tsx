@@ -57,7 +57,7 @@ export default function MessageList({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col px-6 py-6 items-center" ref={scrollRef}>
+    <div className="absolute inset-0 overflow-y-auto flex flex-col pt-6 pb-40 px-6 items-center" ref={scrollRef}>
       <div className="w-full max-w-[780px] flex flex-col gap-6">
         {messages.map((m, i) => {
           if (m.role === "user") {

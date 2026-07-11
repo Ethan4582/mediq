@@ -123,24 +123,32 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden rounded-2xl bg-white shadow-panel">
+    <div className="flex flex-col h-full overflow-hidden rounded-2xl bg-white shadow-panel relative">
       <TopBar session={session} loading={sessionLoading && !isNew} />
-      <MessageList 
-        messages={allMessages} 
-        loading={messagesLoading && !isNew} 
-        pendingUpload={pendingUpload}
-        ocrResult={ocrResult}
-        draft={draft}
-        agentStatus={agentStatus}
-      />
-      <ChatInput
-        onSend={handleSend}
-        onUpload={handleUpload}
-        disabled={session?.status === "processing"}
-        pendingUpload={pendingUpload}
-        selectedProvider={selectedProvider}
-        onProviderChange={setSelectedProvider}
-      />
+      
+      <div className="flex-1 relative h-full">
+        <MessageList 
+          messages={allMessages} 
+          loading={messagesLoading && !isNew} 
+          pendingUpload={pendingUpload}
+          ocrResult={ocrResult}
+          draft={draft}
+          agentStatus={agentStatus}
+        />
+        
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-white via-white/80 to-transparent pt-12 pointer-events-none">
+          <div className="pointer-events-auto">
+            <ChatInput
+              onSend={handleSend}
+              onUpload={handleUpload}
+              disabled={session?.status === "processing"}
+              pendingUpload={pendingUpload}
+              selectedProvider={selectedProvider}
+              onProviderChange={setSelectedProvider}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
