@@ -31,6 +31,10 @@ async def _validate_key(provider: str, key: str):
                     "https://api.mistral.ai/v1/models",
                     headers={"Authorization": f"Bearer {key}"},
                 )
+            elif provider == "gemini":
+                r = await client.get(
+                    f"https://generativelanguage.googleapis.com/v1beta/models?key={key.strip()}"
+                )
             else:
                 raise HTTPException(400, {"error": "invalid_provider"})
             if r.status_code >= 400:
@@ -44,6 +48,7 @@ async def _validate_key(provider: str, key: str):
 @router.post("/keys", response_model=KeyResponse)
 async def add_key(body: AddKeyRequest, request: Request):
     user = await get_current_user(request)
+    body.key = body.key.strip()
     await _validate_key(body.provider, body.key)
 
     encrypted = encrypt(body.key)

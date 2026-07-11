@@ -1,5 +1,5 @@
 export type KeyType = "ocr" | "llm"
-export type LLMProvider = "groq" | "openai" | "anthropic" | "mistral"
+export type LLMProvider = "groq" | "openai" | "anthropic" | "mistral" | "gemini"
 export type SessionStatus = "pending" | "processing" | "done" | "error"
 export type MessageRole = "user" | "assistant"
 export type OcrStatus = "pending" | "processing" | "done" | "failed"

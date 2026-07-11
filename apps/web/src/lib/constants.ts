@@ -14,11 +14,12 @@ export const PROVIDERS = {
   openai:    { name: "OpenAI",    type: "llm",  docsUrl: "https://platform.openai.com/api-keys" },
   anthropic: { name: "Anthropic", type: "llm",  docsUrl: "https://platform.claude.com/dashboard" },
   mistral:   { name: "Mistral",   type: "both", docsUrl: "https://console.mistral.ai/api-keys" },
+  gemini:    { name: "Gemini",    type: "llm",  docsUrl: "https://aistudio.google.com/app/apikey" },
 } as const
 
 export const REQUIRED_KEYS = {
   ocr: "mistral",
-  llm: ["groq", "openai", "anthropic", "mistral"],
+  llm: ["groq", "openai", "anthropic", "mistral", "gemini"],
 } as const
 
 export const UPLOAD_LIMITS = {

@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Literal
 
 class AddKeyRequest(BaseModel):
-    provider: Literal["groq", "openai", "anthropic", "mistral"]
+    provider: Literal["groq", "openai", "anthropic", "mistral", "gemini"]
     key: str
     key_type: Literal["ocr", "llm"]
 
