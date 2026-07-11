@@ -244,7 +244,7 @@ export default function Sidebar({
           className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors"
           style={{ color: "var(--text-muted)" }}
         >
-          <ChevronsLeft size={16} />
+          <img src="/sidebar.svg" alt="Toggle Sidebar" className="w-[18px] h-[18px] opacity-70 group-hover:opacity-100 transition-opacity" />
         </button>
       </div>
 

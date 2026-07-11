@@ -1,18 +1,14 @@
-import { FileText, MoreHorizontal, Info, ChevronDown, Activity, FlaskConical, Pill, Calendar, Share, Download, MessageSquare } from "lucide-react";
-import { useState } from "react";
+import { FileText, MoreHorizontal, Download, Share, MessageSquare, Copy } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Parse raw OCR text into structured sections
 function parseOcrText(raw: string) {
   const sections: Record<string, string> = {}
   
-  // Split on section headers (handles # prefix from Mistral and plain CAPS headers)
   const normalized = raw.replace(/^#{1,6}\s*/gm, '')
   
   const sectionPatterns = [
@@ -31,14 +27,12 @@ function parseOcrText(raw: string) {
     if (match) sections[key] = match[1].trim()
   })
   
-  // Extract diagnoses as array (numbered list or newline separated)
   const diagnosisText = sections.diagnosis || ''
   const diagnoses = diagnosisText
     .split(/\n/)
     .map(d => d.replace(/^\d+[\)\.]\s*/, '').trim())
     .filter(d => d.length > 5)
   
-  // Extract vitals from examination
   const vitalsMatch = (sections.examination || '').match(
     /PR[:\-]?([\d\/]+).*?BP[:\-]?([\d\/]+\s*mmHg).*?RR[:\-]?([\d\/]+).*?SP[O0]2[:\-]?([\d]+%[^,\n]*)/i
   )
@@ -64,44 +58,15 @@ interface SummaryCardProps {
   fileName: string
   pageCount: number
   chunkCount: number
-}
-
-function ExpandableSection({ 
-  icon: Icon, 
-  title, 
-  children 
-}: { 
-  icon: any, 
-  title: string, 
-  children: React.ReactNode 
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div className="border-t border-[#f0f2f5]">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-5 py-3 hover:bg-[#f9fafb] text-sm font-medium text-[#374151] transition-colors"
-      >
-        <span className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-[#6b7280]" />
-          {title}
-        </span>
-        <ChevronDown className={`w-4 h-4 text-[#9ca3af] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      {isOpen && (
-        <div className="px-5 pb-4 text-sm text-[#374151] leading-relaxed border-t border-[#f0f2f5] pt-3">
-          {children}
-        </div>
-      )}
-    </div>
-  );
+  isFirst?: boolean
 }
 
 export default function SummaryCard({
   rawText,
   fileName,
   pageCount,
-  chunkCount
+  chunkCount,
+  isFirst
 }: SummaryCardProps) {
   const parsed = parseOcrText(rawText);
 
@@ -134,158 +99,114 @@ export default function SummaryCard({
   };
 
   return (
-    <div className="rounded-2xl border border-[#e5e7eb] shadow-[0_1px_4px_rgba(0,0,0,0.08)] bg-white overflow-hidden w-full">
+    <div className="w-full flex flex-col gap-6 text-[#111827] mt-2 mb-4">
       
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#f0f2f5]">
-        <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-[#2563eb]" />
-          <span className="text-sm font-semibold text-[#111827]">
-            Discharge Summary (Draft)
-          </span>
+      {isFirst && (
+        <h1 className="text-[22px] font-bold tracking-tight text-[#111827] mb-2">
+          Patient summary
+        </h1>
+      )}
+
+      {/* Basic Info */}
+      <div className="flex flex-col gap-1 text-[15px] leading-relaxed">
+        <p><strong className="font-semibold text-[#111827]">Patient:</strong> <span className="text-[#374151]">Unknown</span></p>
+        <p><strong className="font-semibold text-[#111827]">Admission Date:</strong> <span className="text-[#374151]">—</span></p>
+        <p><strong className="font-semibold text-[#111827]">Discharge Date:</strong> <span className="text-[#374151]">—</span></p>
+      </div>
+
+      <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
+        <h2 className="text-[19px] font-bold text-[#111827]">Principal Diagnosis</h2>
+        {parsed.diagnoses.length > 0 ? (
+           <p className="text-[#374151]">{parsed.diagnoses[0]}</p>
+        ) : (
+           <p className="text-[#6b7280] italic">Not found in document</p>
+        )}
+
+        {parsed.diagnoses.length > 1 && (
+          <div className="mt-3">
+            <h3 className="text-[17px] font-bold text-[#111827]">Secondary Diagnoses</h3>
+            <ul className="list-disc pl-5 mt-2 space-y-1 text-[#374151]">
+              {parsed.diagnoses.slice(1).map((d, i) => (
+                <li key={i}>{d}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
+        <h2 className="text-[19px] font-bold text-[#111827]">Hospital Course</h2>
+        {parsed.course ? (
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.course}</p>
+        ) : (
+          <p className="text-[#6b7280] italic">Pending — clinician review required</p>
+        )}
+      </div>
+
+      {parsed.examinationRaw && (
+        <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
+          <h2 className="text-[19px] font-bold text-[#111827]">Physical Examination</h2>
+          {parsed.vitals && (
+            <p className="text-[#374151] mb-1">
+              <strong className="font-semibold text-[#111827]">Vitals:</strong> PR: {parsed.vitals.pr}, BP: {parsed.vitals.bp}, RR: {parsed.vitals.rr}, SpO2: {parsed.vitals.spo2}
+            </p>
+          )}
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.examinationRaw}</p>
         </div>
+      )}
+
+      {parsed.investigations && (
+        <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
+          <h2 className="text-[19px] font-bold text-[#111827]">Investigations</h2>
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.investigations}</p>
+        </div>
+      )}
+
+      {parsed.medications && (
+        <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
+          <h2 className="text-[19px] font-bold text-[#111827]">Medications</h2>
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.medications}</p>
+        </div>
+      )}
+
+      {parsed.followUp && (
+        <div className="flex flex-col gap-2 text-[15px] leading-relaxed">
+          <h2 className="text-[19px] font-bold text-[#111827]">Follow-up</h2>
+          <p className="text-[#374151] whitespace-pre-wrap">{parsed.followUp}</p>
+        </div>
+      )}
+
+      {/* Footer Actions (matching the user's request to put action buttons at bottom) */}
+      <div className="flex items-center justify-start gap-1 mt-2">
+        <button 
+          onClick={() => navigator.clipboard.writeText(rawText)}
+          className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-[#f4f6f8] transition-colors"
+          title="Copy text"
+        >
+          <Copy size={15} />
+        </button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="w-8 h-8 rounded-lg hover:bg-[#f4f6f8] flex items-center justify-center text-[#9ca3af]">
-              <MoreHorizontal className="w-4 h-4" />
+            <button className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-[#f4f6f8] transition-colors" title="More options">
+               <MoreHorizontal size={15} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem onClick={handleDownloadPdf}>
+              <Download className="mr-2 h-4 w-4" />
+              <span>Download PDF</span>
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Share className="mr-2 h-4 w-4" />
               <span>Share</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDownloadPdf}>
-              <Download className="mr-2 h-4 w-4" />
-              <span>Download Summary PDF</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem>
               <MessageSquare className="mr-2 h-4 w-4" />
               <span>Suggest Improvements</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-3 divide-x divide-[#f0f2f5]">
-        
-        {/* Col 1 */}
-        <div className="px-5 py-5 space-y-4">
-          <div>
-            <p className="text-xs text-[#9ca3af] font-medium mb-1">Patient</p>
-            <p className="text-sm font-semibold text-[#111827]">Unknown</p>
-          </div>
-          <div>
-            <p className="text-xs text-[#9ca3af] font-medium mb-1">Admission Date</p>
-            <p className="text-sm font-semibold text-[#111827]">—</p>
-          </div>
-          <div>
-            <p className="text-xs text-[#9ca3af] font-medium mb-1">Discharge Date</p>
-            <p className="text-sm font-semibold text-[#111827]">—</p>
-          </div>
-        </div>
-
-        {/* Col 2 */}
-        <div className="px-5 py-5">
-          <p className="text-xs text-[#9ca3af] font-medium mb-1">Principal Diagnosis</p>
-          {parsed.diagnoses.length > 0 ? (
-             <p className="text-sm font-semibold text-[#111827] leading-snug">
-               {parsed.diagnoses[0]}
-             </p>
-          ) : (
-             <p className="text-sm text-[#d1d5db] italic text-[13px]">Not found in document</p>
-          )}
-
-          {parsed.diagnoses.length > 1 && (
-            <>
-              <p className="text-xs text-[#9ca3af] font-medium mt-4 mb-2">Secondary Diagnoses</p>
-              <ul className="space-y-1">
-                {parsed.diagnoses.slice(1).map((d, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-[#374151]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#9ca3af] mt-1.5 shrink-0"/>
-                    {d}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-
-        {/* Col 3 */}
-        <div className="px-5 py-5">
-          <p className="text-xs text-[#9ca3af] font-medium mb-1">Hospital Course</p>
-          {parsed.course ? (
-            <p className="text-sm text-[#374151] leading-relaxed line-clamp-6">
-              {parsed.course}
-            </p>
-          ) : (
-            <p className="text-sm text-[#9ca3af] italic">Pending — clinician review required</p>
-          )}
-        </div>
-      </div>
-
-      {/* Expandable Sections */}
-      {parsed.examinationRaw && (
-        <ExpandableSection icon={Activity} title="Physical Examination">
-          {parsed.vitals && (
-            <div className="grid grid-cols-4 gap-3 mb-3">
-              <div className="rounded-xl bg-[#f4f6f8] px-3 py-2">
-                <p className="text-xs text-[#9ca3af]">PR</p>
-                <p className="text-sm font-semibold text-[#111827]">{parsed.vitals.pr}</p>
-              </div>
-              <div className="rounded-xl bg-[#f4f6f8] px-3 py-2">
-                <p className="text-xs text-[#9ca3af]">BP</p>
-                <p className="text-sm font-semibold text-[#111827]">{parsed.vitals.bp}</p>
-              </div>
-              <div className="rounded-xl bg-[#f4f6f8] px-3 py-2">
-                <p className="text-xs text-[#9ca3af]">RR</p>
-                <p className="text-sm font-semibold text-[#111827]">{parsed.vitals.rr}</p>
-              </div>
-              <div className="rounded-xl bg-[#f4f6f8] px-3 py-2">
-                <p className="text-xs text-[#9ca3af]">SpO2</p>
-                <p className="text-sm font-semibold text-[#111827]">{parsed.vitals.spo2}</p>
-              </div>
-            </div>
-          )}
-          <p className="whitespace-pre-wrap">{parsed.examinationRaw}</p>
-        </ExpandableSection>
-      )}
-
-      {parsed.investigations && (
-        <ExpandableSection icon={FlaskConical} title="Investigations">
-          <p className="whitespace-pre-wrap">{parsed.investigations}</p>
-        </ExpandableSection>
-      )}
-
-      {parsed.medications && (
-        <ExpandableSection icon={Pill} title="Medications">
-          <p className="whitespace-pre-wrap">{parsed.medications}</p>
-        </ExpandableSection>
-      )}
-
-      {parsed.followUp && (
-        <ExpandableSection icon={Calendar} title="Follow-up">
-          <p className="whitespace-pre-wrap">{parsed.followUp}</p>
-        </ExpandableSection>
-      )}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between px-5 py-3 bg-[#f9fafb] border-t border-[#f0f2f5]">
-        <div className="flex items-center">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-[#16a34a] bg-[#dcfce7] rounded-full px-2.5 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
-            Confidence: High
-          </span>
-          <span className="text-xs text-[#6b7280] ml-3">
-            Sources: {chunkCount} chunks
-          </span>
-        </div>
-        <span className="flex items-center gap-1.5 text-xs text-[#6b7280]">
-          Review required
-          <Info className="w-3.5 h-3.5" />
-        </span>
       </div>
 
     </div>

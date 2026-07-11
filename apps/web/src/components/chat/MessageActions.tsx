@@ -1,5 +1,11 @@
-import { Copy, Download } from "lucide-react";
+import { Copy, Download, Share, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function MessageActions({ content }: { content: string }) {
   const [copied, setCopied] = useState(false);
@@ -39,21 +45,34 @@ export default function MessageActions({ content }: { content: string }) {
   };
 
   return (
-    <div className="flex gap-2 mt-2">
+    <div className="flex gap-1 mt-2">
       <button
         onClick={handleCopy}
         title="Copy"
         className="w-7 h-7 rounded-md flex items-center justify-center transition-colors hover:bg-[#f4f6f8] text-[#9ca3af] hover:text-[#374151]"
       >
-        <Copy size={13} />
+        <Copy size={14} />
       </button>
-      <button
-        onClick={handleDownloadPdf}
-        title="Download PDF"
-        className="w-7 h-7 rounded-md flex items-center justify-center transition-colors hover:bg-[#f4f6f8] text-[#9ca3af] hover:text-[#374151]"
-      >
-        <Download size={14} />
-      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            title="More options"
+            className="w-7 h-7 rounded-md flex items-center justify-center transition-colors hover:bg-[#f4f6f8] text-[#9ca3af] hover:text-[#374151]"
+          >
+            <MoreHorizontal size={14} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48">
+          <DropdownMenuItem onClick={handleDownloadPdf}>
+            <Download className="mr-2 h-4 w-4" />
+            <span>Download PDF</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Share className="mr-2 h-4 w-4" />
+            <span>Share</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

@@ -67,6 +67,8 @@ export default function MessageList({
           const isSummary =
             (m.metadata as Record<string, unknown>)?.type === "summary";
 
+          const isFirstSummary = isSummary && messages.findIndex(msg => (msg.metadata as Record<string, unknown>)?.type === "summary") === i;
+
           return (
             <AiMessage key={m.id ?? i} message={m}>
               {isSummary && m.metadata?.content ? (
@@ -75,6 +77,7 @@ export default function MessageList({
                   fileName={String((m.metadata as Record<string, unknown>).file_name ?? "Unknown")}
                   pageCount={Number((m.metadata as Record<string, unknown>).page_count ?? 1)}
                   chunkCount={Number((m.metadata as Record<string, unknown>).source_count ?? 0)}
+                  isFirst={isFirstSummary}
                 />
               ) : null}
             </AiMessage>
@@ -124,6 +127,7 @@ export default function MessageList({
                fileName={ocrResult?.fileName || "Unknown"}
                pageCount={ocrResult?.pageCount || 1}
                chunkCount={ocrResult?.chunkCount || 0}
+               isFirst={true}
              />
           </AiMessage>
         )}
