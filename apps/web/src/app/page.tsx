@@ -5,6 +5,7 @@ import { BookOpen, Sparkles, Plus, ChevronDown, Mic, ArrowUp, ShieldCheck, Brain
 import Link from "next/link";
 import { useState } from "react";
 import { ImpactSection } from "@/components/ImpactSection";
+import { Footer } from "@/components/Footer";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -187,6 +188,9 @@ export default function LandingPage() {
 
       {/* Impact Section */}
       <ImpactSection />
+
+      {/* Footer */}
+      <Footer />
     </main>
   );
 }

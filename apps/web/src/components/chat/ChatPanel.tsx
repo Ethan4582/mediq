@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
 import { useMessages } from "@/hooks/useMessages";
 import TopBar from "@/components/layout/TopBar";
@@ -24,6 +24,56 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
       router.replace(`/chat/${newSessionId}`);
     }
   });
+
+  const [draft, setDraft] = useState<any>(null);
+  const [agentStatus, setAgentStatus] = useState<string>("idle");
+
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  
+  // Auto-trigger agent run after OCR
+  useEffect(() => {
+    if (ocrResult && sessionId && sessionId !== "new" && agentStatus === "idle") {
+      const runAgent = async () => {
+        setAgentStatus("running");
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/run`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ llm_provider: selectedProvider || "openai" }),
+          });
+          if (res.ok) {
+            pollDraft();
+          } else {
+            setAgentStatus("error");
+          }
+        } catch (err) {
+          setAgentStatus("error");
+        }
+      };
+
+      const pollDraft = () => {
+        const interval = setInterval(async () => {
+          try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.content) {
+                setDraft(data.content);
+                setAgentStatus("done");
+                clearInterval(interval);
+              }
+            } else if (res.status !== 404) {
+              // Wait for completion unless it's a hard error
+            }
+          } catch (e) {
+            // keep polling
+          }
+        }, 2000);
+      };
+
+      runAgent();
+    }
+  }, [ocrResult, sessionId, agentStatus, selectedProvider]);
 
   const allMessages = [...messages, ...optimisticMessages];
 
@@ -80,12 +130,16 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
         loading={messagesLoading && !isNew} 
         pendingUpload={pendingUpload}
         ocrResult={ocrResult}
+        draft={draft}
+        agentStatus={agentStatus}
       />
       <ChatInput
         onSend={handleSend}
         onUpload={handleUpload}
         disabled={session?.status === "processing"}
         pendingUpload={pendingUpload}
+        selectedProvider={selectedProvider}
+        onProviderChange={setSelectedProvider}
       />
     </div>
   );

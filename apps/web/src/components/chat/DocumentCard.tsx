@@ -48,13 +48,8 @@ export default function DocumentCard({
       </div>
 
       {isProcessing && (
-        <div className="mt-5">
-          <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-             <div className="bg-[#2563eb] h-1.5 rounded-full transition-all duration-700 ease-out" style={{ width: `${progress}%` }} />
-          </div>
-          <div className="mt-1">
-            <OcrProgressSteps stage={stage} />
-          </div>
+        <div className="mt-4">
+          <OcrProgressSteps stage={stage} />
         </div>
       )}
 

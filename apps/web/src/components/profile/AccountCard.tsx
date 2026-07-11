@@ -26,7 +26,7 @@ export default function AccountCard({
     >
       <div className="flex items-center gap-4">
         <div className="relative">
-          <Avatar name={displayName} src={user?.user_metadata?.avatar_url} size="xl" />
+          <Avatar name={displayName} src={user?.user_metadata?.avatar_url} size="lg" />
           <button
             className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border bg-white flex items-center justify-center text-gray-500 shadow-sm"
             style={{ borderColor: "var(--border-default)" }}

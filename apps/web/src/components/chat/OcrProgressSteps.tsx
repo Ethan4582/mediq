@@ -20,34 +20,32 @@ export default function OcrProgressSteps({ stage }: { stage: string }) {
   const activeStep = stageToStep[stage] ?? 0;
 
   return (
-    <div className="flex items-center gap-0 mt-3 relative h-6 pb-2">
-      {STEPS.map((step, i) => {
-        const isCompleted = i < activeStep;
-        const isActive = i === activeStep;
+    <div className="flex flex-col mt-4 w-full">
+      <div className="flex items-center gap-0 w-full">
+        {STEPS.map((step, i) => {
+          const isCompleted = i < activeStep;
+          const isActive = i === activeStep;
 
-        let dotClass = "w-2 h-2 rounded-full z-10 shrink-0";
-        if (isCompleted) dotClass += " bg-[#2563eb]";
-        else if (isActive) dotClass += " bg-[#2563eb] animate-pulse";
-        else dotClass += " bg-[#e5e7eb]";
+          let dotClass = "w-2.5 h-2.5 rounded-full z-10 shrink-0 transition-colors duration-300";
+          if (isCompleted) dotClass += " bg-[#2563eb]";
+          else if (isActive) dotClass += " bg-[#2563eb] ring-4 ring-[#2563eb]/20 animate-pulse";
+          else dotClass += " bg-[#e5e7eb]";
 
-        return (
-          <React.Fragment key={step.key}>
-            <div className="relative flex flex-col items-center">
+          return (
+            <React.Fragment key={step.key}>
               <div className={dotClass} />
-              {isActive && (
-                <span className="absolute top-3 text-[10px] text-[#2563eb] font-medium whitespace-nowrap">
-                  {step.label}
-                </span>
+              {i < STEPS.length - 1 && (
+                <div 
+                  className={`flex-1 h-px transition-colors duration-300 ${isCompleted ? "bg-[#2563eb]" : "bg-[#e5e7eb]"}`}
+                />
               )}
-            </div>
-            {i < STEPS.length - 1 && (
-              <div 
-                className={`flex-1 h-px ${isCompleted || isActive ? "bg-[#2563eb]" : "bg-[#e5e7eb]"}`}
-              />
-            )}
-          </React.Fragment>
-        );
-      })}
+            </React.Fragment>
+          );
+        })}
+      </div>
+      <div className="text-[11px] font-medium text-[#2563eb] mt-3 h-4">
+        {STEPS[activeStep]?.label || "Processing document..."}
+      </div>
     </div>
   );
 }
