@@ -17,7 +17,7 @@ export default function TopBar({
     <div
       className="shrink-0 transition-all duration-300 w-full bg-transparent"
     >
-      <div className="flex items-center justify-between px-6 py-5 mx-auto w-full max-w-[780px]">
+      <div className="flex items-center justify-between px-6 py-3 mx-auto w-full max-w-[860px]">
         <div className="flex items-center gap-4 min-w-0">
           {!isSidebarOpen && (
             <button
@@ -28,9 +28,6 @@ export default function TopBar({
               <Menu size={16} />
             </button>
           )}
-          <span className="font-bold text-lg text-gray-900 tracking-tight">
-            Branch
-          </span>
         </div>
 
         <div 

@@ -62,12 +62,12 @@ export default function ChatInput({
 
   return (
     <div
-      className="px-4 pb-2 shrink-0 flex flex-col items-center bg-transparent relative z-10"
+      className="px-8 pb-0 shrink-0 flex flex-col items-center bg-transparent relative z-10"
     >
-      <div className="w-full max-w-[780px]">
+      <div className="w-full max-w-[860px]">
         {/* Chat Input Pill */}
         <div
-          className={`flex flex-col gap-2 rounded-3xl border border-gray-200/60 bg-white/80 backdrop-blur-xl px-5 py-3.5 shadow-lg transition-all focus-within:ring-2 focus-within:ring-[#2563eb]/20 focus-within:border-[#2563eb]/50 focus-within:bg-white/95 ${disabled ? "opacity-50 pointer-events-none" : ""}`}
+          className={`flex flex-col rounded-2xl border border-gray-200 bg-white/90 backdrop-blur-xl px-4 py-3 shadow-md transition-all focus-within:ring-1 focus-within:ring-[#2563eb]/30 focus-within:border-[#2563eb]/40 ${disabled ? "opacity-50 pointer-events-none" : ""}`}
         >
           {/* Top: Text Input */}
           <div className="flex items-start">

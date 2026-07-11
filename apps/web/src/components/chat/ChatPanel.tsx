@@ -136,7 +136,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
           agentStatus={agentStatus}
         />
         
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-white via-white/80 to-transparent pt-12 pointer-events-none">
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-white via-white/85 to-transparent pt-8 pointer-events-none">
           <div className="pointer-events-auto">
             <ChatInput
               onSend={handleSend}
