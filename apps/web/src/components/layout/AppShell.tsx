@@ -14,7 +14,7 @@ export default function AppShell({
   const { isSidebarOpen, closeSidebar } = useSessionStore();
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#f0f2f5] p-3 gap-3">
+    <div className="flex h-screen w-full overflow-hidden bg-[#f9fafb]">
       {/* Sidebar — toggled via margin on desktop, transform on mobile */}
       <div
         className={`
@@ -36,7 +36,7 @@ export default function AppShell({
       )}
 
       {/* Main content */}
-      <main className="flex-1 overflow-hidden flex flex-col min-w-0">
+      <main className="flex-1 overflow-hidden flex flex-col min-w-0 bg-white rounded-tl-[24px] border-t border-l border-[#e5e7eb] shadow-sm">
         {children}
       </main>
     </div>

@@ -227,7 +227,7 @@ export default function Sidebar({
 
   return (
     <div
-      className="w-[240px] h-full flex flex-col shrink-0 rounded-2xl shadow-panel bg-white px-3 py-4 gap-1"
+      className="w-[240px] h-full flex flex-col shrink-0 bg-[#f9fafb] px-3 py-4 gap-1"
     >
       {/* Logo Row */}
       <div className="flex items-center justify-between px-2 pt-1 pb-2">

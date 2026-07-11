@@ -2,12 +2,19 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@font-face {
+  font-family: 'ProximaVara';
+  src: local('Proxima Vara'), local('ProximaVara'), local('Proxima Nova'), local('ProximaNova');
+  font-weight: 100 900;
+  font-stretch: 50% 200%;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: 'ProximaVara', 'Proxima Vara', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -151,7 +158,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
     color: #111827;
     background: var(--bg-primary);
     font-weight: 400;

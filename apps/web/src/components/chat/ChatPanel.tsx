@@ -123,7 +123,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden rounded-2xl bg-white shadow-panel relative">
+    <div className="flex flex-col h-full overflow-hidden bg-white relative">
       <TopBar session={session} loading={sessionLoading && !isNew} />
       
       <div className="flex-1 relative h-full">
