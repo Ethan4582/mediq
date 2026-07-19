@@ -24,15 +24,7 @@ export default function LandingPage() {
   };
 
   return (
-    <main 
-      className="relative min-h-screen overflow-hidden" 
-      style={{
-        backgroundImage: "url('/hero_bg.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
-      }}
-    >
+    <main className="relative min-h-screen overflow-hidden">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-8 py-5 bg-transparent">
         {/* Left - Logo */}
@@ -73,10 +65,18 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Content Section */}
-      <section className="relative min-h-screen flex flex-col items-center pt-32 pb-20 px-4 bg-transparent">
+      <section 
+        className="relative min-h-[90vh] flex flex-col items-center pt-24 pb-16 px-4 bg-transparent"
+        style={{
+          backgroundImage: "url('/hero_bg.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      >
         
         {/* Badge pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#c7d7fe] bg-white/70 backdrop-blur-sm mt-32 text-sm font-medium text-[#3b5bdb]">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#c7d7fe] bg-white/70 backdrop-blur-sm mt-16 text-sm font-medium text-[#3b5bdb]">
           <Sparkles className="w-3.5 h-3.5 text-[#2563eb]" />
           AI-Powered Healthcare Intelligence
         </div>

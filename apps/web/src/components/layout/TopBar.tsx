@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Share2, MoreHorizontal, Menu } from "lucide-react";
+import { Settings, Share2, MoreHorizontal, Menu, PanelRight } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { AppSession } from "@/types/app";
 
@@ -32,32 +32,47 @@ export default function TopBar({
 
         <div 
           className="flex items-center gap-2 shrink-0 relative py-1"
-          onMouseEnter={() => setShowSettings(true)}
-          onMouseLeave={() => setShowSettings(false)}
         >
-          <button
-            className="p-2 rounded-lg hover:bg-[var(--bg-hover)] cursor-pointer text-gray-500 hover:text-gray-800 transition-colors"
+          <div
+            className="relative"
+            onMouseEnter={() => setShowSettings(true)}
+            onMouseLeave={() => setShowSettings(false)}
           >
-            <Settings size={18} />
-          </button>
-          
-          {showSettings && (
-            <div 
-              className="absolute right-0 top-full mt-1 w-56 rounded-lg border shadow-md bg-white p-1 z-50"
-              style={{
-                borderColor: "var(--border-default)",
-              }}
+            <button
+              className="p-2 rounded-lg hover:bg-[var(--bg-hover)] cursor-pointer text-gray-500 hover:text-gray-800 transition-colors"
             >
-              <button className="w-full text-left cursor-pointer flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] px-3 py-2 rounded-md transition-colors bg-transparent border-none">
-                <Share2 size={14} />
-                <span>Start new session or branch</span>
-              </button>
-              <button className="w-full text-left cursor-pointer flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] px-3 py-2 rounded-md transition-colors bg-transparent border-none">
-                <MoreHorizontal size={14} />
-                <span>More options</span>
-              </button>
-            </div>
-          )}
+              <Settings size={18} />
+            </button>
+            
+            {showSettings && (
+              <div 
+                className="absolute right-0 top-full mt-1 w-56 rounded-lg border shadow-md bg-white p-1 z-50"
+                style={{
+                  borderColor: "var(--border-default)",
+                }}
+              >
+                <button className="w-full text-left cursor-pointer flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] px-3 py-2 rounded-md transition-colors bg-transparent border-none">
+                  <Share2 size={14} />
+                  <span>Start new session or branch</span>
+                </button>
+                <button className="w-full text-left cursor-pointer flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] px-3 py-2 rounded-md transition-colors bg-transparent border-none">
+                  <MoreHorizontal size={14} />
+                  <span>More options</span>
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <button
+            onClick={() => {
+              const { isRightPanelOpen, setRightPanelOpen } = useSessionStore.getState();
+              setRightPanelOpen(!isRightPanelOpen);
+            }}
+            className="w-8 h-8 rounded-lg hover:bg-[#f4f6f8] flex items-center justify-center cursor-pointer text-gray-500 hover:text-gray-800 transition-colors"
+            title="Toggle Right Panel"
+          >
+            <PanelRight size={18} />
+          </button>
         </div>
       </div>
     </div>

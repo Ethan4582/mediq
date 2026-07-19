@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
 import { useMessages } from "@/hooks/useMessages";
+import { useSessionStore } from "@/stores/sessionStore";
 import TopBar from "@/components/layout/TopBar";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
+import RightPanel from "../panel/RightPanel";
 import type { Message } from "@/types/app";
 import Link from "next/link";
 
@@ -106,8 +108,11 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
             if (res.ok) {
               const data = await res.json();
               if (data && data.content) {
-                setDraft(data.content);
+                const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+                setDraft(content);
                 setPipelineStatus("done");
+                useSessionStore.getState().setRightPanelOpen(true);
+                useSessionStore.getState().setRightPanelTab("summary");
                 clearInterval(interval);
               }
             }
@@ -175,11 +180,17 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     );
   }
 
+  const { isRightPanelOpen } = useSessionStore();
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white relative">
       <TopBar session={session} loading={sessionLoading && !isNew} />
       
-      <div className="flex-1 relative h-full">
+      <div 
+        className={`flex-1 relative h-full transition-all duration-300 ${
+          isRightPanelOpen ? "mr-[392px]" : "mr-0"
+        }`}
+      >
         <MessageList 
           messages={allMessages} 
           loading={messagesLoading && !isNew} 
@@ -202,6 +213,8 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
           </div>
         </div>
       </div>
+      
+      <RightPanel draft={draft} ocrResult={ocrResult} />
     </div>
   );
 }

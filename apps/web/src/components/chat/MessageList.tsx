@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileCheck } from "lucide-react";
 import type { Message } from "@/types/app";
+import { useSessionStore } from "@/stores/sessionStore";
 import MessageBubble from "./MessageBubble";
 import AiMessage from "./AiMessage";
 import SummaryCard from "./SummaryCard";
@@ -104,13 +105,20 @@ export default function MessageList({
 
         {draft && (
           <AiMessage message={{ role: "assistant", content: "", id: "draft-msg", created_at: "", session_id: "", metadata: {} }}>
-             <SummaryCard
-               rawText={typeof draft === 'string' ? draft : JSON.stringify(draft)}
-               fileName={ocrResult?.fileName || "Unknown"}
-               pageCount={ocrResult?.pageCount || 1}
-               chunkCount={ocrResult?.chunkCount || 0}
-               isFirst={true}
-             />
+            <div 
+              className="flex items-center gap-3 p-4 rounded-xl border border-[var(--border-default)] hover:bg-[var(--bg-hover)] cursor-pointer bg-white transition-colors max-w-sm" 
+              onClick={() => { 
+                const { setRightPanelTab, setRightPanelOpen } = useSessionStore.getState();
+                setRightPanelTab("summary"); 
+                setRightPanelOpen(true); 
+              }}
+            >
+              <FileCheck className="w-5 h-5 text-[#2563eb]" />
+              <div>
+                <p className="text-sm font-medium text-[var(--text-primary)]">Discharge summary generated</p>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Click to view full summary &rarr;</p>
+              </div>
+            </div>
           </AiMessage>
         )}
       </div>

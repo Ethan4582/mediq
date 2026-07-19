@@ -36,14 +36,22 @@ def run(state: AgentState) -> AgentState:
         embeddings = generate_embeddings([query_text], state["mistral_key"])
         query_embedding = embeddings[0]
         
-        # Call RPC
         # Supabase API format for Postgres arrays/vectors expects a string like '[0.1, 0.2, ...]'
-        # Wait, supabase-py db.rpc arguments will be serialized to JSON.
+        vector_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
+        
         result = db.rpc("match_chunks", {
-            "query_embedding": query_embedding,
+            "query_embedding": vector_str,
             "session_id": state["session_id"],
             "match_count": 8
         }).execute()
+        
+        if not result.data or len(result.data) == 0:
+            result = db.table("chunks")\
+                .select("id, text")\
+                .eq("session_id", state["session_id"])\
+                .not_.is_("embedding", "null")\
+                .limit(8)\
+                .execute()
         
         chunks = result.data
         chunk_ids = [c["id"] for c in chunks]

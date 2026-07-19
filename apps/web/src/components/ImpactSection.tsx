@@ -18,15 +18,7 @@ export function ImpactSection() {
   };
 
   return (
-    <section 
-      className="relative py-24 px-4 overflow-hidden"
-      style={{
-        backgroundImage: "url('/hero_bg.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
-      }}
-    >
+    <section className="relative py-24 px-4 overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10">
         
         {/* Header */}

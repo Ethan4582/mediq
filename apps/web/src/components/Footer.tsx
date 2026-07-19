@@ -1,7 +1,20 @@
-import { LayoutGrid, User, BookOpen, Mail } from "lucide-react";
+"use client";
+
+import { User, BookOpen, Mail } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export function Footer() {
+  const [email, setEmail] = useState("");
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    toast.success("Subscription request received!");
+    setEmail("");
+  };
+
   return (
     <footer className="w-full pt-16 pb-8 px-4 md:px-8 bg-[#040914] relative rounded-t-[32px] overflow-hidden mt-12 shadow-[0_-10px_40px_rgba(37,99,235,0.1)]">
       {/* Top subtle glow */}
@@ -17,11 +30,7 @@ export function Footer() {
           {/* Left: Brand & Desc */}
           <div className="flex flex-col max-w-[340px]">
             <div className="flex items-center gap-3 mb-5">
-              {/* Custom Logo SVG mimicking the design */}
-              <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 4C12 2.89543 12.8954 2 14 2H20C21.1046 2 22 2.89543 22 4V12H30C31.1046 12 32 12.8954 32 14V20C32 21.1046 31.1046 22 30 22H22V30C22 31.1046 21.1046 32 20 32H14C12.8954 32 12 31.1046 12 30V22H4C2.89543 22 2 21.1046 2 20V14C2 12.8954 2.89543 12 4 12H12V4Z" fill="transparent" stroke="#3b82f6" strokeWidth="2.5"/>
-                <path d="M17 9.5C17.3 12.6 19.4 14.7 22.5 15C19.4 15.3 17.3 17.4 17 20.5C16.7 17.4 14.6 15.3 11.5 15C14.6 14.7 16.7 12.6 17 9.5Z" fill="white"/>
-              </svg>
+              <img src="/logo.png" alt="MediQ logo" className="w-[34px] h-[34px] object-contain" />
               <span className="text-white text-[28px] font-bold tracking-wide">MediQ</span>
             </div>
             <p className="text-[#8492a6] text-[15px] leading-relaxed">
@@ -30,28 +39,27 @@ export function Footer() {
           </div>
 
           {/* Middle: Links */}
-          <div className="flex items-center gap-8 md:gap-14 mt-4 md:mt-2">
+          <div className="flex items-center gap-12 md:gap-20 mt-4 md:mt-2">
             {/* Link 1 */}
-            <Link href="#features" className="flex flex-col items-center gap-3 group">
-              <LayoutGrid className="w-7 h-7 text-[#3b82f6] group-hover:text-white transition-colors stroke-[1.5]" />
+            <Link href="#features" className="flex items-center group">
               <span className="text-white text-[15px] font-semibold group-hover:text-blue-400 transition-colors">Features</span>
             </Link>
             
             {/* Divider */}
-            <div className="w-px h-14 bg-gradient-to-b from-transparent via-[#1e293b] to-transparent"></div>
+            <div className="w-px h-8 bg-gradient-to-b from-transparent via-[#1e293b] to-transparent"></div>
 
             {/* Link 2 */}
-            <Link href="#about" className="flex flex-col items-center gap-3 group">
-              <User className="w-7 h-7 text-[#3b82f6] group-hover:text-white transition-colors stroke-[1.5]" />
+            <Link href="#about" className="flex items-center gap-2.5 group">
+              <User className="w-4 h-4 text-[#3b82f6] group-hover:text-white transition-colors" />
               <span className="text-white text-[15px] font-semibold group-hover:text-blue-400 transition-colors">About</span>
             </Link>
 
             {/* Divider */}
-            <div className="w-px h-14 bg-gradient-to-b from-transparent via-[#1e293b] to-transparent"></div>
+            <div className="w-px h-8 bg-gradient-to-b from-transparent via-[#1e293b] to-transparent"></div>
 
             {/* Link 3 */}
-            <Link href="#docs" className="flex flex-col items-center gap-3 group">
-              <BookOpen className="w-7 h-7 text-[#3b82f6] group-hover:text-white transition-colors stroke-[1.5]" />
+            <Link href="#docs" className="flex items-center gap-2.5 group">
+              <BookOpen className="w-4 h-4 text-[#3b82f6] group-hover:text-white transition-colors" />
               <span className="text-white text-[15px] font-semibold group-hover:text-blue-400 transition-colors">Docs</span>
             </Link>
           </div>
@@ -62,16 +70,19 @@ export function Footer() {
               <Mail className="w-[22px] h-[22px] text-[#3b82f6]" />
               <span className="font-semibold text-[16px]">Stay in the loop</span>
             </div>
-            <div className="relative flex items-center">
+            <form onSubmit={handleSubscribe} className="relative flex items-center">
               <input 
                 type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email" 
+                required
                 className="w-full bg-[#0f172a]/60 border border-[#1e293b] rounded-[16px] py-[14px] pl-5 pr-[110px] text-white text-[15px] placeholder:text-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
               />
-              <button className="absolute right-1.5 top-1.5 bottom-1.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-medium text-[15px] px-6 rounded-[12px] transition-colors">
+              <button type="submit" className="absolute right-1.5 top-1.5 bottom-1.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-medium text-[15px] px-6 rounded-[12px] transition-colors">
                 Subscribe
               </button>
-            </div>
+            </form>
           </div>
         </div>
 

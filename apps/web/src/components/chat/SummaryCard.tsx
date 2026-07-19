@@ -54,21 +54,53 @@ function parseOcrText(raw: string) {
 }
 
 interface SummaryCardProps {
-  rawText: string
-  fileName: string
-  pageCount: number
-  chunkCount: number
-  isFirst?: boolean
+  draft?: any;
+  rawText?: string;
+  fileName: string;
+  pageCount: number;
+  chunkCount: number;
+  isFirst?: boolean;
 }
 
 export default function SummaryCard({
-  rawText,
+  draft,
+  rawText = "",
   fileName,
   pageCount,
   chunkCount,
   isFirst
 }: SummaryCardProps) {
-  const parsed = parseOcrText(rawText);
+  // Use draft if available, otherwise fallback to parsing rawText
+  const parsed = draft || parseOcrText(rawText);
+
+  // Safely extract fields with null-checks
+  const principalDiagnosis = draft?.diagnoses?.principal_diagnosis 
+    ?? parsed.diagnoses?.[0] 
+    ?? "MISSING — clinician review required";
+    
+  const secondaryDiagnoses = draft?.diagnoses?.secondary_diagnoses 
+    ?? parsed.diagnoses?.slice(1) 
+    ?? [];
+    
+  const courseSummary = draft?.course?.summary 
+    ?? parsed.course 
+    ?? "Pending — clinician review required";
+    
+  const vitalsText = draft?.vitals 
+    ? `PR: ${draft.vitals.pulse_rate}, BP: ${draft.vitals.blood_pressure}, RR: ${draft.vitals.respiratory_rate}, SpO2: ${draft.vitals.oxygen_saturation}`
+    : parsed.vitals 
+      ? `PR: ${parsed.vitals.pr}, BP: ${parsed.vitals.bp}, RR: ${parsed.vitals.rr}, SpO2: ${parsed.vitals.spo2}`
+      : null;
+      
+  const examText = draft?.physical_examination ?? parsed.examinationRaw;
+  const invText = draft?.investigations?.summary ?? parsed.investigations;
+  const followUpText = draft?.follow_up?.instructions ?? parsed.followUp;
+  
+  const medsAdmit = draft?.medications?.admission ?? [];
+  const medsDischarge = draft?.medications?.discharge ?? [];
+  const medsText = draft?.medications 
+    ? `Admission: ${medsAdmit.length} | Discharge: ${medsDischarge.length}` 
+    : parsed.medications;
 
   const handleDownloadPdf = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
@@ -149,17 +181,17 @@ export default function SummaryCard({
 
       <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
         <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Principal Diagnosis</h2>
-        {parsed.diagnoses.length > 0 ? (
-           <p className="text-[#374151]">{parsed.diagnoses[0]}</p>
+        {principalDiagnosis ? (
+           <p className="text-[#374151]">{principalDiagnosis}</p>
         ) : (
            <p className="text-[#6b7280] italic">Not found in document</p>
         )}
 
-        {parsed.diagnoses.length > 1 && (
+        {secondaryDiagnoses && secondaryDiagnoses.length > 0 && (
           <div className="mt-4">
             <h3 className="text-[17px] font-semibold text-[#111827]">Secondary Diagnoses</h3>
             <ul className="list-disc pl-5 mt-2.5 space-y-2 text-[#374151] marker:text-[#2563eb]">
-              {parsed.diagnoses.slice(1).map((d, i) => (
+              {secondaryDiagnoses.map((d: string, i: number) => (
                 <li key={i}>{d}</li>
               ))}
             </ul>
@@ -169,43 +201,43 @@ export default function SummaryCard({
 
       <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
         <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Hospital Course</h2>
-        {parsed.course ? (
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.course}</p>
+        {courseSummary ? (
+          <p className="text-[#374151] whitespace-pre-wrap">{courseSummary}</p>
         ) : (
           <p className="text-[#6b7280] italic">Pending — clinician review required</p>
         )}
       </div>
 
-      {parsed.examinationRaw && (
+      {examText && (
         <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
           <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Physical Examination</h2>
-          {parsed.vitals && (
+          {vitalsText && (
             <p className="text-[#374151] mb-1">
-              <strong className="font-semibold text-[#111827]">Vitals:</strong> PR: {parsed.vitals.pr}, BP: {parsed.vitals.bp}, RR: {parsed.vitals.rr}, SpO2: {parsed.vitals.spo2}
+              <strong className="font-semibold text-[#111827]">Vitals:</strong> {vitalsText}
             </p>
           )}
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.examinationRaw}</p>
+          <p className="text-[#374151] whitespace-pre-wrap">{typeof examText === 'string' ? examText : JSON.stringify(examText)}</p>
         </div>
       )}
 
-      {parsed.investigations && (
+      {invText && (
         <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
           <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Investigations</h2>
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.investigations}</p>
+          <p className="text-[#374151] whitespace-pre-wrap">{typeof invText === 'string' ? invText : JSON.stringify(invText)}</p>
         </div>
       )}
 
-      {parsed.medications && (
+      {medsText && (
         <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
           <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Medications</h2>
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.medications}</p>
+          <p className="text-[#374151] whitespace-pre-wrap">{typeof medsText === 'string' ? medsText : JSON.stringify(draft?.medications || medsText)}</p>
         </div>
       )}
 
-      {parsed.followUp && (
+      {followUpText && (
         <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
           <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Follow-up</h2>
-          <p className="text-[#374151] whitespace-pre-wrap">{parsed.followUp}</p>
+          <p className="text-[#374151] whitespace-pre-wrap">{typeof followUpText === 'string' ? followUpText : JSON.stringify(followUpText)}</p>
         </div>
       )}
 
