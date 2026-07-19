@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Share2, MoreHorizontal, Menu, PanelRight } from "lucide-react";
+import { Settings, Share2, MoreHorizontal, Menu, FileText } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { AppSession } from "@/types/app";
 
@@ -71,7 +71,7 @@ export default function TopBar({
             className="w-8 h-8 rounded-lg hover:bg-[#f4f6f8] flex items-center justify-center cursor-pointer text-gray-500 hover:text-gray-800 transition-colors"
             title="Toggle Right Panel"
           >
-            <PanelRight size={18} />
+            <FileText size={18} />
           </button>
         </div>
       </div>

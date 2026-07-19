@@ -225,27 +225,33 @@ export default function Sidebar({
     );
   };
 
+  const firstName = displayName.split(" ")[0];
+
   return (
     <div
-      className="w-[240px] h-full flex flex-col shrink-0 bg-[#f9fafb] px-3 py-4 gap-1"
+      className="w-full h-full flex flex-col shrink-0 bg-[#f9fafb] px-3 py-4 gap-1"
     >
       {/* Logo Row */}
-      <div className="flex items-center justify-between px-2 pt-1 pb-2">
+      <div className={`flex items-center ${isSidebarOpen ? "justify-between" : "justify-center"} px-2 pt-1 pb-2`}>
         <div className="flex items-center gap-2">
           <div>
             <img src="/logo.png" alt="MediQ" width={34} height={34} />
           </div>
-          <span className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>
-            MediQ
-          </span>
+          {isSidebarOpen && (
+            <span className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>
+              MediQ
+            </span>
+          )}
         </div>
-        <button
-          onClick={toggleSidebar}
-          className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors"
-          style={{ color: "var(--text-muted)" }}
-        >
-          <img src="/sidebar.svg" alt="Toggle Sidebar" className="w-[18px] h-[18px] opacity-70 group-hover:opacity-100 transition-opacity" />
-        </button>
+        {isSidebarOpen && (
+          <button
+            onClick={toggleSidebar}
+            className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <img src="/sidebar.svg" alt="Toggle Sidebar" className="w-[18px] h-[18px] opacity-70 hover:opacity-100 transition-opacity" />
+          </button>
+        )}
       </div>
 
       {/* New Session Button */}
@@ -260,179 +266,174 @@ export default function Sidebar({
           onMouseLeave={(e) =>
             (e.currentTarget.style.background = "var(--brand-primary)")
           }
+          title="New Session"
         >
           <Plus size={14} />
-          New Session
+          {isSidebarOpen && "New Session"}
         </Link>
       </div>
 
       {/* Search Bar */}
-      <div className="px-1 pb-2">
-        <div
-          className="relative flex items-center gap-2 rounded-md px-3 py-1.5 focus-within:ring-1 focus-within:ring-blue-500 transition-all"
-          style={{ background: "var(--bg-hover)" }}
-        >
-          <Search size={14} style={{ color: "var(--text-muted)" }} />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search sessions"
-            className="flex-1 text-sm bg-transparent outline-none pr-8"
-            style={{ color: "var(--text-primary)" }}
-          />
-          <span
-            className="absolute right-2 text-[10px] px-1.5 py-0.5 rounded border font-mono pointer-events-none"
-            style={{ color: "var(--text-muted)", borderColor: "var(--border-default)" }}
+      {isSidebarOpen && (
+        <div className="px-1 pb-2">
+          <div
+            className="relative flex items-center gap-2 rounded-md px-3 py-1.5 focus-within:ring-1 focus-within:ring-blue-500 transition-all"
+            style={{ background: "var(--bg-hover)" }}
           >
-            ⌘K
-          </span>
+            <Search size={14} style={{ color: "var(--text-muted)" }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search sessions"
+              className="flex-1 text-sm bg-transparent outline-none pr-8"
+              style={{ color: "var(--text-primary)" }}
+            />
+            <span
+              className="absolute right-2 text-[10px] px-1.5 py-0.5 rounded border font-mono pointer-events-none"
+              style={{ color: "var(--text-muted)", borderColor: "var(--border-default)" }}
+            >
+              ⌘K
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Middle: Nav Links */}
       <div className="px-1 space-y-1">
         <Link
           href="/api-keys"
-          className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm transition-colors hover:bg-[var(--bg-hover)]"
+          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3" : "justify-center"}`}
           style={{ color: "var(--text-secondary)" }}
+          title="API Keys"
         >
           <Key size={15} />
-          API Keys
+          {isSidebarOpen && "API Keys"}
         </Link>
         <Link
           href="/analytics"
-          className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm transition-colors hover:bg-[var(--bg-hover)]"
+          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3" : "justify-center"}`}
           style={{ color: "var(--text-secondary)" }}
+          title="Analytics"
         >
           <BarChart2 size={15} />
-          Analytics
+          {isSidebarOpen && "Analytics"}
         </Link>
         <Link
           href="/profile"
-          className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm transition-colors hover:bg-[var(--bg-hover)]"
+          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3" : "justify-center"}`}
           style={{ color: "var(--text-secondary)" }}
+          title="Profile"
         >
           <User size={15} />
-          Profile
+          {isSidebarOpen && "Profile"}
         </Link>
       </div>
 
-      <hr className="mx-1 my-1" style={{ borderColor: "var(--border-default)" }} />
-
       {/* Sessions List */}
-      <div className="flex-1 overflow-y-auto px-2 space-y-4 pb-4">
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-2 px-3 py-2.5">
-              <div
-                className="w-4 h-4 rounded animate-pulse shrink-0"
-                style={{ background: "var(--bg-hover)" }}
-              />
-              <div className="flex-1 space-y-1.5">
-                <SkeletonLine className="w-3/4 h-3" />
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="space-y-4">
-            {/* Pinned Sessions */}
-            {pinnedSessions.length > 0 && (
-              <div className="space-y-0.5">
-                <span className="px-3 py-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
-                  <Pin size={12} />
-                  Pinned
-                </span>
-                {pinnedSessions.map((s) => (
-                  <SessionItem key={s.id} session={s} />
-                ))}
-              </div>
-            )}
-
-            {/* Folders */}
-            {folders.map(f => {
-              const folderSesh = folderGroups.get(f.id) || [];
-              if (folderSesh.length === 0) return null;
-              const isCollapsed = collapsedFolders[f.id];
-              return (
-                <div key={f.id} className="space-y-0.5">
-                  <button 
-                    onClick={() => toggleFolder(f.id)}
-                    className="w-full text-left px-3 py-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5 hover:text-foreground transition-colors"
-                  >
-                    {isCollapsed ? <FolderClosed size={12} /> : <FolderOpen size={12} />}
-                    {f.name}
-                  </button>
-                  {!isCollapsed && folderSesh.map((s) => (
-                    <SessionItem key={s.id} session={s} />
-                  ))}
+      {isSidebarOpen && (
+        <>
+          <hr className="mx-1 my-1" style={{ borderColor: "var(--border-default)" }} />
+          <div className="flex-1 overflow-y-auto px-2 space-y-4 pb-4">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-2.5">
+                  <div
+                    className="w-4 h-4 rounded animate-pulse shrink-0"
+                    style={{ background: "var(--bg-hover)" }}
+                  />
+                  <div className="flex-1 space-y-1.5">
+                    <SkeletonLine className="w-3/4 h-3" />
+                  </div>
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              <div className="space-y-4">
+                {/* Pinned Sessions */}
+                {pinnedSessions.length > 0 && (
+                  <div className="space-y-0.5">
+                    <span className="px-3 py-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                      <Pin size={12} />
+                      Pinned
+                    </span>
+                    {pinnedSessions.map((s) => (
+                      <SessionItem key={s.id} session={s} />
+                    ))}
+                  </div>
+                )}
 
-            {/* Recent Sessions */}
-            {recentSessions.length > 0 && (
-              <div className="space-y-0.5">
-                <span className="px-3 py-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                  Recent
-                </span>
-                {recentSessions.map((s) => (
-                  <SessionItem key={s.id} session={s} />
-                ))}
+                {/* Folders */}
+                {folders.map(f => {
+                  const folderSesh = folderGroups.get(f.id) || [];
+                  if (folderSesh.length === 0) return null;
+                  const isCollapsed = collapsedFolders[f.id];
+                  return (
+                    <div key={f.id} className="space-y-0.5">
+                      <button 
+                        onClick={() => toggleFolder(f.id)}
+                        className="w-full text-left px-3 py-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5 hover:text-foreground transition-colors"
+                      >
+                        {isCollapsed ? <FolderClosed size={12} /> : <FolderOpen size={12} />}
+                        {f.name}
+                      </button>
+                      {!isCollapsed && folderSesh.map((s) => (
+                        <SessionItem key={s.id} session={s} />
+                      ))}
+                    </div>
+                  );
+                })}
+
+                {/* Recent Sessions */}
+                {recentSessions.length > 0 && (
+                  <div className="space-y-0.5">
+                    <span className="px-3 py-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                      Recent
+                    </span>
+                    {recentSessions.map((s) => (
+                      <SessionItem key={s.id} session={s} />
+                    ))}
+                  </div>
+                )}
+
+                {filteredSessions.length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground pt-4">
+                    No sessions found
+                  </p>
+                )}
               </div>
-            )}
-
-            {filteredSessions.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground pt-4">
-                No sessions found
-              </p>
             )}
           </div>
-        )}
-      </div>
+        </>
+      )}
+      {!isSidebarOpen && <div className="flex-1" />}
 
       {/* Bottom User Row */}
       <div
-        className="mt-auto px-3 py-3 border-t relative"
+        className="mt-auto px-2 py-3 border-t relative group"
         style={{ borderColor: "var(--border-default)" }}
       >
-        <button
-          className="flex items-center gap-2.5 w-full rounded-lg px-2 py-2 hover:bg-[var(--bg-hover)] transition-colors"
-          onClick={() => setShowUserMenu((v) => !v)}
-        >
-          <Avatar
-            name={displayName}
-            src={user?.user_metadata?.avatar_url}
-            size="md"
-          />
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
-              {displayName}
-            </p>
-            <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
-              {user?.email}
-            </p>
+        <div className={`flex items-center gap-2 w-full rounded-lg py-2 ${isSidebarOpen ? "px-2" : "justify-center"} hover:bg-[var(--bg-hover)] transition-colors cursor-pointer`}>
+          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-semibold shrink-0">
+            {firstName.charAt(0).toUpperCase()}
           </div>
-          <ChevronDown size={14} style={{ color: "var(--text-muted)" }} />
-        </button>
+          {isSidebarOpen && (
+            <div className="flex-1 min-w-0 text-left pl-1">
+              <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                {firstName}
+              </p>
+            </div>
+          )}
+        </div>
 
-        {showUserMenu && (
-          <div
-            className="absolute bottom-full left-2 right-2 mb-1 rounded-lg border shadow-md overflow-hidden"
-            style={{
-              background: "var(--card-bg)",
-              borderColor: "var(--border-default)",
-              boxShadow: "var(--card-shadow)",
-            }}
+        {/* Hover Logout */}
+        <div className="absolute bottom-full left-2 right-2 mb-1 rounded-lg border shadow-md overflow-hidden bg-white opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+          <button
+            onClick={handleSignOut}
+            className="w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--bg-hover)] transition-colors text-red-600 font-medium"
           >
-            <button
-              onClick={handleSignOut}
-              className="w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--bg-hover)] transition-colors text-red-600"
-            >
-              Sign out
-            </button>
-          </div>
-        )}
+            Sign out
+          </button>
+        </div>
       </div>
 
       {/* Rename Dialog */}

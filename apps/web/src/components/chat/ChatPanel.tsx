@@ -183,38 +183,44 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const { isRightPanelOpen } = useSessionStore();
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-white relative">
-      <TopBar session={session} loading={sessionLoading && !isNew} />
-      
+    <div className="flex h-full overflow-hidden bg-white relative">
       <div 
-        className={`flex-1 relative h-full transition-all duration-300 ${
-          isRightPanelOpen ? "mr-[392px]" : "mr-0"
+        className={`flex flex-col h-full transition-all duration-300 ${
+          isRightPanelOpen ? "w-1/2 shrink-0 border-r border-[var(--border-default)]" : "w-full"
         }`}
       >
-        <MessageList 
-          messages={allMessages} 
-          loading={messagesLoading && !isNew} 
-          pendingUpload={pendingUpload}
-          ocrResult={ocrResult}
-          draft={draft}
-          pipelineStatus={pipelineStatus}
-        />
+        <TopBar session={session} loading={sessionLoading && !isNew} />
         
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-white via-white/85 to-transparent pt-8 pointer-events-none">
-          <div className="pointer-events-auto">
-            <ChatInput
-              onSend={handleSend}
-              onUpload={handleUpload}
-              disabled={session?.status === "processing"}
-              pendingUpload={pendingUpload}
-              selectedProvider={selectedProvider}
-              onProviderChange={setSelectedProvider}
-            />
+        <div className="flex-1 relative overflow-hidden">
+          <MessageList 
+            messages={allMessages} 
+            loading={messagesLoading && !isNew} 
+            pendingUpload={pendingUpload}
+            ocrResult={ocrResult}
+            draft={draft}
+            pipelineStatus={pipelineStatus}
+          />
+          
+          <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-white via-white/85 to-transparent pt-8 pointer-events-none">
+            <div className="pointer-events-auto">
+              <ChatInput
+                onSend={handleSend}
+                onUpload={handleUpload}
+                disabled={session?.status === "processing"}
+                pendingUpload={pendingUpload}
+                selectedProvider={selectedProvider}
+                onProviderChange={setSelectedProvider}
+              />
+            </div>
           </div>
         </div>
       </div>
       
-      <RightPanel draft={draft} ocrResult={ocrResult} />
+      {isRightPanelOpen && (
+        <div className="w-1/2 h-full shrink-0">
+          <RightPanel draft={draft} ocrResult={ocrResult} />
+        </div>
+      )}
     </div>
   );
 }

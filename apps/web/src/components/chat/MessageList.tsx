@@ -105,14 +105,13 @@ export default function MessageList({
 
         {draft && (
           <AiMessage message={{ role: "assistant", content: "", id: "draft-msg", created_at: "", session_id: "", metadata: {} }}>
-            <div 
-              className="flex items-center gap-3 p-4 rounded-xl border border-[var(--border-default)] hover:bg-[var(--bg-hover)] cursor-pointer bg-white transition-colors max-w-sm" 
-              onClick={() => { 
-                const { setRightPanelTab, setRightPanelOpen } = useSessionStore.getState();
-                setRightPanelTab("summary"); 
-                setRightPanelOpen(true); 
-              }}
-            >
+              <div 
+                className="flex items-center gap-3 p-4 rounded-xl border border-[var(--border-default)] hover:bg-[var(--bg-hover)] cursor-pointer bg-white transition-colors max-w-sm" 
+                onClick={() => { 
+                  const { setFileViewMode } = useSessionStore.getState();
+                  setFileViewMode(true); 
+                }}
+              >
               <FileCheck className="w-5 h-5 text-[#2563eb]" />
               <div>
                 <p className="text-sm font-medium text-[var(--text-primary)]">Discharge summary generated</p>

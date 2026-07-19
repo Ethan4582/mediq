@@ -131,41 +131,15 @@ export default function SummaryCard({
   };
 
   return (
-    <div className="w-full flex flex-col gap-6 text-[#111827] mt-2 mb-4 relative group pr-10">
-      
-      {/* Action buttons at the top right, visible on hover */}
-      <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-30 flex items-center gap-1">
-        <button 
-          onClick={() => navigator.clipboard.writeText(rawText)}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-[#f4f6f8] transition-colors"
-          title="Copy text"
-        >
-          <Copy size={15} />
-        </button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-[#f4f6f8] transition-colors" title="More options">
-               <MoreHorizontal size={15} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleDownloadPdf}>
-              <Download className="mr-2 h-4 w-4" />
-              <span>Download PDF</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Share className="mr-2 h-4 w-4" />
-              <span>Share</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <MessageSquare className="mr-2 h-4 w-4" />
-              <span>Agent Feedback</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <div className="w-full flex flex-col gap-6 text-[#111827]">
+      <div className="flex items-center gap-3 bg-[#f4f6f8] p-3 rounded-lg border border-[var(--border-default)]">
+        <FileText size={20} className="text-[#2563eb]" />
+        <div className="flex-1">
+          <p className="text-sm font-medium">{fileName}</p>
+          <p className="text-xs text-[var(--text-secondary)]">{pageCount} pages • {chunkCount} extracted chunks</p>
+        </div>
       </div>
-
+      
       {isFirst && (
         <h1 className="text-[26px] font-extrabold tracking-tight text-[#111827] mb-2">
           Patient summary

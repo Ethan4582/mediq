@@ -20,9 +20,9 @@ export default function AppShell({
         className={`
           fixed inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out shrink-0
           md:relative md:translate-x-0
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:!ml-[-240px]"}
+          ${!isSidebarOpen ? "-translate-x-full md:translate-x-0" : "translate-x-0"}
         `}
-        style={{ width: "240px" }}
+        style={{ width: isSidebarOpen ? "240px" : "64px" }}
       >
         <Sidebar user={user} />
       </div>
