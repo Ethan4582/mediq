@@ -18,6 +18,13 @@ const config: Record<
     color: "var(--status-pending-text)",
     label: "Processing",
   },
+  processed: {
+    dot: "bg-green-400",
+    text: "",
+    bg: "var(--status-active-bg)",
+    color: "var(--status-active-text)",
+    label: "Processed",
+  },
   pending: {
     dot: "bg-gray-400",
     text: "",
