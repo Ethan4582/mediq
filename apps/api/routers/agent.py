@@ -115,7 +115,8 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
         "draft": None,
         "trace": [],
         "status": "running",
-        "error": None
+        "error": None,
+        "_current_chunks": [],
     }
     
     graph = build_graph()

@@ -14,11 +14,8 @@ export default function RightPanel({ draft, ocrResult }: RightPanelProps) {
   const { isRightPanelOpen, rightPanelTab, setRightPanelTab, setRightPanelOpen, isFileViewMode, setFileViewMode } = useSessionStore();
 
   const handleClose = () => {
-    if (isFileViewMode) {
-      setFileViewMode(false);
-    } else {
-      setRightPanelOpen(false);
-    }
+    setRightPanelOpen(false);
+    setFileViewMode(false);
   };
 
   return (
@@ -27,29 +24,9 @@ export default function RightPanel({ draft, ocrResult }: RightPanelProps) {
     >
       <div className="shrink-0 border-b border-[var(--border-default)] p-3 flex items-center justify-between bg-white z-10">
         {!isFileViewMode ? (
-          <div className="flex bg-[#f4f6f8] p-1 rounded-lg gap-1">
-            <button
-              onClick={() => setRightPanelTab("files")}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                rightPanelTab === "files"
-                  ? "bg-white text-[var(--text-primary)] shadow-sm"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
-            >
-              <FileText size={14} />
-              Files
-            </button>
-            <button
-              onClick={() => setRightPanelTab("summary")}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                rightPanelTab === "summary"
-                  ? "bg-white text-[var(--text-primary)] shadow-sm"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
-            >
-              <FileSearch size={14} />
-              Summary
-            </button>
+          <div className="flex items-center gap-2 px-2 text-[var(--text-primary)]">
+            <FileText size={16} className="text-[var(--text-secondary)]" />
+            <span className="text-sm font-semibold">Files</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 px-2 text-[var(--text-primary)]">
@@ -100,13 +77,19 @@ export default function RightPanel({ draft, ocrResult }: RightPanelProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {rightPanelTab === "files" && <FilesTab ocrResult={ocrResult} />}
-        {rightPanelTab === "summary" && <SummaryTab draft={draft} ocrResult={ocrResult} />}
-        {rightPanelTab === "edit" && (
-          <div className="p-6 text-center text-[var(--text-secondary)] mt-10">
-            <Edit3 size={32} className="mx-auto mb-3 opacity-30" />
-            <p>Editing coming in the next update.</p>
-          </div>
+        {!isFileViewMode ? (
+          <FilesTab ocrResult={ocrResult} />
+        ) : (
+          <>
+            {rightPanelTab === "files" && <FilesTab ocrResult={ocrResult} />}
+            {rightPanelTab === "summary" && <SummaryTab draft={draft} ocrResult={ocrResult} />}
+            {rightPanelTab === "edit" && (
+              <div className="p-6 text-center text-[var(--text-secondary)] mt-10">
+                <Edit3 size={32} className="mx-auto mb-3 opacity-30" />
+                <p>Editing coming in the next update.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

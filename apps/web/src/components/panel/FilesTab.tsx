@@ -9,7 +9,7 @@ interface FilesTabProps {
 }
 
 export default function FilesTab({ ocrResult }: FilesTabProps) {
-  const { setRightPanelTab } = useSessionStore();
+  const { setFileViewMode } = useSessionStore();
 
   const mockSummaries = [
     { id: 1, name: "summary_1", pages: 1, ready: true },
@@ -24,7 +24,7 @@ export default function FilesTab({ ocrResult }: FilesTabProps) {
       <div className="space-y-3">
         {ocrResult && (
           <div 
-            onClick={() => setRightPanelTab("summary")}
+            onClick={() => setFileViewMode(true)}
             className="flex items-start gap-3 p-3 rounded-xl border border-[var(--border-default)] bg-[#f9fafb] hover:bg-[#f4f6f8] transition-colors cursor-pointer"
           >
             <div className="p-2 bg-white rounded-lg border border-[var(--border-default)] shadow-sm shrink-0">
@@ -52,7 +52,7 @@ export default function FilesTab({ ocrResult }: FilesTabProps) {
           <div 
             key={summary.id}
             onClick={() => {
-              if (summary.ready) setRightPanelTab("summary");
+              if (summary.ready) setFileViewMode(true);
             }}
             className="flex items-start gap-3 p-3 rounded-xl border border-[var(--border-default)] bg-white hover:bg-[#f9fafb] transition-colors cursor-pointer"
           >

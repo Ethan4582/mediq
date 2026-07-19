@@ -16,6 +16,7 @@ class AgentState(TypedDict):
     # Extracted data per section
     extracted_fields: dict       # { section: { field: value | "MISSING" } }
     source_citations: dict       # { section: [chunk_ids] }
+    _current_chunks: list        # temp: chunks passed from retriever to extractor
     
     # Reconciliation + conflicts
     medications_admission: list

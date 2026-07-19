@@ -65,8 +65,13 @@ export default function TopBar({
           
           <button
             onClick={() => {
-              const { isRightPanelOpen, setRightPanelOpen } = useSessionStore.getState();
-              setRightPanelOpen(!isRightPanelOpen);
+              const { isRightPanelOpen, setRightPanelOpen, setFileViewMode } = useSessionStore.getState();
+              if (isRightPanelOpen) {
+                setRightPanelOpen(false);
+              } else {
+                setFileViewMode(false);
+                setRightPanelOpen(true);
+              }
             }}
             className="w-8 h-8 rounded-lg hover:bg-[#f4f6f8] flex items-center justify-center cursor-pointer text-gray-500 hover:text-gray-800 transition-colors"
             title="Toggle Right Panel"

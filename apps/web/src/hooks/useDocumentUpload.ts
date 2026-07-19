@@ -70,10 +70,6 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
         stage: "uploading",
       });
 
-      toast.info("Uploading document...", {
-        description: file.name,
-        duration: 2000,
-      });
 
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -130,10 +126,6 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
                console.error("Failed to fetch OCR result", err);
             }
 
-            toast.success("Document processed", {
-              description: `${file.name} is ready. You can now ask questions about this case.`,
-              duration: 5000,
-            });
             
             onComplete?.(session_id);
           } else if (data.status === "error") {

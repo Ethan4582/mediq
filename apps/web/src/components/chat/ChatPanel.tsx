@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 export type PipelineStatus = 
   | "idle"
@@ -80,9 +81,8 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
               const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
               setDraft(content);
               setPipelineStatus("done");
-              // useSessionStore.getState().setRightPanelOpen(true);
-              // useSessionStore.getState().setRightPanelTab("summary");
-              return; // Stop here, don't run the agent
+              toast.success("Summary ready", { description: "Discharge summary has been generated.", duration: 5000 });
+              return;
             }
           }
 
@@ -130,6 +130,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
                 const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
                 setDraft(content);
                 setPipelineStatus("done");
+                toast.success("Summary ready", { description: "Discharge summary has been generated.", duration: 5000 });
                 useSessionStore.getState().setFileViewMode(true);
                 clearInterval(interval);
               }

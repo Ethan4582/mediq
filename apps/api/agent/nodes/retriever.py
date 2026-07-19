@@ -54,16 +54,24 @@ def run(state: AgentState) -> AgentState:
                 .execute()
         
         chunks = result.data
+        
+        # Debug: log what keys the RPC returned
+        if chunks:
+            print(f"Chunk keys available: {list(chunks[0].keys())}")
+        
         chunk_ids = [c["id"] for c in chunks]
         
         if "source_citations" not in state:
             state["source_citations"] = {}
         state["source_citations"][section] = chunk_ids
         
-        # Put the retrieved texts in a temporary state key for the extractor to use
-        state["_current_chunks"] = [c["text"] for c in chunks]
+        # RPC may return 'text' or 'chunk_text' depending on function definition
+        def extract_text(chunk: dict) -> str:
+            return chunk.get("text") or chunk.get("chunk_text") or chunk.get("content") or ""
         
-        print(f"Retrieved {len(chunks)} chunks.")
+        state["_current_chunks"] = [extract_text(c) for c in chunks if extract_text(c)]
+        
+        print(f"Retrieved {len(chunks)} chunks, total chars: {sum(len(extract_text(c)) for c in chunks)}")
     except Exception as e:
         print(f"Retriever error: {e}")
         state["_current_chunks"] = []
