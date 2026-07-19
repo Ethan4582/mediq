@@ -113,27 +113,12 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
 
   // Auto-trigger agent run when OCR is completely done and we transition to agent_running
   useEffect(() => {
-    if (pipelineStatus === "agent_running" && sessionId && sessionId !== "new" && !draft) {
+    if (pipelineStatus === "agent_running" && sessionId && sessionId !== "new") {
       const checkAndRunAgent = async () => {
         try {
           const supabase = createClient();
           const { data: { session: authSession } } = await supabase.auth.getSession();
           const token = authSession?.access_token;
-          
-          // Check if a draft already exists
-          const draftRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-          
-          if (draftRes.ok) {
-            const data = await draftRes.json();
-            if (data && data.content) {
-              const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
-              setDraft(content);
-              setPipelineStatus("done");
-              return;
-            }
-          }
 
           // Call POST /run — backend has duplicate-run guard so this is always safe
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/run`, {

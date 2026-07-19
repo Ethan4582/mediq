@@ -7,13 +7,3 @@ services:
     plan: free
     envVars:
       - fromGroup: mediq-secrets
-
-  - type: worker
-    name: mediq-worker
-    runtime: docker
-    dockerfilePath: ./apps/api/Dockerfile
-    dockerContext: ./apps/api
-    plan: free
-    startCommand: celery -A tasks.ocr worker --loglevel=info --concurrency=1
-    envVars:
-      - fromGroup: mediq-secrets

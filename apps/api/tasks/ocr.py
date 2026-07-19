@@ -5,33 +5,9 @@ from datetime import datetime, timezone
 import httpx
 import fitz
 
-from celery import Celery
-from core.config import settings
 from core.supabase import db
 from core.r2 import download_file
-from core.redis import set_job_progress
-
-# Celery app using Upstash Redis REST → use rediss:// URL
-# Upstash requires token-based URL: rediss://:TOKEN@HOST:6379
-_redis_url = (
-    settings.UPSTASH_REDIS_REST_URL
-    .replace("https://", "rediss://:")
-    .rstrip("/") + f"@{settings.UPSTASH_REDIS_REST_URL.replace('https://', '')}:6379"
-    if "upstash" in settings.UPSTASH_REDIS_REST_URL
-    else settings.UPSTASH_REDIS_REST_URL
-)
-# Simpler: use token in URL format for Upstash
-_host = settings.UPSTASH_REDIS_REST_URL.replace("https://", "")
-_redis_broker = f"rediss://:{settings.UPSTASH_REDIS_REST_TOKEN}@{_host}:6379?ssl_cert_reqs=CERT_NONE"
-
-celery_app = Celery("mediq", broker=_redis_broker, backend=_redis_broker)
-celery_app.conf.update(
-    task_serializer="json",
-    result_serializer="json",
-    accept_content=["json"],
-    broker_use_ssl={"ssl_cert_reqs": None},
-    redis_backend_use_ssl={"ssl_cert_reqs": None},
-)
+from core.progress import set_doc_progress
 
 
 def _ocr_pdf_batch(pages_bytes: bytes, mistral_key: str) -> str:
@@ -70,16 +46,11 @@ def _ocr_image(img_bytes: bytes, content_type: str, mistral_key: str) -> str:
 
 def _chunk_text(text: str) -> list[str]:
     import re
-    # Detect vital signs blocks — keep together
     VITAL_PATTERN = r'((?:(?:BP|Temp|HR|RR|Sp[O0]2|Pulse|SpO2|MAP|GCS|Weight|Height|BMI)[:\s\-]+[\d\.\/]+[^\n]*\n?){2,})'
-    
     vital_blocks = re.findall(VITAL_PATTERN, text, re.IGNORECASE)
-    
-    chunks = []
-    # Standard chunking on double newline
+
     raw_chunks = [c.strip() for c in text.split("\n\n") if len(c.strip()) > 20]
-    
-    # Merge consecutive short chunks (< 200 chars) with next chunk
+
     merged = []
     buffer = ""
     for chunk in raw_chunks:
@@ -89,22 +60,20 @@ def _chunk_text(text: str) -> list[str]:
             buffer = ""
     if buffer:
         merged.append(buffer)
-    
+
     return merged
 
 
-@celery_app.task(bind=True, name="tasks.ocr.process_document")
-def process_document(self, document_id: str, session_id: str, mistral_api_key: str):
+def process_document(document_id: str, session_id: str, mistral_api_key: str):
     print(f"=== OCR TASK START ===")
     print(f"document_id: {document_id}")
     print(f"session_id: {session_id}")
     print(f"mistral_api_key present: {bool(mistral_api_key)}")
     print(f"mistral_api_key last4: {mistral_api_key[-4:] if mistral_api_key else 'NONE'}")
-    
-    task_id = self.request.id
+
     try:
         if not mistral_api_key:
-            set_job_progress(task_id, "error", 0, "error", error="Mistral API key is missing")
+            set_doc_progress(document_id, "error", 0, "error", error="Mistral API key is missing")
             db.table("documents").update({"ocr_status": "failed"}).eq("id", document_id).execute()
             db.table("sessions").update({"status": "error"}).eq("id", session_id).execute()
             return
@@ -113,7 +82,7 @@ def process_document(self, document_id: str, session_id: str, mistral_api_key: s
         doc = doc_row.data
 
         file_bytes = download_file(doc["r2_key"])
-        set_job_progress(task_id, "processing", 5, "ocr")
+        set_doc_progress(document_id, "processing", 5, "ocr")
         db.table("documents").update({"ocr_status": "processing"}).eq("id", document_id).execute()
 
         file_name: str = doc["file_name"] or ""
@@ -133,25 +102,23 @@ def process_document(self, document_id: str, session_id: str, mistral_api_key: s
                 batch_pdf.close()
                 extracted_text += _ocr_pdf_batch(batch_bytes, mistral_api_key)
                 progress = int((i + 1) / total_batches * 55) + 5
-                set_job_progress(task_id, "processing", progress, "ocr")
+                set_doc_progress(document_id, "processing", progress, "ocr")
             pdf.close()
         else:
-            # image
-            content_type = "image/jpeg" if file_name.lower().endswith(".jpg") or file_name.lower().endswith(".jpeg") else "image/png"
+            content_type = "image/jpeg" if file_name.lower().endswith((".jpg", ".jpeg")) else "image/png"
             extracted_text = _ocr_image(file_bytes, content_type, mistral_api_key)
 
         def clean_ocr_text(text: str) -> str:
-            # Strip mistral markdown headers, normalize newlines, trim trailing whitespace
             import re
             text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
             text = '\n'.join([line.rstrip() for line in text.split('\n')])
             text = re.sub(r'\n{3,}', '\n\n', text)
             return text.strip()
-            
+
         extracted_text = clean_ocr_text(extracted_text)
 
         db.table("documents").update({"raw_text": extracted_text, "ocr_status": "done"}).eq("id", document_id).execute()
-        set_job_progress(task_id, "processing", 65, "chunking")
+        set_doc_progress(document_id, "processing", 65, "chunking")
 
         chunks = _chunk_text(extracted_text)
         chunk_rows = [
@@ -167,34 +134,33 @@ def process_document(self, document_id: str, session_id: str, mistral_api_key: s
         ]
         if chunk_rows:
             db.table("chunks").insert(chunk_rows).execute()
+            set_doc_progress(document_id, "processing", 75, "embedding")
 
-            set_job_progress(task_id, "processing", 75, "embedding")
-            
             from core.embeddings import generate_embeddings
             chunk_texts = [c["text"] for c in chunk_rows]
             embeddings = generate_embeddings(chunk_texts, mistral_api_key)
-            
+
             inserted = db.table("chunks")\
                 .select("id, chunk_index")\
                 .eq("session_id", session_id)\
                 .eq("document_id", document_id)\
                 .order("chunk_index")\
                 .execute()
-            
+
             chunk_ids = [row["id"] for row in inserted.data]
-            
+
             for chunk_id, embedding in zip(chunk_ids, embeddings):
                 db.table("chunks")\
                     .update({"embedding": embedding})\
                     .eq("id", chunk_id)\
                     .execute()
 
-        set_job_progress(task_id, "done", 100, "ready")
+        set_doc_progress(document_id, "done", 100, "ready")
         db.table("sessions").update({"status": "done", "updated_at": datetime.now(timezone.utc).isoformat()}).eq("id", session_id).execute()
         db.table("documents").update({"ocr_status": "done"}).eq("id", document_id).execute()
 
     except Exception as e:
-        set_job_progress(task_id, "error", 0, "error", error=str(e))
+        set_doc_progress(document_id, "error", 0, "error", error=str(e))
         db.table("documents").update({"ocr_status": "failed"}).eq("id", document_id).execute()
         db.table("sessions").update({"status": "error"}).eq("id", session_id).execute()
         traceback.print_exc()
