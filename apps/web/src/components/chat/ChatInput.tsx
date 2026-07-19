@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { Paperclip, Send, ChevronDown, Zap, Search } from "lucide-react";
+import { Paperclip, Send, ChevronDown, Zap, Search, ChevronUp } from "lucide-react";
 import Spinner from "@/components/shared/Spinner";
+import Image from "next/image";
 
 import { useKeyStatus } from "@/hooks/useKeyStatus";
 import { PROVIDERS } from "@/lib/constants";
@@ -24,11 +25,35 @@ export default function ChatInput({
   onProviderChange?: (provider: string) => void;
 }) {
   const [text, setText] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { keys } = useKeyStatus();
   const llmKeys = keys.filter(k => k.key_type === "llm" && k.is_active);
+
+  const getProviderDefaultModel = (provider: string) => {
+    switch (provider.toLowerCase()) {
+      case "groq": return "Llama 3.3 70B";
+      case "anthropic": return "Claude 3.5 Sonnet";
+      case "mistral": return "Mistral Large";
+      case "gemini": return "Gemini 2.0 Flash";
+      case "openai": return "GPT-4o-mini";
+      default: return "";
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -89,21 +114,59 @@ export default function ChatInput({
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
               {/* Model Selector */}
               {llmKeys.length > 0 && (
-                <div className="relative group">
-                  <select
-                    value={selectedProvider || ""}
-                    onChange={(e) => onProviderChange?.(e.target.value)}
-                    className="appearance-none outline-none cursor-pointer text-xs font-medium bg-transparent border-none py-1.5 pl-2 pr-6 hover:text-[#2563eb] transition-colors"
-                    style={{ color: "var(--text-secondary)" }}
+                <div className="relative group" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     disabled={disabled || isUploading}
+                    className="flex items-center gap-1.5 cursor-pointer text-xs font-medium bg-transparent border-none py-1.5 pl-2 pr-2 hover:text-[#2563eb] transition-colors disabled:opacity-50"
+                    style={{ color: "var(--text-secondary)" }}
                   >
-                    {llmKeys.map(k => (
-                      <option key={k.id} value={k.provider} className="text-gray-900 bg-white">
-                        {PROVIDERS[k.provider as LLMProvider]?.name || k.provider}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-[#2563eb] transition-colors" />
+                    {selectedProvider && (
+                      <img 
+                        src={`/${selectedProvider.toLowerCase()}.svg`} 
+                        alt={selectedProvider} 
+                        className="w-3.5 h-3.5 object-contain opacity-70 group-hover:opacity-100 transition-opacity"
+                        onError={(e) => (e.currentTarget as HTMLImageElement).style.display = 'none'}
+                      />
+                    )}
+                    <span>
+                      {selectedProvider ? PROVIDERS[selectedProvider as LLMProvider]?.name || selectedProvider : "Select Model"}
+                    </span>
+                    {isDropdownOpen ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400 group-hover:text-[#2563eb] transition-colors" />}
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isDropdownOpen && (
+                    <div className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50 overflow-hidden">
+                      {llmKeys.map(k => (
+                        <div
+                          key={k.id}
+                          onClick={() => {
+                            onProviderChange?.(k.provider);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors ${
+                            selectedProvider === k.provider ? "bg-blue-50/50" : "hover:bg-gray-50"
+                          }`}
+                        >
+                          <img 
+                            src={`/${k.provider.toLowerCase()}.svg`} 
+                            alt={k.provider} 
+                            className="w-4 h-4 object-contain shrink-0"
+                            onError={(e) => (e.currentTarget as HTMLImageElement).style.display = 'none'}
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-xs font-semibold text-gray-900 leading-tight">
+                              {PROVIDERS[k.provider as LLMProvider]?.name || k.provider}
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-medium mt-0.5">
+                              {getProviderDefaultModel(k.provider)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

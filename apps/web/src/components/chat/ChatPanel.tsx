@@ -63,25 +63,26 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
       else if (pendingUpload.stage === "chunking") setPipelineStatus("chunking");
       else if (pendingUpload.stage === "embedding") setPipelineStatus("embedding");
       else if (pendingUpload.status === "done") setPipelineStatus("agent_running");
-    } else if (ocrResult && !draft && sessionId !== "new" && pipelineStatus === "idle") {
-      // We just redirected to a new session or reloaded the page, and the draft isn't ready yet.
-      // The OCR is done, so the next step is running the agent.
+    } else if (session?.status === "done") {
+      setPipelineStatus("done");
+    } else if (session?.status === "processing") {
+      setPipelineStatus("agent_running");
+    } else if (ocrResult && !draft && sessionId !== "new" && pipelineStatus === "idle" && session?.status !== "done") {
       setPipelineStatus("agent_running");
     } else if (draft) {
       setPipelineStatus("done");
     }
-  }, [pendingUpload, ocrResult, draft, sessionId, pipelineStatus]);
+  }, [pendingUpload, ocrResult, draft, sessionId, pipelineStatus, session?.status]);
 
-  // Auto-trigger agent run when OCR is completely done and we transition to agent_running
+  // Silent draft fetch for already completed sessions (avoids animations/toasts)
   useEffect(() => {
-    if (pipelineStatus === "agent_running" && sessionId && sessionId !== "new" && !draft) {
-      const checkAndRunAgent = async () => {
+    if (session?.status === "done" && sessionId !== "new" && !draft) {
+      const fetchDraftSilently = async () => {
         try {
           const supabase = createClient();
-          const { data: { session } } = await supabase.auth.getSession();
-          const token = session?.access_token;
+          const { data: { session: authSession } } = await supabase.auth.getSession();
+          const token = authSession?.access_token;
           
-          // First check if a draft already exists
           const draftRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
             headers: { "Authorization": `Bearer ${token}` }
           });
@@ -92,12 +93,52 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
               const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
               setDraft(content);
               setPipelineStatus("done");
-              toast.success("Summary ready", { description: "Discharge summary has been generated.", duration: 5000 });
+            }
+          }
+        } catch (err) {}
+      };
+      fetchDraftSilently();
+    }
+  }, [session?.status, sessionId, draft]);
+
+  // Auto-trigger agent run when OCR is completely done and we transition to agent_running
+  useEffect(() => {
+    if (pipelineStatus === "agent_running" && sessionId && sessionId !== "new" && !draft) {
+      const checkAndRunAgent = async () => {
+        try {
+          // If the session was already completed before we got here (should be caught above, but just in case)
+          if (session?.status === "done") return;
+
+          const supabase = createClient();
+          const { data: { session: authSession } } = await supabase.auth.getSession();
+          const token = authSession?.access_token;
+          
+          // First check if a draft already exists (e.g. page was refreshed while it was processing and it just finished)
+          const draftRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          
+          if (draftRes.ok) {
+            const data = await draftRes.json();
+            if (data && data.content) {
+              const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+              setDraft(content);
+              setPipelineStatus("done");
+              // Only toast if the session was actively processing, not if it was already done long ago
+              if (session?.status === "processing") {
+                toast.success("Summary ready", { description: "Discharge summary has been generated.", duration: 5000 });
+              }
               return;
             }
           }
 
-          // No draft exists, run the agent
+          // If session is processing on the backend, just poll. Don't trigger another run.
+          if (session?.status === "processing") {
+            pollDraft();
+            return;
+          }
+
+          // No draft exists and not processing, run the agent
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/run`, {
             method: "POST",
             headers: { 

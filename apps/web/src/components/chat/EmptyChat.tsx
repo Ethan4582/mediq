@@ -12,7 +12,7 @@ export default function EmptyChat() {
           How can MediQ help today?
         </h3>
         <p className="text-sm max-w-sm mx-auto" style={{ color: "var(--text-secondary)" }}>
-          Upload a patient document using the paperclip icon below to generate a discharge summary.
+          Upload a patient document to generate a discharge summary.
         </p>
       </div>
     </div>

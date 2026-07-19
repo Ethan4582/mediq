@@ -125,16 +125,17 @@ export default function AddKeyDialog({
                 <div key={key} className="space-y-1">
                   <button
                     onClick={() => setProvider(key)}
-                    className="w-full border rounded-xl py-3 px-4 text-sm font-semibold transition-all flex items-center justify-between"
+                    className="w-full border rounded-xl py-3 px-4 text-sm font-semibold transition-all flex flex-col items-center justify-center gap-2"
                     style={{
                       borderColor: provider === key ? "var(--brand-primary)" : "var(--border-default)",
                       background: provider === key ? "#eff6ff" : "transparent",
                       color: "var(--text-primary)",
                     }}
                   >
-                    {val.name}
+                    <img src={`/${key}.svg`} alt={val.name} className="h-6 w-auto object-contain" />
+                    <span>{val.name}</span>
                   </button>
-                  <a href={val.docsUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 pl-1">
+                  <a href={val.docsUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center justify-center gap-1 mt-1">
                     Get key <ExternalLink size={10} />
                   </a>
                 </div>

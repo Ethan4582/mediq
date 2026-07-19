@@ -1,15 +1,36 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { BookOpen, Sparkles, Plus, ChevronDown, Mic, ArrowUp, ShieldCheck, Brain, Lock } from "lucide-react";
+import { BookOpen, Sparkles, Plus, ChevronDown, Mic, ArrowUp, ShieldCheck, Brain, Lock, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { ImpactSection } from "@/components/ImpactSection";
 import { Footer } from "@/components/Footer";
+
+import { useScroll, useTransform } from "framer-motion";
 
 export default function LandingPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  
+  const { scrollY } = useScroll();
+  
+  // Transform values for gradual animation
+  const navTop = useTransform(scrollY, [0, 60], ["0px", "16px"]);
+  const navPaddingX = useTransform(scrollY, [0, 60], ["32px", "12px"]);
+  const navPaddingY = useTransform(scrollY, [0, 60], ["16px", "8px"]);
+  const navBg = useTransform(scrollY, [0, 60], ["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 0.95)"]);
+  const navBackdrop = useTransform(scrollY, [0, 60], ["blur(0px)", "blur(12px)"]);
+  const navShadow = useTransform(scrollY, [0, 60], ["0 0px 0px rgba(0,0,0,0)", "0 8px 30px rgba(0,0,0,0.06)"]);
+  const navBorder = useTransform(scrollY, [0, 60], ["1px solid rgba(229, 231, 235, 0)", "1px solid rgba(229, 231, 235, 0.5)"]);
+  const navRadius = useTransform(scrollY, [0, 60], ["0px", "16px"]);
+  const navMaxWidth = useTransform(scrollY, [0, 60], ["100%", "768px"]);
+  
+  const logoSize = useTransform(scrollY, [0, 60], ["32px", "28px"]);
+  const buttonPaddingX = useTransform(scrollY, [0, 60], ["20px", "16px"]);
+  const buttonPaddingY = useTransform(scrollY, [0, 60], ["8px", "6px"]);
+  const buttonRadius = useTransform(scrollY, [0, 60], ["16px", "12px"]);
 
   const handleSend = () => {
     if (!query.trim()) return;
@@ -26,43 +47,60 @@ export default function LandingPage() {
   return (
     <main className="relative min-h-screen overflow-hidden">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-8 py-5 bg-transparent">
+      <motion.nav 
+        className="fixed left-0 right-0 z-50 flex items-center justify-between mx-auto"
+        style={{
+          top: navTop,
+          paddingLeft: navPaddingX,
+          paddingRight: navPaddingX,
+          paddingTop: navPaddingY,
+          paddingBottom: navPaddingY,
+          backgroundColor: navBg,
+          backdropFilter: navBackdrop,
+          boxShadow: navShadow,
+          border: navBorder,
+          borderRadius: navRadius,
+          maxWidth: navMaxWidth
+        }}
+      >
         {/* Left - Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 flex items-center justify-center">
+          <motion.div 
+            className="flex items-center justify-center"
+            style={{ width: logoSize, height: logoSize }}
+          >
             <img src="/logo.png" alt="MediQ logo" className="w-full h-full object-contain" />
-          </div>
-          <span className="font-bold text-xl text-[#0f172a]">MediQ</span>
+          </motion.div>
         </div>
 
         {/* Center - Nav Links (Hidden on mobile) */}
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 nav-links">
-          <Link href="/docs" className="flex items-center gap-1.5 text-sm font-medium text-[#475569] hover:text-[#0f172a] transition-colors">
-            <BookOpen size={16} />
+          <Link href="#features" className="flex items-center gap-1.5 text-[15px] font-medium text-[#475569] hover:text-[#0f172a] transition-colors">
+            Features
+          </Link>
+          <Link href="/docs" className="flex items-center gap-1.5 text-[15px] font-medium text-[#475569] hover:text-[#0f172a] transition-colors">
             Docs
           </Link>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm font-medium text-[#475569] hover:text-[#0f172a] transition-colors">
-            <img src="/github.svg" alt="GitHub" width={16} height={16} />
-            GitHub
-          </a>
         </div>
 
         {/* Right - Auth Buttons */}
         <div className="flex items-center gap-3">
-          <Link 
-            href="/auth" 
-            className="text-sm font-medium text-[#0f172a] px-5 py-2 rounded-xl hover:bg-white/60 transition-all hidden sm:block"
-          >
-            Log in
-          </Link>
-          <Link 
-            href="/auth?tab=signup" 
-            className="text-sm font-semibold text-white bg-[#2563eb] px-5 py-2 rounded-xl hover:bg-[#1d4ed8] transition-all shadow-sm"
-          >
-            Sign up
+          <Link href="/chat/new">
+            <motion.div
+              className="text-sm font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+              style={{
+                paddingLeft: buttonPaddingX,
+                paddingRight: buttonPaddingX,
+                paddingTop: buttonPaddingY,
+                paddingBottom: buttonPaddingY,
+                borderRadius: buttonRadius
+              }}
+            >
+              Try MediaQ
+            </motion.div>
           </Link>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Content Section */}
       <section 
@@ -76,24 +114,39 @@ export default function LandingPage() {
       >
         
         {/* Badge pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#c7d7fe] bg-white/70 backdrop-blur-sm mt-16 text-sm font-medium text-[#3b5bdb]">
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#c7d7fe] bg-white/70 backdrop-blur-sm mt-16 text-sm font-medium text-[#3b5bdb]"
+        >
           <Sparkles className="w-3.5 h-3.5 text-[#2563eb]" />
           AI-Powered Healthcare Intelligence
-        </div>
+        </motion.div>
 
         {/* Hero headline */}
-        <h1 className="text-center mt-6">
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
+          className="text-center mt-6"
+        >
           <span className="hero-headline-blue block">Smarter Insights.</span>
           <span className="block">
             <span className="hero-headline-dark">Better </span>
             <span className="hero-headline-blue">Decisions.</span>
           </span>
-        </h1>
+        </motion.h1>
 
         {/* Subheadline */}
-        <p className="mt-6 text-center hero-sub mx-auto max-w-[480px]">
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+          className="mt-6 text-center hero-sub mx-auto max-w-[480px]"
+        >
           MediQ combines advanced AI with trusted medical knowledge to help you understand, analyze, and make confident decisions.
-        </p>
+        </motion.p>
 
         {/* Chat input bar */}
         <div className="mt-10 w-full max-w-[620px] mx-auto group">

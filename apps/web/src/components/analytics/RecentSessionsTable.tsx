@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { ExternalLink } from "lucide-react";
+import Image from "next/image";
 import { RecentSession } from "@/types/app";
 import StatusBadge from "@/components/shared/StatusBadge";
 import SkeletonLine from "@/components/shared/SkeletonLine";
@@ -49,7 +50,15 @@ export default function RecentSessionsTable({
                 <td className="px-6 py-4 text-gray-700 font-medium">{s.page_count}</td>
                 <td className="px-6 py-4">
                   {s.provider_used ? (
-                    <span className="capitalize rounded-full px-2 py-0.5 text-xs bg-gray-100 text-gray-600 font-medium">
+                    <span className="inline-flex items-center gap-1.5 rounded-full pl-1.5 pr-2.5 py-0.5 text-xs bg-gray-100/80 border border-gray-200/60 text-gray-700 font-medium capitalize">
+                      <Image 
+                        src={`/${s.provider_used.toLowerCase()}.svg`} 
+                        alt={s.provider_used} 
+                        width={14} 
+                        height={14} 
+                        className="object-contain"
+                        onError={(e) => e.currentTarget.style.display = 'none'}
+                      />
                       {s.provider_used}
                     </span>
                   ) : (

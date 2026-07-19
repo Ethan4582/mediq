@@ -50,10 +50,26 @@ export default function MessageList({
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto py-4 px-6 space-y-4" ref={scrollRef}>
-        <SkeletonCard />
-        <SkeletonLine className="w-3/4 mx-auto" />
-        <SkeletonLine className="w-1/2 mx-auto" />
+      <div className="absolute inset-0 overflow-y-auto flex flex-col pt-10 pb-28 px-8 items-center" ref={scrollRef}>
+        <div className="w-full max-w-[860px] flex flex-col gap-8">
+          {/* Mock User Message */}
+          <div className="flex w-full justify-end">
+            <div className="bg-gray-100/80 rounded-[20px] p-4 w-1/3 animate-pulse">
+              <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+          {/* Mock AI Message */}
+          <div className="flex w-full justify-start gap-4">
+            <div className="w-8 h-8 rounded-full bg-blue-50 animate-pulse shrink-0"></div>
+            <div className="bg-white border border-gray-100 rounded-[20px] p-5 w-2/3 shadow-sm animate-pulse space-y-3">
+              <div className="h-3 bg-gray-100 rounded w-full"></div>
+              <div className="h-3 bg-gray-100 rounded w-5/6"></div>
+              <div className="h-3 bg-gray-100 rounded w-4/5"></div>
+              <div className="h-3 bg-gray-100 rounded w-2/3"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

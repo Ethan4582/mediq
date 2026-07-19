@@ -88,7 +88,16 @@ export default function KeyTable({
                   key={k.id}
                   className="grid grid-cols-5 items-center px-6 py-4 border-b border-gray-100 last:border-none text-sm"
                 >
-                  <div className="capitalize font-medium text-gray-900">
+                  <div className="capitalize font-medium text-gray-900 flex items-center gap-2">
+                    <img 
+                      src={`/${k.provider.toLowerCase()}.svg`} 
+                      alt={k.provider} 
+                      className="w-5 h-5 object-contain"
+                      onError={(e) => {
+                        // Fallback in case logo doesn't exist
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                     {k.provider}
                   </div>
                   <div className="font-mono text-gray-500">
