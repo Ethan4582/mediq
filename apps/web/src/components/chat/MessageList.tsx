@@ -12,8 +12,8 @@ import SkeletonLine from "@/components/shared/SkeletonLine";
 import type { DraftContent } from "@/types/app";
 
 import type { PendingUpload, OcrResult } from "@/hooks/useDocumentUpload";
-import DocumentCard from "./DocumentCard";
-import OcrResultMessage from "./OcrResultMessage";
+import type { PipelineStatus } from "./ChatPanel";
+import PipelineLoader from "./PipelineLoader";
 
 export default function MessageList({
   messages,
@@ -21,14 +21,14 @@ export default function MessageList({
   pendingUpload,
   ocrResult,
   draft,
-  agentStatus,
+  pipelineStatus,
 }: {
   messages: Message[];
   loading: boolean;
   pendingUpload?: PendingUpload | null;
   ocrResult?: OcrResult | null;
   draft?: any;
-  agentStatus?: string;
+  pipelineStatus?: PipelineStatus;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
@@ -96,40 +96,10 @@ export default function MessageList({
           );
         })}
 
-        {pendingUpload && (
-          <div className="flex justify-center w-full my-6">
-            <DocumentCard
-              fileName={pendingUpload.fileName}
-              fileSize={pendingUpload.fileSize}
-              pageCount={pendingUpload.pageCount}
-              status={pendingUpload.status}
-              progress={pendingUpload.progress}
-              stage={pendingUpload.stage}
-              errorMessage={pendingUpload.errorMessage}
-            />
-          </div>
-        )}
-
-        {ocrResult && !draft && (
-          <div className="w-full">
-            <OcrResultMessage
-              rawText={ocrResult.rawText}
-              fileName={ocrResult.fileName}
-              pageCount={ocrResult.pageCount}
-              chunkCount={ocrResult.chunkCount}
-            />
-            {agentStatus === "running" && (
-              <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Agent is analyzing the document...</span>
-              </div>
-            )}
-            {agentStatus === "error" && (
-              <div className="mt-4 text-sm text-red-500">
-                Error running agent analysis.
-              </div>
-            )}
-          </div>
+        {pipelineStatus && pipelineStatus !== "idle" && pipelineStatus !== "done" && (
+          <AiMessage message={{ role: "assistant", content: "", id: "pipeline-msg", created_at: "", session_id: "", metadata: {} }}>
+            <PipelineLoader status={pipelineStatus} />
+          </AiMessage>
         )}
 
         {draft && (

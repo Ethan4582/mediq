@@ -5,11 +5,12 @@ from agent.nodes.tracer import emit_trace
 from agent.utils import get_llm_client, get_llm_model
 
 EXTRACTION_SYSTEM_PROMPT = """
-You are a clinical data extraction assistant. 
-Extract only what is explicitly stated in the provided document excerpts.
-Never infer, assume, or complete missing information.
-If a field cannot be found verbatim in the text, return exactly: "MISSING — clinician review required"
-Do not fabricate values. Do not use medical knowledge to fill gaps.
+You are a clinical data extraction assistant.
+Extract information from the provided medical document text.
+Be flexible with formatting — medical documents vary widely.
+If a field is clearly present but formatted differently than expected, still extract it.
+Only return MISSING if the information is genuinely absent from the text.
+Do not fabricate values. If truly not found, return: "MISSING — clinician review required"
 """
 
 class DiagnosisSection(BaseModel):
@@ -74,6 +75,11 @@ def run(state: AgentState) -> AgentState:
     print(f"Extracting section: {section}")
     
     chunks = state.get("_current_chunks", [])
+    
+    print(f"=== CHUNKS SENT TO LLM ===")
+    print(f"Context length: {len(''.join(chunks))} chars")
+    print(f"First 500 chars: {''.join(chunks)[:500]}")
+    
     context = "\n---\n".join(chunks) if chunks else "No relevant information found."
     
     client = get_llm_client(state["llm_provider"], state["llm_key"])

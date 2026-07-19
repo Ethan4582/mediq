@@ -13,6 +13,16 @@ import { useRouter } from "next/navigation";
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
 import { createClient } from "@/lib/supabase/client";
 
+export type PipelineStatus = 
+  | "idle"
+  | "uploading"
+  | "ocr"
+  | "chunking"
+  | "embedding"
+  | "agent_running"
+  | "done"
+  | "error";
+
 export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const isNew = sessionId === "new";
   const { session, loading: sessionLoading } = useSession(isNew ? "" : sessionId);
@@ -27,15 +37,31 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   });
 
   const [draft, setDraft] = useState<any>(null);
-  const [agentStatus, setAgentStatus] = useState<string>("idle");
-
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>("idle");
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
-  
-  // Auto-trigger agent run after OCR
+
+  // Sync upload stages to pipeline status, or recover state after redirect
   useEffect(() => {
-    if (ocrResult && sessionId && sessionId !== "new" && agentStatus === "idle") {
+    if (pendingUpload) {
+      if (pendingUpload.status === "error") setPipelineStatus("error");
+      else if (pendingUpload.stage === "uploading") setPipelineStatus("uploading");
+      else if (pendingUpload.stage === "ocr") setPipelineStatus("ocr");
+      else if (pendingUpload.stage === "chunking") setPipelineStatus("chunking");
+      else if (pendingUpload.stage === "embedding") setPipelineStatus("embedding");
+      else if (pendingUpload.status === "done") setPipelineStatus("agent_running");
+    } else if (ocrResult && !draft && sessionId !== "new" && pipelineStatus === "idle") {
+      // We just redirected to a new session or reloaded the page, and the draft isn't ready yet.
+      // The OCR is done, so the next step is running the agent.
+      setPipelineStatus("agent_running");
+    } else if (draft) {
+      setPipelineStatus("done");
+    }
+  }, [pendingUpload, ocrResult, draft, sessionId, pipelineStatus]);
+
+  // Auto-trigger agent run when OCR is completely done and we transition to agent_running
+  useEffect(() => {
+    if (pipelineStatus === "agent_running" && sessionId && sessionId !== "new" && !draft) {
       const runAgent = async () => {
-        setAgentStatus("running");
         try {
           const supabase = createClient();
           const { data: { session } } = await supabase.auth.getSession();
@@ -52,10 +78,10 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
           if (res.ok) {
             pollDraft();
           } else {
-            setAgentStatus("error");
+            setPipelineStatus("error");
           }
         } catch (err) {
-          setAgentStatus("error");
+          setPipelineStatus("error");
         }
       };
 
@@ -65,7 +91,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
           pollCount++;
           if (pollCount > 30) {
             clearInterval(interval);
-            setAgentStatus("error");
+            setPipelineStatus("error");
             return;
           }
           
@@ -81,11 +107,9 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
               const data = await res.json();
               if (data && data.content) {
                 setDraft(data.content);
-                setAgentStatus("done");
+                setPipelineStatus("done");
                 clearInterval(interval);
               }
-            } else if (res.status !== 404) {
-              // Wait for completion unless it's a hard error
             }
           } catch (e) {
             // keep polling
@@ -95,7 +119,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
 
       runAgent();
     }
-  }, [ocrResult, sessionId, agentStatus, selectedProvider]);
+  }, [pipelineStatus, sessionId, draft, selectedProvider]);
 
   const allMessages = [...messages, ...optimisticMessages];
 
@@ -162,7 +186,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
           pendingUpload={pendingUpload}
           ocrResult={ocrResult}
           draft={draft}
-          agentStatus={agentStatus}
+          pipelineStatus={pipelineStatus}
         />
         
         <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-white via-white/85 to-transparent pt-8 pointer-events-none">

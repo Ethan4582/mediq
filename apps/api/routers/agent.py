@@ -27,6 +27,15 @@ import uuid
 from core.auth import get_current_user
 from fastapi import Depends
 
+@router.get("/patient/{session_id}/chunks-debug")
+async def debug_chunks(session_id: str, user=Depends(get_current_user)):
+    chunks = db.table("chunks")\
+        .select("text, chunk_index")\
+        .eq("session_id", session_id)\
+        .order("chunk_index")\
+        .execute()
+    return {"chunks": chunks.data, "count": len(chunks.data)}
+
 class RunAgentRequest(BaseModel):
     llm_provider: str = "openai"
 
