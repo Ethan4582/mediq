@@ -28,6 +28,7 @@ export default function SummaryTab({ draft, ocrResult }: SummaryTabProps) {
         pageCount={ocrResult?.pageCount || 1}
         chunkCount={ocrResult?.chunkCount || 0}
         isFirst={true}
+        hideMetadata={true}
       />
       
       {/* Edit button placeholder at the bottom */}

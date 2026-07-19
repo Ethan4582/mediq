@@ -22,7 +22,7 @@ export default function AppShell({
           md:relative md:translate-x-0
           ${!isSidebarOpen ? "-translate-x-full md:translate-x-0" : "translate-x-0"}
         `}
-        style={{ width: isSidebarOpen ? "240px" : "64px" }}
+        style={{ width: isSidebarOpen ? "240px" : "80px" }}
       >
         <Sidebar user={user} />
       </div>

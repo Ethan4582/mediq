@@ -60,6 +60,7 @@ interface SummaryCardProps {
   pageCount: number;
   chunkCount: number;
   isFirst?: boolean;
+  hideMetadata?: boolean;
 }
 
 export default function SummaryCard({
@@ -68,7 +69,8 @@ export default function SummaryCard({
   fileName,
   pageCount,
   chunkCount,
-  isFirst
+  isFirst,
+  hideMetadata = false
 }: SummaryCardProps) {
   // Use draft if available, otherwise fallback to parsing rawText
   const parsed = draft || parseOcrText(rawText);
@@ -132,13 +134,15 @@ export default function SummaryCard({
 
   return (
     <div className="w-full flex flex-col gap-6 text-[#111827]">
-      <div className="flex items-center gap-3 bg-[#f4f6f8] p-3 rounded-lg border border-[var(--border-default)]">
-        <FileText size={20} className="text-[#2563eb]" />
-        <div className="flex-1">
-          <p className="text-sm font-medium">{fileName}</p>
-          <p className="text-xs text-[var(--text-secondary)]">{pageCount} pages • {chunkCount} extracted chunks</p>
+      {!hideMetadata && (
+        <div className="flex items-center gap-3 bg-[#f4f6f8] p-3 rounded-lg border border-[var(--border-default)]">
+          <FileText size={20} className="text-[#2563eb]" />
+          <div className="flex-1">
+            <p className="text-sm font-medium">{fileName}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{pageCount} pages • {chunkCount} extracted chunks</p>
+          </div>
         </div>
-      </div>
+      )}
       
       {isFirst && (
         <h1 className="text-[26px] font-extrabold tracking-tight text-[#111827] mb-2">

@@ -232,9 +232,9 @@ export default function Sidebar({
       className="w-full h-full flex flex-col shrink-0 bg-[#f9fafb] px-3 py-4 gap-1"
     >
       {/* Logo Row */}
-      <div className={`flex items-center ${isSidebarOpen ? "justify-between" : "justify-center"} px-2 pt-1 pb-2`}>
+      <div className="flex items-center justify-between px-2 pt-1 pb-2">
         <div className="flex items-center gap-2">
-          <div>
+          <div className="flex items-center justify-center w-[34px]">
             <img src="/logo.png" alt="MediQ" width={34} height={34} />
           </div>
           {isSidebarOpen && (
@@ -246,7 +246,7 @@ export default function Sidebar({
         {isSidebarOpen && (
           <button
             onClick={toggleSidebar}
-            className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors"
+            className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors shrink-0"
             style={{ color: "var(--text-muted)" }}
           >
             <img src="/sidebar.svg" alt="Toggle Sidebar" className="w-[18px] h-[18px] opacity-70 hover:opacity-100 transition-opacity" />
@@ -255,7 +255,7 @@ export default function Sidebar({
       </div>
 
       {/* New Session Button */}
-      <div className="px-1 pb-2">
+      <div className="px-2 pb-2">
         <Link
           href="/chat/new"
           className="flex items-center justify-center gap-2 w-full rounded-lg py-2 text-sm font-medium text-white transition-colors"
@@ -268,64 +268,67 @@ export default function Sidebar({
           }
           title="New Session"
         >
-          <Plus size={14} />
+          <Plus size={16} />
           {isSidebarOpen && "New Session"}
         </Link>
       </div>
 
       {/* Search Bar */}
-      {isSidebarOpen && (
-        <div className="px-1 pb-2">
-          <div
-            className="relative flex items-center gap-2 rounded-md px-3 py-1.5 focus-within:ring-1 focus-within:ring-blue-500 transition-all"
-            style={{ background: "var(--bg-hover)" }}
-          >
-            <Search size={14} style={{ color: "var(--text-muted)" }} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search sessions"
-              className="flex-1 text-sm bg-transparent outline-none pr-8"
-              style={{ color: "var(--text-primary)" }}
-            />
-            <span
-              className="absolute right-2 text-[10px] px-1.5 py-0.5 rounded border font-mono pointer-events-none"
-              style={{ color: "var(--text-muted)", borderColor: "var(--border-default)" }}
-            >
-              ⌘K
-            </span>
-          </div>
+      <div className="px-2 pb-2">
+        <div
+          className={`relative flex items-center ${isSidebarOpen ? "gap-2 px-3 justify-start" : "justify-center"} rounded-md py-1.5 focus-within:ring-1 focus-within:ring-blue-500 transition-all`}
+          style={{ background: "var(--bg-hover)" }}
+          title={!isSidebarOpen ? "Search sessions (⌘K)" : undefined}
+        >
+          <Search size={14} style={{ color: "var(--text-muted)" }} />
+          {isSidebarOpen && (
+            <>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search sessions"
+                className="flex-1 text-sm bg-transparent outline-none pr-8"
+                style={{ color: "var(--text-primary)" }}
+              />
+              <span
+                className="absolute right-2 text-[10px] px-1.5 py-0.5 rounded border font-mono pointer-events-none"
+                style={{ color: "var(--text-muted)", borderColor: "var(--border-default)" }}
+              >
+                ⌘K
+              </span>
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Middle: Nav Links */}
-      <div className="px-1 space-y-1">
+      <div className="px-2 space-y-1">
         <Link
           href="/api-keys"
-          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3" : "justify-center"}`}
+          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3 justify-start" : "justify-center"}`}
           style={{ color: "var(--text-secondary)" }}
           title="API Keys"
         >
-          <Key size={15} />
+          <Key size={16} />
           {isSidebarOpen && "API Keys"}
         </Link>
         <Link
           href="/analytics"
-          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3" : "justify-center"}`}
+          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3 justify-start" : "justify-center"}`}
           style={{ color: "var(--text-secondary)" }}
           title="Analytics"
         >
-          <BarChart2 size={15} />
+          <BarChart2 size={16} />
           {isSidebarOpen && "Analytics"}
         </Link>
         <Link
           href="/profile"
-          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3" : "justify-center"}`}
+          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3 justify-start" : "justify-center"}`}
           style={{ color: "var(--text-secondary)" }}
           title="Profile"
         >
-          <User size={15} />
+          <User size={16} />
           {isSidebarOpen && "Profile"}
         </Link>
       </div>
@@ -412,7 +415,7 @@ export default function Sidebar({
         className="mt-auto px-2 py-3 border-t relative group"
         style={{ borderColor: "var(--border-default)" }}
       >
-        <div className={`flex items-center gap-2 w-full rounded-lg py-2 ${isSidebarOpen ? "px-2" : "justify-center"} hover:bg-[var(--bg-hover)] transition-colors cursor-pointer`}>
+        <div className={`flex items-center gap-2 w-full rounded-lg py-2 ${isSidebarOpen ? "px-2 justify-start" : "justify-center"} hover:bg-[var(--bg-hover)] transition-colors cursor-pointer`}>
           <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-semibold shrink-0">
             {firstName.charAt(0).toUpperCase()}
           </div>
@@ -426,7 +429,7 @@ export default function Sidebar({
         </div>
 
         {/* Hover Logout */}
-        <div className="absolute bottom-full left-2 right-2 mb-1 rounded-lg border shadow-md overflow-hidden bg-white opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+        <div className={`absolute bottom-full mb-1 rounded-lg border shadow-md overflow-hidden bg-white opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 ${isSidebarOpen ? "left-2 right-2" : "left-2 w-32"}`}>
           <button
             onClick={handleSignOut}
             className="w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--bg-hover)] transition-colors text-red-600 font-medium"

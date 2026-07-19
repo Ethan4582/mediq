@@ -180,13 +180,13 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     );
   }
 
-  const { isRightPanelOpen } = useSessionStore();
+  const { isRightPanelOpen, isFileViewMode } = useSessionStore();
 
   return (
     <div className="flex h-full overflow-hidden bg-white relative">
       <div 
-        className={`flex flex-col h-full transition-all duration-300 ${
-          isRightPanelOpen ? "w-1/2 shrink-0 border-r border-[var(--border-default)]" : "w-full"
+        className={`flex flex-col h-full transition-all duration-300 flex-1 min-w-0 ${
+          isRightPanelOpen ? "border-r border-[var(--border-default)]" : ""
         }`}
       >
         <TopBar session={session} loading={sessionLoading && !isNew} />
@@ -217,7 +217,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
       </div>
       
       {isRightPanelOpen && (
-        <div className="w-1/2 h-full shrink-0">
+        <div className={`h-full shrink-0 transition-all duration-300 ${isFileViewMode ? "w-1/2" : "w-[300px]"}`}>
           <RightPanel draft={draft} ocrResult={ocrResult} />
         </div>
       )}
