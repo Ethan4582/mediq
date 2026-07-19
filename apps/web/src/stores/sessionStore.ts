@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-
+import { persist } from 'zustand/middleware'
 import type { PipelineStatus } from "@/components/chat/ChatPanel"
 
 interface SessionState {
@@ -10,6 +10,7 @@ interface SessionState {
   rightPanelTab: "files" | "summary" | "edit"
   refreshKey: number
   pendingPipelineStatus: PipelineStatus | null
+  selectedProvider: string | null
   setActiveSession: (id: string) => void
   toggleSidebar: () => void
   closeSidebar: () => void
@@ -18,16 +19,20 @@ interface SessionState {
   setRightPanelTab: (tab: "files" | "summary" | "edit") => void
   triggerRefresh: () => void
   setPendingPipelineStatus: (status: PipelineStatus | null) => void
+  setSelectedProvider: (provider: string | null) => void
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
-  activeSessionId: null,
-  isSidebarOpen: true,
-  isRightPanelOpen: false,
-  isFileViewMode: false,
-  rightPanelTab: "summary",
-  refreshKey: 0,
-  pendingPipelineStatus: null,
+export const useSessionStore = create<SessionState>()(
+  persist(
+    (set) => ({
+      activeSessionId: null,
+      isSidebarOpen: true,
+      isRightPanelOpen: false,
+      isFileViewMode: false,
+      rightPanelTab: "summary",
+      refreshKey: 0,
+      pendingPipelineStatus: null,
+      selectedProvider: null,
   setActiveSession: (id) => set({ activeSessionId: id }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   closeSidebar: () => set({ isSidebarOpen: false }),
@@ -52,4 +57,11 @@ export const useSessionStore = create<SessionState>((set) => ({
   setRightPanelTab: (tab) => set({ rightPanelTab: tab, isFileViewMode: false }),
   triggerRefresh: () => set((state) => ({ refreshKey: state.refreshKey + 1 })),
   setPendingPipelineStatus: (status) => set({ pendingPipelineStatus: status }),
-}))
+  setSelectedProvider: (provider) => set({ selectedProvider: provider }),
+    }),
+    {
+      name: 'session-storage', // name of the item in the storage (must be unique)
+      partialize: (state) => ({ selectedProvider: state.selectedProvider }), // only persist selectedProvider
+    }
+  )
+)

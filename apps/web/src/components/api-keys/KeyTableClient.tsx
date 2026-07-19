@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { API_URL, PROVIDERS } from "@/lib/constants";
 import SkeletonLine from "@/components/shared/SkeletonLine";
 import { ApiKey, LLMProvider } from "@/types/app";
+import Image from "next/image";
 
 export default function KeyTableClient() {
   const [open, setOpen] = useState(false);
@@ -77,7 +78,15 @@ export default function KeyTableClient() {
             <div className="flex flex-col">
               {keys.map((k) => (
                 <div key={k.id} className="grid grid-cols-5 items-center px-6 py-4 border-b border-gray-100 last:border-none text-sm">
-                  <div className="capitalize font-semibold text-gray-900">
+                  <div className="flex items-center gap-2 capitalize font-semibold text-gray-900">
+                    <Image 
+                      src={`/${k.provider.toLowerCase()}.svg`} 
+                      width={16} 
+                      height={16} 
+                      alt={k.provider} 
+                      className="object-contain"
+                      onError={(e) => e.currentTarget.style.display = 'none'}
+                    />
                     {PROVIDERS[k.provider as LLMProvider]?.name || k.provider}
                   </div>
                   <div className="font-mono text-gray-500">···· {k.key_last4}</div>

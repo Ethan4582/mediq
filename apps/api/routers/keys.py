@@ -95,7 +95,7 @@ async def list_keys(request: Request):
         .order("created_at", desc=True)
         .execute()
     )
-    return [
+    keys_res = [
         KeyResponse(
             id=r["id"],
             provider=r["provider"],
@@ -106,6 +106,8 @@ async def list_keys(request: Request):
         )
         for r in (rows.data or [])
     ]
+    print(f"DEBUG: Returning keys for user {user['user_id']}: {keys_res}")
+    return keys_res
 
 
 @router.delete("/keys/{key_id}", status_code=204)

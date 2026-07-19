@@ -8,29 +8,9 @@ import { motion } from "framer-motion";
 import { ImpactSection } from "@/components/ImpactSection";
 import { Footer } from "@/components/Footer";
 
-import { useScroll, useTransform } from "framer-motion";
-
 export default function LandingPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  
-  const { scrollY } = useScroll();
-  
-  // Transform values for gradual animation
-  const navTop = useTransform(scrollY, [0, 60], ["0px", "16px"]);
-  const navPaddingX = useTransform(scrollY, [0, 60], ["32px", "12px"]);
-  const navPaddingY = useTransform(scrollY, [0, 60], ["16px", "8px"]);
-  const navBg = useTransform(scrollY, [0, 60], ["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 0.95)"]);
-  const navBackdrop = useTransform(scrollY, [0, 60], ["blur(0px)", "blur(12px)"]);
-  const navShadow = useTransform(scrollY, [0, 60], ["0 0px 0px rgba(0,0,0,0)", "0 8px 30px rgba(0,0,0,0.06)"]);
-  const navBorder = useTransform(scrollY, [0, 60], ["1px solid rgba(229, 231, 235, 0)", "1px solid rgba(229, 231, 235, 0.5)"]);
-  const navRadius = useTransform(scrollY, [0, 60], ["0px", "16px"]);
-  const navMaxWidth = useTransform(scrollY, [0, 60], ["100%", "768px"]);
-  
-  const logoSize = useTransform(scrollY, [0, 60], ["32px", "28px"]);
-  const buttonPaddingX = useTransform(scrollY, [0, 60], ["20px", "16px"]);
-  const buttonPaddingY = useTransform(scrollY, [0, 60], ["8px", "6px"]);
-  const buttonRadius = useTransform(scrollY, [0, 60], ["16px", "12px"]);
 
   const handleSend = () => {
     if (!query.trim()) return;
@@ -47,60 +27,35 @@ export default function LandingPage() {
   return (
     <main className="relative min-h-screen overflow-hidden">
       {/* Navbar */}
-      <motion.nav 
-        className="fixed left-0 right-0 z-50 flex items-center justify-between mx-auto"
-        style={{
-          top: navTop,
-          paddingLeft: navPaddingX,
-          paddingRight: navPaddingX,
-          paddingTop: navPaddingY,
-          paddingBottom: navPaddingY,
-          backgroundColor: navBg,
-          backdropFilter: navBackdrop,
-          boxShadow: navShadow,
-          border: navBorder,
-          borderRadius: navRadius,
-          maxWidth: navMaxWidth
-        }}
+      <nav 
+        className="fixed top-4 left-4 right-4 md:left-0 md:right-0 z-50 flex items-center justify-between mx-auto max-w-[600px] bg-white/95 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-gray-200/50 rounded-2xl px-4 py-2.5"
       >
         {/* Left - Logo */}
         <div className="flex items-center gap-2">
-          <motion.div 
-            className="flex items-center justify-center"
-            style={{ width: logoSize, height: logoSize }}
-          >
+          <div className="flex items-center justify-center w-[28px] h-[28px]">
             <img src="/logo.png" alt="MediQ logo" className="w-full h-full object-contain" />
-          </motion.div>
+          </div>
         </div>
 
         {/* Center - Nav Links (Hidden on mobile) */}
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 nav-links">
-          <Link href="#features" className="flex items-center gap-1.5 text-[15px] font-medium text-[#475569] hover:text-[#0f172a] transition-colors">
-            Features
-          </Link>
+        <div className="hidden md:flex flex-1 justify-center items-center gap-8 nav-links">
           <Link href="/docs" className="flex items-center gap-1.5 text-[15px] font-medium text-[#475569] hover:text-[#0f172a] transition-colors">
             Docs
           </Link>
+          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[15px] font-medium text-[#475569] hover:text-[#0f172a] transition-colors">
+            GitHub
+          </a>
         </div>
 
         {/* Right - Auth Buttons */}
         <div className="flex items-center gap-3">
           <Link href="/chat/new">
-            <motion.div
-              className="text-sm font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
-              style={{
-                paddingLeft: buttonPaddingX,
-                paddingRight: buttonPaddingX,
-                paddingTop: buttonPaddingY,
-                paddingBottom: buttonPaddingY,
-                borderRadius: buttonRadius
-              }}
-            >
-              Try MediaQ
-            </motion.div>
+            <div className="text-sm font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer px-4 py-1.5 rounded-[10px]">
+              Try MediQ
+            </div>
           </Link>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Hero Content Section */}
       <section 

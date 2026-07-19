@@ -5,13 +5,24 @@ import type { AppSession } from "@/types/app";
 export function useSession(sessionId: string) {
   const [session, setSession] = useState<AppSession | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentSessionId, setCurrentSessionId] = useState(sessionId);
   const supabase = createClient();
+
+  let currentSession = session;
+  let currentLoading = loading;
+
+  if (sessionId !== currentSessionId) {
+    setCurrentSessionId(sessionId);
+    setSession(null);
+    setLoading(true);
+    currentSession = null;
+    currentLoading = true;
+  }
 
   useEffect(() => {
     if (!sessionId) return;
 
     const fetchSession = async () => {
-      setLoading(true);
       const { data, error } = await supabase
         .from("sessions")
         .select("*")
@@ -27,5 +38,5 @@ export function useSession(sessionId: string) {
     fetchSession();
   }, [sessionId]);
 
-  return { session, loading };
+  return { session: currentSession, loading: currentLoading };
 }

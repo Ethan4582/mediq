@@ -4,6 +4,7 @@ import { ScanText, Brain, CheckCircle, XCircle } from "lucide-react";
 import { useKeyStatus } from "@/hooks/useKeyStatus";
 import { PROVIDERS } from "@/lib/constants";
 import SkeletonLine from "@/components/shared/SkeletonLine";
+import Image from "next/image";
 
 export default function KeyStatusCards() {
   const { keys, has_mistral_key, has_llm_key, active_llm_provider, loading, refetch } = useKeyStatus();
@@ -42,7 +43,10 @@ export default function KeyStatusCards() {
               {has_mistral_key ? (
                 <>
                   <CheckCircle size={14} className="text-green-500" />
-                  <span className="text-sm font-semibold text-green-600">Connected ···{ocrKey?.key_last4}</span>
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-green-600">
+                    <Image src="/mistral.svg" width={14} height={14} alt="Mistral" className="object-contain" />
+                    Connected ···{ocrKey?.key_last4}
+                  </span>
                 </>
               ) : (
                 <>
@@ -71,8 +75,24 @@ export default function KeyStatusCards() {
               {has_llm_key ? (
                 <>
                   <CheckCircle size={14} className="text-green-500" />
-                  <span className="text-sm font-semibold text-green-600">
-                    {active_llm_provider ? PROVIDERS[active_llm_provider]?.name : "Connected"} ···{llmKey?.key_last4}
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-green-600">
+                    {keys.filter(k => k.key_type === "llm" && k.is_active).length > 1 ? (
+                      `Connected (${keys.filter(k => k.key_type === "llm" && k.is_active).length} providers)`
+                    ) : (
+                      <>
+                        {active_llm_provider && (
+                          <Image 
+                            src={`/${active_llm_provider.toLowerCase()}.svg`} 
+                            width={14} 
+                            height={14} 
+                            alt={active_llm_provider} 
+                            className="object-contain" 
+                            onError={(e) => e.currentTarget.style.display = 'none'}
+                          />
+                        )}
+                        {active_llm_provider ? PROVIDERS[active_llm_provider]?.name : "Connected"} ···{llmKey?.key_last4}
+                      </>
+                    )}
                   </span>
                 </>
               ) : (

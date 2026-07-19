@@ -52,7 +52,8 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     }
   }, [pendingStatus, clearPendingStatus]);
 
-  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const selectedProvider = useSessionStore(state => state.selectedProvider);
+  const setSelectedProvider = useSessionStore(state => state.setSelectedProvider);
 
   // Sync upload stages to pipeline status, or recover state after redirect
   useEffect(() => {

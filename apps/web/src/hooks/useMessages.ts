@@ -5,13 +5,24 @@ import type { Message } from "@/types/app";
 export function useMessages(sessionId: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentSessionId, setCurrentSessionId] = useState(sessionId);
   const supabase = createClient();
+
+  let currentMessages = messages;
+  let currentLoading = loading;
+
+  if (sessionId !== currentSessionId) {
+    setCurrentSessionId(sessionId);
+    setMessages([]);
+    setLoading(true);
+    currentMessages = [];
+    currentLoading = true;
+  }
 
   useEffect(() => {
     if (!sessionId || sessionId === "new") return;
 
     const fetchMessages = async () => {
-      setLoading(true);
       const { data, error } = await supabase
         .from("messages")
         .select("*")
@@ -48,5 +59,5 @@ export function useMessages(sessionId: string) {
     };
   }, [sessionId]);
 
-  return { messages, loading };
+  return { messages: currentMessages, loading: currentLoading };
 }

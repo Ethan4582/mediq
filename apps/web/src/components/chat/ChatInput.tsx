@@ -111,7 +111,7 @@ export default function ChatInput({
 
           {/* Bottom: Tools & Actions */}
           <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-2 flex-wrap">
               {/* Model Selector */}
               {llmKeys.length > 0 && (
                 <div className="relative group" ref={dropdownRef}>

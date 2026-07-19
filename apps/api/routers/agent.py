@@ -55,7 +55,14 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
     
     # Fallback
     if not llm_key:
-        llm_key_obj = next((k for k in keys if k["key_type"] == "llm" and k.get("is_active")), None)
+        profile_res = db.table("profiles").select("active_llm_provider").eq("id", user_id).maybe_single().execute()
+        active_provider = profile_res.data.get("active_llm_provider") if profile_res.data else None
+        
+        if active_provider:
+            llm_key_obj = next((k for k in keys if k["key_type"] == "llm" and k["provider"] == active_provider and k.get("is_active")), None)
+        else:
+            llm_key_obj = next((k for k in keys if k["key_type"] == "llm" and k.get("is_active")), None)
+            
         if llm_key_obj:
             llm_key = decrypt(llm_key_obj["key_encrypted"])
             req.llm_provider = llm_key_obj["provider"]
@@ -86,7 +93,8 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
     db.table("runs").insert({
         "id": run_id,
         "session_id": session_id,
-        "status": "running"
+        "status": "running",
+        "provider_used": req.llm_provider
     }).execute()
     
     from agent.graph import build_graph
