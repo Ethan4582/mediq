@@ -163,6 +163,8 @@
     background: var(--bg-primary);
     font-weight: 400;
     line-height: 1.6;
+    overflow-y: overlay;
+    overflow-x: hidden;
   }
   html {
     @apply font-sans;

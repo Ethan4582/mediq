@@ -68,7 +68,7 @@ export default function LandingPage() {
       <section 
         className="relative min-h-[90vh] flex flex-col items-center pt-24 pb-16 px-4 bg-transparent"
         style={{
-          backgroundImage: "url('/hero_bg.png')",
+          backgroundImage: "url('/hero_bg1.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"

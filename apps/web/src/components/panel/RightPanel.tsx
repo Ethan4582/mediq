@@ -1,7 +1,8 @@
 "use client";
 
 import { useSessionStore } from "@/stores/sessionStore";
-import { FileText, FileSearch, Edit3, X, MoreHorizontal, Copy } from "lucide-react";
+import { FileText, FileSearch, Edit3, X, MoreHorizontal, Copy, Download } from "lucide-react";
+import { toast } from "sonner";
 import FilesTab from "./FilesTab";
 import SummaryTab from "./SummaryTab";
 
@@ -16,6 +17,45 @@ export default function RightPanel({ draft, ocrResult }: RightPanelProps) {
   const handleClose = () => {
     setRightPanelOpen(false);
     setFileViewMode(false);
+  };
+
+  const handleCopy = () => {
+    const textToCopy = draft ? JSON.stringify(draft, null, 2) : ocrResult?.rawText || "";
+    navigator.clipboard.writeText(textToCopy);
+    toast.success("Copied to clipboard", { description: "Summary has been copied to your clipboard." });
+  };
+
+  const handleDownloadPdf = () => {
+    const rawText = ocrResult?.rawText || JSON.stringify(draft, null, 2) || "";
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (!printWindow) {
+      toast.error("Popup blocked", { description: "Please allow popups to download PDF." });
+      return;
+    }
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Discharge Summary</title>
+          <style>
+            body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; padding: 40px; color: #111827; max-width: 800px; margin: 0 auto; }
+            pre { white-space: pre-wrap; font-family: inherit; margin-top: 20px; }
+            h2 { color: #2563eb; }
+          </style>
+        </head>
+        <body>
+          <h2>Discharge Summary</h2>
+          <hr />
+          <pre>${rawText}</pre>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+    toast.success("Preparing PDF", { description: "Print dialog has been opened." });
   };
 
   return (
@@ -45,7 +85,10 @@ export default function RightPanel({ draft, ocrResult }: RightPanelProps) {
               </button>
               
               <div className="absolute right-0 top-full mt-1 w-40 rounded-lg border border-[var(--border-default)] shadow-md bg-white p-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                <button className="w-full text-left flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[#f4f6f8] px-3 py-2 rounded-md transition-colors">
+                <button 
+                  onClick={handleCopy}
+                  className="w-full text-left flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[#f4f6f8] px-3 py-2 rounded-md transition-colors"
+                >
                   <Copy size={14} />
                   <span>Copy</span>
                 </button>
@@ -58,11 +101,11 @@ export default function RightPanel({ draft, ocrResult }: RightPanelProps) {
                 </button>
                 <div className="h-px bg-[var(--border-default)] my-1"></div>
                 <button 
-                  onClick={handleClose}
-                  className="w-full text-left flex items-center gap-2 text-sm text-red-600 hover:bg-red-50 px-3 py-2 rounded-md transition-colors"
+                  onClick={handleDownloadPdf}
+                  className="w-full text-left flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[#f4f6f8] px-3 py-2 rounded-md transition-colors"
                 >
-                  <X size={14} />
-                  <span>Close</span>
+                  <Download size={14} />
+                  <span>Download PDF</span>
                 </button>
               </div>
             </div>

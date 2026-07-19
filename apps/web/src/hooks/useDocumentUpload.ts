@@ -126,6 +126,9 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
                console.error("Failed to fetch OCR result", err);
             }
 
+            import("@/stores/sessionStore").then((mod) => {
+              mod.useSessionStore.getState().setPendingPipelineStatus("agent_running");
+            });
             
             onComplete?.(session_id);
           } else if (data.status === "error") {

@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 
+import type { PipelineStatus } from "@/components/chat/ChatPanel"
+
 interface SessionState {
   activeSessionId: string | null
   isSidebarOpen: boolean
@@ -7,6 +9,7 @@ interface SessionState {
   isFileViewMode: boolean
   rightPanelTab: "files" | "summary" | "edit"
   refreshKey: number
+  pendingPipelineStatus: PipelineStatus | null
   setActiveSession: (id: string) => void
   toggleSidebar: () => void
   closeSidebar: () => void
@@ -14,6 +17,7 @@ interface SessionState {
   setFileViewMode: (open: boolean) => void
   setRightPanelTab: (tab: "files" | "summary" | "edit") => void
   triggerRefresh: () => void
+  setPendingPipelineStatus: (status: PipelineStatus | null) => void
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -23,6 +27,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   isFileViewMode: false,
   rightPanelTab: "summary",
   refreshKey: 0,
+  pendingPipelineStatus: null,
   setActiveSession: (id) => set({ activeSessionId: id }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   closeSidebar: () => set({ isSidebarOpen: false }),
@@ -31,14 +36,20 @@ export const useSessionStore = create<SessionState>((set) => ({
     if (open && state.isSidebarOpen) {
       return { isRightPanelOpen: true, isSidebarOpen: false, isFileViewMode: false };
     }
+    if (!open) {
+      // When closing right panel, automatically open the left sidebar
+      return { isRightPanelOpen: false, isFileViewMode: false, isSidebarOpen: true };
+    }
     return { isRightPanelOpen: open, isFileViewMode: open ? state.isFileViewMode : false };
   }),
   setFileViewMode: (open) => set((state) => {
     if (open) {
       return { isRightPanelOpen: true, isFileViewMode: true, isSidebarOpen: false, rightPanelTab: "summary" };
     }
-    return { isFileViewMode: false };
+    // When closing file viewer, close the right panel and open the left sidebar
+    return { isFileViewMode: false, isRightPanelOpen: false, isSidebarOpen: true };
   }),
   setRightPanelTab: (tab) => set({ rightPanelTab: tab, isFileViewMode: false }),
   triggerRefresh: () => set((state) => ({ refreshKey: state.refreshKey + 1 })),
+  setPendingPipelineStatus: (status) => set({ pendingPipelineStatus: status }),
 }))

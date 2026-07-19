@@ -40,7 +40,18 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   });
 
   const [draft, setDraft] = useState<any>(null);
-  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>("idle");
+  
+  // Use pending status if we just redirected from an upload, to prevent UI flash
+  const pendingStatus = useSessionStore(state => state.pendingPipelineStatus);
+  const clearPendingStatus = useSessionStore(state => state.setPendingPipelineStatus);
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>(pendingStatus || "idle");
+  
+  useEffect(() => {
+    if (pendingStatus) {
+      clearPendingStatus(null);
+    }
+  }, [pendingStatus, clearPendingStatus]);
+
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
   // Sync upload stages to pipeline status, or recover state after redirect

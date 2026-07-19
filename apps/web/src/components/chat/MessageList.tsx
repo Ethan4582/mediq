@@ -11,6 +11,7 @@ import EmptyChat from "./EmptyChat";
 import SkeletonCard from "@/components/shared/SkeletonCard";
 import SkeletonLine from "@/components/shared/SkeletonLine";
 import type { DraftContent } from "@/types/app";
+import Image from "next/image";
 
 import type { PendingUpload, OcrResult } from "@/hooks/useDocumentUpload";
 import type { PipelineStatus } from "./ChatPanel";
@@ -57,7 +58,12 @@ export default function MessageList({
     );
   }
 
-  if (messages.length === 0 && !pendingUpload && !ocrResult) {
+  if (
+    messages.length === 0 && 
+    !pendingUpload && 
+    !ocrResult && 
+    (!pipelineStatus || pipelineStatus === "idle" || pipelineStatus === "done")
+  ) {
     return (
       <div className="flex-1 flex overflow-y-auto" ref={scrollRef}>
         <EmptyChat />
@@ -106,16 +112,20 @@ export default function MessageList({
         {draft && (
           <AiMessage message={{ role: "assistant", content: "", id: "draft-msg", created_at: "", session_id: "", metadata: {} }}>
               <div 
-                className="flex items-center gap-3 p-4 rounded-xl border border-[var(--border-default)] hover:bg-[var(--bg-hover)] cursor-pointer bg-white transition-colors max-w-sm" 
+                className="flex items-center gap-4 p-5 rounded-2xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-md cursor-pointer bg-white shadow-sm transition-all max-w-md w-[400px]" 
                 onClick={() => { 
                   const { setFileViewMode } = useSessionStore.getState();
                   setFileViewMode(true); 
                 }}
               >
-              <FileCheck className="w-5 h-5 text-[#2563eb]" />
-              <div>
-                <p className="text-sm font-medium text-[var(--text-primary)]">Discharge summary generated</p>
-                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Click to view full summary &rarr;</p>
+              <div className="shrink-0 p-2.5 bg-[#f9fafb] rounded-xl border border-[#f3f4f6]">
+                <Image src="/compress-pdf-flat.svg" alt="PDF" width={32} height={32} className="opacity-90" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-[15px] font-semibold text-[#111827] mb-0.5">Discharge summary generated</h4>
+                <p className="text-[13px] text-[#6b7280] font-medium flex items-center">
+                  Click to view full summary <span className="ml-1 text-[14px]">&rarr;</span>
+                </p>
               </div>
             </div>
           </AiMessage>
