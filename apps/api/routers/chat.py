@@ -4,7 +4,8 @@ from core.auth import get_current_user
 from core.supabase import db
 from core.encryption import decrypt
 from core.rag import retrieve_context
-from agent.utils import get_llm_client, get_llm_model
+from agent.utils import get_llm_model
+from openai import OpenAI
 
 router = APIRouter(tags=["chat"])
 
@@ -62,13 +63,35 @@ async def chat(req: ChatRequest, user: dict = Depends(get_current_user)):
             {"role": "user", "content": f"Document context:\n{context_text}\n\nQuestion: {req.message}"}
         ]
 
-        client = get_llm_client(llm_provider, llm_key)
         model = get_llm_model(llm_provider)
 
-        # Plain completion (no Instructor structured output)
-        raw_client = client._client if hasattr(client, "_client") else client
-        response = raw_client.chat.completions.create(model=model, messages=messages)
-        answer = response.choices[0].message.content
+        def make_plain_client(provider: str, api_key: str):
+            if provider == "mistral":
+                return OpenAI(api_key=api_key, base_url="https://api.mistral.ai/v1")
+            elif provider == "gemini":
+                return OpenAI(api_key=api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+            elif provider == "groq":
+                from groq import Groq
+                return Groq(api_key=api_key)
+            elif provider == "anthropic":
+                import anthropic
+                client = anthropic.Anthropic(api_key=api_key)
+                msg = client.messages.create(
+                    model=model,
+                    max_tokens=1024,
+                    system=CHAT_SYSTEM_PROMPT,
+                    messages=[m for m in messages if m["role"] != "system"]
+                )
+                return None, msg.content[0].text
+            else:
+                return OpenAI(api_key=api_key)
+
+        plain_client = make_plain_client(llm_provider, llm_key)
+        if isinstance(plain_client, tuple):
+            _, answer = plain_client
+        else:
+            response = plain_client.chat.completions.create(model=model, messages=messages)
+            answer = response.choices[0].message.content
         sources = chunk_ids
 
     # Persist messages

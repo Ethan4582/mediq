@@ -20,6 +20,7 @@ import PipelineLoader from "./PipelineLoader";
 export default function MessageList({
   messages,
   loading,
+  isNew,
   pendingUpload,
   ocrResult,
   draft,
@@ -27,6 +28,7 @@ export default function MessageList({
 }: {
   messages: Message[];
   loading: boolean;
+  isNew?: boolean;
   pendingUpload?: PendingUpload | null;
   ocrResult?: OcrResult | null;
   draft?: any;
@@ -75,6 +77,7 @@ export default function MessageList({
   }
 
   if (
+    isNew &&
     messages.length === 0 && 
     !pendingUpload && 
     !ocrResult && 
@@ -94,31 +97,6 @@ export default function MessageList({
       onScroll={handleScroll}
     >
       <div className="w-full max-w-[860px] flex flex-col gap-8">
-        {messages.map((m, i) => {
-          if (m.role === "user") {
-            return <MessageBubble key={m.id ?? i} message={m} />;
-          }
-
-          const isSummary =
-            (m.metadata as Record<string, unknown>)?.type === "summary";
-
-          const isFirstSummary = isSummary && messages.findIndex(msg => (msg.metadata as Record<string, unknown>)?.type === "summary") === i;
-
-          return (
-            <AiMessage key={m.id ?? i} message={m}>
-              {isSummary && m.metadata?.content ? (
-                <SummaryCard
-                  rawText={typeof m.metadata.content === 'string' ? m.metadata.content : JSON.stringify(m.metadata.content)}
-                  fileName={String((m.metadata as Record<string, unknown>).file_name ?? "Unknown")}
-                  pageCount={Number((m.metadata as Record<string, unknown>).page_count ?? 1)}
-                  chunkCount={Number((m.metadata as Record<string, unknown>).source_count ?? 0)}
-                  isFirst={isFirstSummary}
-                />
-              ) : null}
-            </AiMessage>
-          );
-        })}
-
         {pipelineStatus && pipelineStatus !== "idle" && pipelineStatus !== "done" && (
           <AiMessage message={{ role: "assistant", content: "", id: "pipeline-msg", created_at: "", session_id: "", metadata: {} }}>
             <PipelineLoader status={pipelineStatus} />
@@ -146,6 +124,33 @@ export default function MessageList({
             </div>
           </AiMessage>
         )}
+
+        {messages.map((m, i) => {
+          if (m.role === "user") {
+            return <MessageBubble key={m.id ?? i} message={m} />;
+          }
+
+          const isSummary =
+            (m.metadata as Record<string, unknown>)?.type === "summary";
+
+          const isFirstSummary = isSummary && messages.findIndex(msg => (msg.metadata as Record<string, unknown>)?.type === "summary") === i;
+
+          return (
+            <AiMessage key={m.id ?? i} message={m}>
+              {isSummary && m.metadata?.content ? (
+                <SummaryCard
+                  rawText={typeof m.metadata.content === 'string' ? m.metadata.content : JSON.stringify(m.metadata.content)}
+                  fileName={String((m.metadata as Record<string, unknown>).file_name ?? "Unknown")}
+                  pageCount={Number((m.metadata as Record<string, unknown>).page_count ?? 1)}
+                  chunkCount={Number((m.metadata as Record<string, unknown>).source_count ?? 0)}
+                  isFirst={isFirstSummary}
+                />
+              ) : null}
+            </AiMessage>
+          );
+        })}
+
+
       </div>
     </div>
   );

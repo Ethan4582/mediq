@@ -60,7 +60,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const selectedProvider = useSessionStore(state => state.selectedProvider);
   const setSelectedProvider = useSessionStore(state => state.setSelectedProvider);
 
-  // Sync upload stages to pipeline status, or recover state after redirect
+  // Sync upload stages to pipeline status
   useEffect(() => {
     if (pendingUpload) {
       if (pendingUpload.status === "error") setPipelineStatus("error");
@@ -69,14 +69,12 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
       else if (pendingUpload.stage === "chunking") setPipelineStatus("chunking");
       else if (pendingUpload.stage === "embedding") setPipelineStatus("embedding");
       else if (pendingUpload.status === "done") setPipelineStatus("agent_running");
-    } else if (session?.status === "done") {
-      setPipelineStatus("done");
     } else if (session?.status === "processing" || session?.status === "processed") {
-      setPipelineStatus("agent_running");
-    } else if (ocrResult && !draft && sessionId !== "new" && pipelineStatus === "idle" && session?.status !== "done") {
       setPipelineStatus("agent_running");
     } else if (draft) {
       setPipelineStatus("done");
+    } else if (ocrResult && !draft && sessionId !== "new" && pipelineStatus === "idle") {
+      setPipelineStatus("agent_running");
     }
   }, [pendingUpload, ocrResult, draft, sessionId, pipelineStatus, session?.status]);
 
@@ -100,6 +98,9 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
               setDraft(content);
               setPipelineStatus("done");
             }
+          } else {
+            // Session is done but no draft — agent needs to run
+            setPipelineStatus("agent_running");
           }
         } catch (err) {}
       };
@@ -112,17 +113,11 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     if (pipelineStatus === "agent_running" && sessionId && sessionId !== "new" && !draft) {
       const checkAndRunAgent = async () => {
         try {
-          // If session was already completed before we got here, try to fetch the draft
-          if (session?.status === "done") {
-            // Try to load the draft silently
-            return;
-          }
-
           const supabase = createClient();
           const { data: { session: authSession } } = await supabase.auth.getSession();
           const token = authSession?.access_token;
           
-          // First check if a draft already exists (e.g. page was refreshed while it was processing and it just finished)
+          // Check if a draft already exists
           const draftRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
             headers: { "Authorization": `Bearer ${token}` }
           });
@@ -133,18 +128,11 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
               const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
               setDraft(content);
               setPipelineStatus("done");
-              // Only toast if the session was actively processing, not if it was already done long ago
-              if (session?.status === "processing") {
-                toast.success("Summary ready", { description: "Discharge summary has been generated.", duration: 5000 });
-              }
               return;
             }
           }
 
-          // The backend now has a duplicate run guard. 
-          // We can safely call POST /run. If it's already running, it will return { status: 'running' }
-          // and we can just poll. If it's done, it will return { status: 'done' }.
-          
+          // Call POST /run — backend has duplicate-run guard so this is always safe
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/run`, {
             method: "POST",
             headers: { 
@@ -155,6 +143,22 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
           });
           
           if (res.ok) {
+            const runData = await res.json();
+            // If backend returned a cached done result with draft, use it directly
+            if (runData.status === "done" && runData.draft_id) {
+              const draftRes2 = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
+                headers: { "Authorization": `Bearer ${token}` }
+              });
+              if (draftRes2.ok) {
+                const d = await draftRes2.json();
+                if (d?.content) {
+                  const content = typeof d.content === "string" ? JSON.parse(d.content) : d.content;
+                  setDraft(content);
+                  setPipelineStatus("done");
+                  return;
+                }
+              }
+            }
             pollDraft();
           } else {
             setPipelineStatus("error");
@@ -208,7 +212,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const { sendMessage, isSending } = useChat(allMessages, setAllOptimistic);
 
   const handleSend = async (text: string) => {
-    if (pipelineStatus !== "done") return;
+    if (pipelineStatus !== "done" && pipelineStatus !== "idle") return;
     await sendMessage(text, sessionId);
   };
 
@@ -244,6 +248,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
           <MessageList 
             messages={allMessages} 
             loading={messagesLoading && !isNew} 
+            isNew={isNew}
             pendingUpload={pendingUpload}
             ocrResult={ocrResult}
             draft={draft}
@@ -255,7 +260,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
               <ChatInput
                 onSend={handleSend}
                 onUpload={handleUpload}
-                disabled={pipelineStatus !== "done" || isSending}
+                disabled={(pipelineStatus !== "done" && pipelineStatus !== "idle") || isSending}
                 isSending={isSending}
                 pipelineStatus={pipelineStatus}
                 pendingUpload={pendingUpload}
