@@ -23,7 +23,6 @@ export default function MessageList({
   isNew,
   pendingUpload,
   ocrResult,
-  draft,
   pipelineStatus,
 }: {
   messages: Message[];
@@ -31,7 +30,6 @@ export default function MessageList({
   isNew?: boolean;
   pendingUpload?: PendingUpload | null;
   ocrResult?: OcrResult | null;
-  draft?: any;
   pipelineStatus?: PipelineStatus;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -48,7 +46,7 @@ export default function MessageList({
     if (scrollRef.current && isAtBottomRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, pendingUpload, ocrResult, draft]);
+  }, [messages, pendingUpload, ocrResult]);
 
   if (loading) {
     return (
@@ -112,22 +110,27 @@ export default function MessageList({
           return (
             <AiMessage key={m.id ?? i} message={m}>
               {isDraftMessage ? (
-                <div 
-                  className="flex items-center gap-4 p-5 rounded-2xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-md cursor-pointer bg-white shadow-sm transition-all max-w-md w-[400px]" 
-                  onClick={() => { 
-                    const { setFileViewMode } = useSessionStore.getState();
-                    setFileViewMode(true); 
-                  }}
-                >
-                  <div className="shrink-0 p-2.5 bg-[#f9fafb] rounded-xl border border-[#f3f4f6]">
-                    <Image src="/compress-pdf-flat.svg" alt="PDF" width={32} height={32} className="opacity-90" />
+                <div className="flex flex-col gap-2">
+                  <div 
+                    className="flex items-center gap-4 p-5 rounded-2xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-md cursor-pointer bg-white shadow-sm transition-all max-w-md w-[400px]" 
+                    onClick={() => { 
+                      const { setFileViewMode } = useSessionStore.getState();
+                      setFileViewMode(true); 
+                    }}
+                  >
+                    <div className="shrink-0 p-2.5 bg-[#f9fafb] rounded-xl border border-[#f3f4f6]">
+                      <Image src="/compress-pdf-flat.svg" alt="PDF" width={32} height={32} className="opacity-90" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-[15px] font-semibold text-[#111827] mb-0.5">Discharge summary generated</h4>
+                      <p className="text-[13px] text-[#6b7280] font-medium flex items-center">
+                        Click to view full summary <span className="ml-1 text-[14px]">&rarr;</span>
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-[15px] font-semibold text-[#111827] mb-0.5">Discharge summary generated</h4>
-                    <p className="text-[13px] text-[#6b7280] font-medium flex items-center">
-                      Click to view full summary <span className="ml-1 text-[14px]">&rarr;</span>
-                    </p>
-                  </div>
+                  <p className="text-[12.5px] text-gray-400 pl-1 max-w-[400px]">
+                    Missing details? Ask questions about the document in the chat.
+                  </p>
                 </div>
               ) : isSummary && m.metadata?.content ? (
                 <SummaryCard
@@ -145,28 +148,6 @@ export default function MessageList({
         {pipelineStatus && pipelineStatus !== "idle" && pipelineStatus !== "done" && (
           <AiMessage message={{ role: "assistant", content: "", id: "pipeline-msg", created_at: "", session_id: "", metadata: {} }}>
             <PipelineLoader status={pipelineStatus} />
-          </AiMessage>
-        )}
-
-        {draft && !messages.some(m => (m.metadata as any)?.type === "draft_generated") && (
-          <AiMessage message={{ role: "assistant", content: "", id: "draft-msg-legacy", created_at: "", session_id: "", metadata: {} }}>
-              <div 
-                className="flex items-center gap-4 p-5 rounded-2xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-md cursor-pointer bg-white shadow-sm transition-all max-w-md w-[400px]" 
-                onClick={() => { 
-                  const { setFileViewMode } = useSessionStore.getState();
-                  setFileViewMode(true); 
-                }}
-              >
-              <div className="shrink-0 p-2.5 bg-[#f9fafb] rounded-xl border border-[#f3f4f6]">
-                <Image src="/compress-pdf-flat.svg" alt="PDF" width={32} height={32} className="opacity-90" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-[15px] font-semibold text-[#111827] mb-0.5">Discharge summary generated</h4>
-                <p className="text-[13px] text-[#6b7280] font-medium flex items-center">
-                  Click to view full summary <span className="ml-1 text-[14px]">&rarr;</span>
-                </p>
-              </div>
-            </div>
           </AiMessage>
         )}
 

@@ -73,15 +73,21 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
 
     try:
         if not mistral_api_key:
+            print("Missing API key")
             set_doc_progress(document_id, "error", 0, "error", error="Mistral API key is missing")
             db.table("documents").update({"ocr_status": "failed"}).eq("id", document_id).execute()
             db.table("sessions").update({"status": "error"}).eq("id", session_id).execute()
             return
 
+        print("Fetching doc from DB...")
         doc_row = db.table("documents").select("*").eq("id", document_id).single().execute()
         doc = doc_row.data
+        print(f"Doc fetched: {doc['file_name']}")
 
+        print("Downloading from R2...")
         file_bytes = download_file(doc["r2_key"])
+        print("Downloaded file bytes length:", len(file_bytes))
+        
         set_doc_progress(document_id, "processing", 5, "ocr")
         db.table("documents").update({"ocr_status": "processing"}).eq("id", document_id).execute()
 
@@ -90,6 +96,7 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
         extracted_text = ""
 
         if is_pdf:
+            print("Processing PDF...")
             pdf = fitz.open(stream=file_bytes, filetype="pdf")
             page_count = pdf.page_count
             total_batches = math.ceil(page_count / 20)
@@ -100,14 +107,19 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
                 batch_pdf.insert_pdf(pdf, from_page=start, to_page=end - 1)
                 batch_bytes = batch_pdf.tobytes()
                 batch_pdf.close()
+                print(f"Calling Mistral OCR for batch {i+1}/{total_batches}...")
                 extracted_text += _ocr_pdf_batch(batch_bytes, mistral_api_key)
                 progress = int((i + 1) / total_batches * 55) + 5
                 set_doc_progress(document_id, "processing", progress, "ocr")
             pdf.close()
         else:
+            print("Processing image...")
             content_type = "image/jpeg" if file_name.lower().endswith((".jpg", ".jpeg")) else "image/png"
+            print(f"Calling Mistral OCR for image ({content_type})...")
             extracted_text = _ocr_image(file_bytes, content_type, mistral_api_key)
+            print("Mistral OCR finished. Text length:", len(extracted_text))
 
+        print("Cleaning text...")
         def clean_ocr_text(text: str) -> str:
             import re
             text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
@@ -117,10 +129,14 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
 
         extracted_text = clean_ocr_text(extracted_text)
 
-        db.table("documents").update({"raw_text": extracted_text, "ocr_status": "done"}).eq("id", document_id).execute()
+        print("Updating raw text in DB...")
+        db.table("documents").update({"raw_text": extracted_text, "ocr_status": "processing"}).eq("id", document_id).execute()
         set_doc_progress(document_id, "processing", 65, "chunking")
 
+        print("Chunking text...")
         chunks = _chunk_text(extracted_text)
+        print(f"Created {len(chunks)} chunks.")
+        
         chunk_rows = [
             {
                 "document_id": document_id,
@@ -132,13 +148,17 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
             }
             for i, c in enumerate(chunks)
         ]
+        
         if chunk_rows:
+            print("Inserting chunks into DB...")
             db.table("chunks").insert(chunk_rows).execute()
             set_doc_progress(document_id, "processing", 75, "embedding")
 
+            print("Generating embeddings...")
             from core.embeddings import generate_embeddings
             chunk_texts = [c["text"] for c in chunk_rows]
             embeddings = generate_embeddings(chunk_texts, mistral_api_key)
+            print("Embeddings generated.")
 
             inserted = db.table("chunks")\
                 .select("id, chunk_index")\
@@ -148,20 +168,27 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
                 .execute()
 
             chunk_ids = [row["id"] for row in inserted.data]
-
+            
+            print("Updating chunks with embeddings...")
             for chunk_id, embedding in zip(chunk_ids, embeddings):
                 db.table("chunks")\
                     .update({"embedding": embedding})\
                     .eq("id", chunk_id)\
                     .execute()
 
+        print("Finalizing job...")
         set_doc_progress(document_id, "done", 100, "ready")
         db.table("sessions").update({"status": "done", "updated_at": datetime.now(timezone.utc).isoformat()}).eq("id", session_id).execute()
         db.table("documents").update({"ocr_status": "done"}).eq("id", document_id).execute()
+        print("=== OCR TASK FINISHED ===")
 
     except Exception as e:
-        set_doc_progress(document_id, "error", 0, "error", error=str(e))
-        db.table("documents").update({"ocr_status": "failed"}).eq("id", document_id).execute()
-        db.table("sessions").update({"status": "error"}).eq("id", session_id).execute()
+        print(f"Exception caught in process_document: {e}")
+        try:
+            set_doc_progress(document_id, "error", 0, "error", error=str(e))
+            db.table("documents").update({"ocr_status": "failed"}).eq("id", document_id).execute()
+            db.table("sessions").update({"status": "error"}).eq("id", session_id).execute()
+        except Exception as e2:
+            print(f"Secondary exception in error handler: {e2}")
         traceback.print_exc()
         raise

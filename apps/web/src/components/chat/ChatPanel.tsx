@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "@/hooks/useSession";
 import { useMessages } from "@/hooks/useMessages";
 import { useSessionStore } from "@/stores/sessionStore";
@@ -30,7 +30,7 @@ export type PipelineStatus =
 export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const isNew = sessionId === "new";
   const { session, loading: sessionLoading } = useSession(isNew ? "" : sessionId);
-  const { messages, loading: messagesLoading } = useMessages(isNew ? "" : sessionId);
+  const { messages, loading: messagesLoading, refetch: refetchMessages } = useMessages(isNew ? "" : sessionId);
   const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const router = useRouter();
   
@@ -39,6 +39,11 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   }, []);
   
   const [activeDocumentId, setActiveDocumentId] = useState<string | undefined>(undefined);
+  // Track doc IDs already processed to prevent re-triggering the agent
+  const processedDocIds = useRef<Set<string>>(new Set());
+  // Track which docId the active run is for — prevents concurrent duplicate runs
+  const activeRunDocId = useRef<string | null | undefined>(undefined);
+
   const { upload, pendingUpload, ocrResult } = useDocumentUpload(sessionId, (newSessionId, docId) => {
     if (isNew) {
       router.replace(`/chat/${newSessionId}`);
@@ -47,7 +52,8 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     }
   });
 
-  const [draft, setDraft] = useState<any>(null);
+  // Latest draft — for the right panel viewer only, NOT used for chat timeline cards
+  const [latestDraft, setLatestDraft] = useState<any>(null);
   
   // Use pending status if we just redirected from an upload, to prevent UI flash
   const pendingStatus = useSessionStore(state => state.pendingPipelineStatus);
@@ -67,140 +73,193 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   useEffect(() => {
     if (pendingUpload) {
       if (pendingUpload.status === "error") setPipelineStatus("error");
-      else if (pendingUpload.stage === "uploading") setPipelineStatus("uploading");
-      else if (pendingUpload.stage === "ocr") setPipelineStatus("ocr");
-      else if (pendingUpload.stage === "chunking") setPipelineStatus("chunking");
-      else if (pendingUpload.stage === "embedding") setPipelineStatus("embedding");
-      else if (pendingUpload.status === "done") setPipelineStatus("agent_running");
-    } else if (session?.status === "processing" || session?.status === "processed") {
-      setPipelineStatus("agent_running");
-    } else if (draft) {
+      else if (pendingUpload.status === "done" && !["agent_running", "done", "error"].includes(pipelineStatus)) {
+        setPipelineStatus("agent_running");
+      }
+      else if (pendingUpload.stage === "uploading" && pipelineStatus !== "uploading") setPipelineStatus("uploading");
+      else if (pendingUpload.stage === "ocr" && pipelineStatus !== "ocr") setPipelineStatus("ocr");
+      else if (pendingUpload.stage === "chunking" && pipelineStatus !== "chunking") setPipelineStatus("chunking");
+      else if (pendingUpload.stage === "embedding" && pipelineStatus !== "embedding") setPipelineStatus("embedding");
+    } else if (latestDraft && pipelineStatus === "idle") {
       setPipelineStatus("done");
-    } else if (ocrResult && !draft && sessionId !== "new" && pipelineStatus === "idle") {
+    }
+  }, [pendingUpload, latestDraft, pipelineStatus]);
+
+  // Trigger agent when ocrResult is ready but no draft exists yet.
+  // This handles the new-session navigation case where the component remounts
+  // after router.replace() and the SSE stream is already dead.
+  useEffect(() => {
+    if (!ocrResult || latestDraft || !sessionId || sessionId === "new") return;
+    if (pipelineStatus === "idle") {
+      console.log("[AGENT UI] ocrResult ready, no draft → transitioning to agent_running");
       setPipelineStatus("agent_running");
     }
-  }, [pendingUpload, ocrResult, draft, sessionId, pipelineStatus, session?.status]);
+  }, [ocrResult, latestDraft, sessionId, pipelineStatus]);
+
+  // Debug: log every pipelineStatus change
+  useEffect(() => {
+    console.log("[AGENT UI] pipelineStatus changed →", pipelineStatus);
+  }, [pipelineStatus]);
 
   // Silent draft fetch for already completed sessions (avoids animations/toasts)
   useEffect(() => {
-    if (session?.status === "done" && sessionId !== "new" && !draft) {
-      const fetchDraftSilently = async () => {
-        try {
-          const supabase = createClient();
-          const { data: { session: authSession } } = await supabase.auth.getSession();
-          const token = authSession?.access_token;
-          
-          const draftRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-          
-          if (draftRes.ok) {
-            const data = await draftRes.json();
-            if (data && data.content) {
-              const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
-              setDraft(content);
-              setPipelineStatus("done");
-            }
+    const isDone = session?.status === "done";
+    if (!isDone || sessionId === "new" || latestDraft || pipelineStatus !== "idle") return;
+    const fetchDraftSilently = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { session: authSession } } = await supabase.auth.getSession();
+        const token = authSession?.access_token;
+        const draftRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/patient/${sessionId}/draft`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (draftRes.ok) {
+          const data = await draftRes.json();
+          if (data?.content) {
+            const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+            setLatestDraft(content);
+            setPipelineStatus("done");
           } else {
-            // Session is done but no draft — agent needs to run
             setPipelineStatus("agent_running");
           }
-        } catch (err) {}
-      };
-      fetchDraftSilently();
-    }
-  }, [session?.status, sessionId, draft]);
-
-  // Auto-trigger agent run when OCR is completely done and we transition to agent_running
-  useEffect(() => {
-    if (pipelineStatus === "agent_running" && sessionId && sessionId !== "new") {
-      const checkAndRunAgent = async () => {
-        try {
-          const supabase = createClient();
-          const { data: { session: authSession } } = await supabase.auth.getSession();
-          const token = authSession?.access_token;
-
-          // Call POST /run — backend has duplicate-run guard so this is always safe
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/run`, {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({ 
-              llm_provider: selectedProvider || "openai",
-              document_id: activeDocumentId || undefined
-            }),
-          });
-          
-          if (res.ok) {
-            const runData = await res.json();
-            // If backend returned a cached done result with draft, use it directly
-            if (runData.status === "done" && runData.draft_id) {
-              const draftRes2 = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
-                headers: { "Authorization": `Bearer ${token}` }
-              });
-              if (draftRes2.ok) {
-                const d = await draftRes2.json();
-                if (d?.content) {
-                  const content = typeof d.content === "string" ? JSON.parse(d.content) : d.content;
-                  setDraft(content);
-                  setPipelineStatus("done");
-                  return;
-                }
-              }
-            }
-            pollDraft();
-          } else {
-            setPipelineStatus("error");
-          }
-        } catch (err) {
-          setPipelineStatus("error");
+        } else {
+          setPipelineStatus("agent_running");
         }
-      };
+      } catch (err) {}
+    };
+    fetchDraftSilently();
+  }, [session?.status, sessionId, latestDraft, pipelineStatus]);
 
-      const pollDraft = () => {
-        let pollCount = 0;
-        const interval = setInterval(async () => {
-          pollCount++;
-          if (pollCount > 30) {
-            clearInterval(interval);
-            setPipelineStatus("error");
-            return;
-          }
-          
-          try {
-            const supabase = createClient();
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-            
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
+  // Auto-trigger agent run when pipeline enters agent_running.
+  // Guards: only run once per unique document ID.
+  useEffect(() => {
+    console.log("[AGENT UI] Effect evaluated", { pipelineStatus, sessionId, activeDocumentId });
+    if (pipelineStatus !== "agent_running" || !sessionId || sessionId === "new") return;
+
+    const docIdForThisRun = activeDocumentId;
+    // Skip if we already ran this exact doc
+    if (docIdForThisRun && processedDocIds.current.has(docIdForThisRun)) {
+      console.log("[AGENT UI] Skipping run — doc already processed:", docIdForThisRun);
+      return;
+    }
+    // Skip if a run is already in progress for this doc
+    if (docIdForThisRun && activeRunDocId.current === docIdForThisRun) {
+      console.log("[AGENT UI] Skipping run — run already active for doc:", docIdForThisRun);
+      return;
+    }
+    // Skip if a run with no doc ID is already in progress
+    if (!docIdForThisRun && activeRunDocId.current === "") {
+      console.log("[AGENT UI] Skipping run — generic run already active");
+      return;
+    }
+
+    console.log("[AGENT UI] Launching agent run for doc:", docIdForThisRun);
+    activeRunDocId.current = docIdForThisRun || "";
+
+    const checkAndRunAgent = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { session: authSession } } = await supabase.auth.getSession();
+        const token = authSession?.access_token;
+
+        console.log("[AGENT UI] Sending POST /api/patient/" + sessionId + "/run with provider:", selectedProvider || "openai");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/patient/${sessionId}/run`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ 
+            llm_provider: selectedProvider || "openai",
+            document_id: docIdForThisRun || undefined
+          }),
+        });
+        
+        if (res.ok) {
+          const runData = await res.json();
+          console.log("[AGENT UI] POST /run response received:", runData);
+          if (runData.status === "done" && runData.draft_id) {
+            console.log("[AGENT UI] Run finished instantly (cached). Fetching draft:", runData.draft_id);
+            const draftRes2 = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/patient/${sessionId}/draft`, {
               headers: { "Authorization": `Bearer ${token}` }
             });
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.content) {
-                const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
-                setDraft(content);
-                setPipelineStatus("done");
-                toast.success("Summary ready", { description: "Discharge summary has been generated.", duration: 5000 });
-                useSessionStore.getState().setFileViewMode(true);
-                clearInterval(interval);
+            if (draftRes2.ok) {
+              const d = await draftRes2.json();
+              if (d?.content) {
+                const content = typeof d.content === "string" ? JSON.parse(d.content) : d.content;
+                setLatestDraft(content);
               }
             }
-          } catch (e) {
-            // keep polling
+            if (docIdForThisRun) processedDocIds.current.add(docIdForThisRun);
+            activeRunDocId.current = null;
+            console.log("[AGENT UI] ✅ Setting pipelineStatus to 'done' (run completed)");
+            setPipelineStatus("done");
+            refetchMessages();
+            return;
           }
-        }, 2000);
-      };
+          console.log("[AGENT UI] Run started. Starting draft polling for run_id:", runData.run_id);
+          pollDraft(runData.run_id, docIdForThisRun);
+        } else {
+          console.error("[AGENT UI] POST /run failed with status:", res.status);
+          activeRunDocId.current = null;
+          setPipelineStatus("error");
+        }
+      } catch (err) {
+        console.error("[AGENT UI] Error triggering agent:", err);
+        activeRunDocId.current = null;
+        setPipelineStatus("error");
+      }
+    };
 
-      checkAndRunAgent();
-    }
-  }, [pipelineStatus, sessionId, draft, selectedProvider]);
+    const pollDraft = (runId: string, docId: string | undefined) => {
+      let pollCount = 0;
+      const interval = setInterval(async () => {
+        pollCount++;
+        console.log(`[AGENT UI] Polling for draft (attempt ${pollCount}/30)...`);
+        if (pollCount > 30) {
+          console.error("[AGENT UI] Polling timed out after 30 attempts.");
+          clearInterval(interval);
+          activeRunDocId.current = null;
+          setPipelineStatus("error");
+          return;
+        }
+        
+        try {
+          const supabase = createClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          const token = session?.access_token;
+          
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/patient/${sessionId}/draft`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.content && data.run_id === runId) {
+              console.log("[AGENT UI] Draft generated successfully!", data);
+              const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+              setLatestDraft(content);
+              if (docId) processedDocIds.current.add(docId);
+              activeRunDocId.current = null;
+              setPipelineStatus("done");
+              refetchMessages();
+              toast.success("Summary ready", { description: "Discharge summary has been generated.", duration: 5000 });
+              useSessionStore.getState().setFileViewMode(true);
+              clearInterval(interval);
+            }
+          }
+        } catch (e) {
+          console.warn("[AGENT UI] Draft poll failed attempt:", e);
+        }
+      }, 2000);
+    };
+
+    checkAndRunAgent();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pipelineStatus, activeDocumentId]);
 
   const allMessages = [...messages, ...optimisticMessages];
 
-  const { sendMessage, isSending } = useChat(allMessages, setAllOptimistic);
+  const { sendMessage, isSending } = useChat(allMessages, setAllOptimistic, refetchMessages);
 
   const handleSend = async (text: string) => {
     if (pipelineStatus !== "done" && pipelineStatus !== "idle") return;
@@ -208,8 +267,13 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   };
 
   const handleUpload = async (file: File) => {
+    // Reset pipeline state so new doc goes through the full flow independently
+    setPipelineStatus("idle");
+    activeRunDocId.current = null;
     await upload(file);
   };
+
+  const { isRightPanelOpen, isFileViewMode } = useSessionStore();
 
   if (!isNew && !sessionLoading && !session) {
     return (
@@ -223,8 +287,6 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
       </div>
     );
   }
-
-  const { isRightPanelOpen, isFileViewMode } = useSessionStore();
 
   return (
     <div className="flex h-full overflow-hidden bg-white relative">
@@ -242,7 +304,6 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
             isNew={isNew}
             pendingUpload={pendingUpload}
             ocrResult={ocrResult}
-            draft={draft}
             pipelineStatus={pipelineStatus}
           />
           
@@ -265,7 +326,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
       
       {isRightPanelOpen && (
         <div className={`h-full shrink-0 transition-all duration-300 ${isFileViewMode ? "w-1/2" : "w-[300px]"}`}>
-          <RightPanel draft={draft} ocrResult={ocrResult} />
+          <RightPanel draft={latestDraft} ocrResult={ocrResult} />
         </div>
       )}
     </div>

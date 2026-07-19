@@ -31,6 +31,8 @@ export function useKeyStatus() {
         has_llm_key: data.some((k) => k.key_type === "llm" && k.is_active),
         active_llm_provider: data.find((k) => k.key_type === "llm" && k.is_active)?.provider ?? null,
       });
+    } catch (err) {
+      console.warn("Failed to fetch user key status:", err);
     } finally {
       setLoading(false);
     }

@@ -86,13 +86,14 @@ export default function AiMessage({
         </div>
       )}
 
-      {children ? (
-        <div className="w-full">{children}</div>
-      ) : (
-        <div className="ai-content-wrapper pr-10">
-          {parseMarkdown(message.content)}
-        </div>
-      )}
+      <div className="w-full">
+        {message.content && (
+          <div className="ai-content-wrapper pr-10 mb-3">
+            {parseMarkdown(message.content)}
+          </div>
+        )}
+        {children && <div>{children}</div>}
+      </div>
 
       {!children && contextVisible && (
         <div className="mt-4 pt-3 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
