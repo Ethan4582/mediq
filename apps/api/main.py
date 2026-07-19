@@ -6,7 +6,10 @@ app = FastAPI(title="MediQ API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://your-app.vercel.app"  # add after Vercel deploy
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

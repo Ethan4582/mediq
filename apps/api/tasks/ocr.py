@@ -190,7 +190,7 @@ def process_document(self, document_id: str, session_id: str, mistral_api_key: s
                     .execute()
 
         set_job_progress(task_id, "done", 100, "ready")
-        db.table("sessions").update({"status": "processed", "updated_at": datetime.now(timezone.utc).isoformat()}).eq("id", session_id).execute()
+        db.table("sessions").update({"status": "done", "updated_at": datetime.now(timezone.utc).isoformat()}).eq("id", session_id).execute()
         db.table("documents").update({"ocr_status": "done"}).eq("id", document_id).execute()
 
     except Exception as e:

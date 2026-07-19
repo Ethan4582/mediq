@@ -1,4 +1,4 @@
-import { Copy, Download, Share, MoreHorizontal } from "lucide-react";
+import { Copy, Download, Share, MoreHorizontal, FileText } from "lucide-react";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -7,7 +7,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export default function MessageActions({ content }: { content: string }) {
+export default function MessageActions({ 
+  content, 
+  onToggleContext,
+  isContextVisible
+}: { 
+  content: string;
+  onToggleContext?: () => void;
+  isContextVisible?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -63,6 +71,12 @@ export default function MessageActions({ content }: { content: string }) {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-48">
+          {onToggleContext && (
+            <DropdownMenuItem onClick={onToggleContext}>
+              <FileText className="mr-2 h-4 w-4" />
+              <span>{isContextVisible ? "Hide Context" : "View Context"}</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={handleDownloadPdf}>
             <Download className="mr-2 h-4 w-4" />
             <span>Download PDF</span>

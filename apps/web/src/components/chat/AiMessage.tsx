@@ -69,6 +69,7 @@ export default function AiMessage({
   children?: React.ReactNode;
 }) {
   const [showSources, setShowSources] = useState(false);
+  const [contextVisible, setContextVisible] = useState(false);
   const sources = (message.metadata?.sources || []) as any[];
   const sourceCount = message.metadata?.source_count || sources.length;
 
@@ -77,7 +78,11 @@ export default function AiMessage({
       
       {!children && (
         <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-30">
-          <MessageActions content={message.content} />
+          <MessageActions 
+            content={message.content} 
+            onToggleContext={sources.length > 0 ? () => setContextVisible(!contextVisible) : undefined}
+            isContextVisible={contextVisible}
+          />
         </div>
       )}
 
@@ -89,51 +94,29 @@ export default function AiMessage({
         </div>
       )}
 
-      {!children && (
-        <div className="mt-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5" style={{ color: "var(--text-secondary)" }}>
-              <FileText className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">Sources</span>
-            </div>
-            {sources.length > 0 ? (
-              <>
-                {sources.slice(0, 2).map((src, idx) => (
-                  <div key={idx} className="rounded-full px-2 py-0.5 text-xs bg-gray-50 text-gray-600 border border-gray-200">
-                    {src.source_file} · Page {src.page_num}
-                  </div>
-                ))}
-                {sources.length > 2 && (
-                  <button 
-                    onClick={() => setShowSources(!showSources)}
-                    className="rounded-full px-2 py-0.5 text-xs bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 transition-colors flex items-center gap-1"
-                  >
-                    +{sources.length - 2} more
-                    <ChevronDown className={`w-3 h-3 transition-transform ${showSources ? "rotate-180" : ""}`} />
-                  </button>
-                )}
-              </>
-            ) : (
-              <span className="text-xs text-gray-400">0</span>
-            )}
+      {!children && contextVisible && (
+        <div className="mt-4 pt-3 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-1.5 text-gray-400 mb-2">
+            <FileText className="w-3.5 h-3.5" />
+            <span className="text-xs font-medium uppercase tracking-wider">Retrieved Context</span>
           </div>
           
-          {showSources && sources.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {sources.map((src, idx) => (
-                <div key={idx} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <FileText className="w-3 h-3 text-gray-400" />
-                    <span className="text-xs font-medium text-gray-600">
-                      {src.source_file} · Page {src.page_num}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                    {src.excerpt}
-                  </p>
-                </div>
-              ))}
+          {sources.length > 0 ? (
+            <div className="text-[13.5px] text-gray-600">
+               <p className={`leading-relaxed ${!showSources ? 'line-clamp-3' : ''}`}>
+                 {sources.map(s => s.excerpt).join(" ... ")}
+               </p>
+               {sources.map(s => s.excerpt).join(" ... ").length > 200 && (
+                 <button 
+                   onClick={() => setShowSources(!showSources)}
+                   className="text-[#2563eb] hover:text-blue-700 font-medium mt-1.5 text-xs transition-colors"
+                 >
+                   {showSources ? "Show less" : "Show more"}
+                 </button>
+               )}
             </div>
+          ) : (
+             <span className="text-[13px] text-gray-400">This information was not found in the uploaded documents.</span>
           )}
         </div>
       )}

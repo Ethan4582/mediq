@@ -10,18 +10,22 @@ router = APIRouter(tags=["agent"])
 
 @router.get("/patient/{session_id}/ocr-result")
 async def get_ocr_result(session_id: str):
-    doc_resp = db.table("documents").select("raw_text, file_name, page_count").eq("session_id", session_id).maybe_single().execute()
+    doc_resp = db.table("documents").select("raw_text, file_name, page_count").eq("session_id", session_id).execute()
     if not doc_resp.data:
         raise HTTPException(404, {"error": "Document not found"})
         
     chunks_resp = db.table("chunks").select("id", count="exact").eq("session_id", session_id).execute()
     chunk_count = chunks_resp.count if chunks_resp.count is not None else len(chunks_resp.data or [])
     
-    doc = doc_resp.data
+    docs = doc_resp.data
+    combined_text = "\n\n---\n\n".join([d.get("raw_text", "") for d in docs if d.get("raw_text")])
+    total_pages = sum([d.get("page_count", 0) or 0 for d in docs])
+    file_names = ", ".join([d.get("file_name", "") for d in docs if d.get("file_name")])
+    
     return {
-        "raw_text": doc.get("raw_text", ""),
-        "file_name": doc.get("file_name", ""),
-        "page_count": doc.get("page_count", 0),
+        "raw_text": combined_text,
+        "file_name": file_names,
+        "page_count": total_pages,
         "chunk_count": chunk_count
     }
 
@@ -161,6 +165,17 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
             "session_id": session_id,
             "run_id": run_id,
             "content": draft
+        }).execute()
+        
+        # Insert a message into the chat stream so the user sees the summary in the conversation flow
+        db.table("messages").insert({
+            "session_id": session_id,
+            "role": "assistant",
+            "content": "I have generated a discharge summary based on the document.",
+            "metadata": {
+                "type": "draft_generated",
+                "draft_id": draft_id
+            }
         }).execute()
         
         db.table("runs").update({

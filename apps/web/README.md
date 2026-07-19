@@ -1,36 +1,150 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MediQ — Medical Document Intelligence
 
-## Getting Started
+![MediQ Banner](./docs/banner.png)
 
-First, run the development server:
+
+
+## What is MediQ?
+
+MediQ is an agentic AI system that reads raw patient documents handwritten notes, scanned PDFs, drug charts, lab reports and produces structured discharge summary drafts for clinician review.
+
+## Why not just ChatGPT with a PDF?
+
+| ChatGPT + PDF                              | MediQ                                                                  |
+|--------------------------------------------|------------------------------------------------------------------------|
+| Single LLM call over raw text              | Multi-step agent that plans, retrieves, and re-plans                   |
+| Fills missing fields with plausible values | Marks every unverifiable field as `MISSING — clinician review required`|
+| No source traceability                     | Every field cites the exact document and chunk it came from            |
+| No conflict detection                      | Flags contradictions between documents, never silently resolves them   |
+| No medication reconciliation               | Diffs admission vs discharge meds, surfaces unexplained changes        |
+| Black box reasoning                        | Full per-step agent reasoning trace emitted and viewable               |
+
+MediQ is not a chatbot. It is a clinical drafting agent with hard safety guardrails.
+
+
+
+## Agentic Features
+
+- **Real agent loop** — Stateful LangGraph orchestrates planning, RAG retrieval, and re-planning (max 5 iterations).
+- **No hallucination guardrail** — Outputs `MISSING` if unsupported by sources. Never guesses clinical values.
+- **Medication reconciliation** — Compares admission/discharge meds and flags undocumented changes.
+- **Conflict detection** — Surfaces and flags disagreements across documents without arbitrarily resolving them.
+- **Mock clinical tools** — Uses mock drug interaction and lab checkers, designed for easy real-API swapping.
+- **Full observability** — Emits a structured, UI-viewable trace for every reasoning step and tool call.
+
+
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 14, Tailwind CSS, shadcn/ui |
+| Auth | Supabase Auth (Google + email) |
+| API | FastAPI, Python 3.12 |
+| Agent | LangGraph |
+| OCR | Mistral OCR API (BYOK) |
+| LLM | Groq / OpenAI / Anthropic / Mistral (BYOK) |
+| Structured output | Instructor + Pydantic |
+| Vector store | pgvector via Supabase |
+| Embeddings | Mistral Embed |
+| File storage | Cloudflare R2 |
+| Async jobs | Celery + Upstash Redis |
+| Database | Supabase Postgres |
+
+---
+
+## Prerequisites
+
+- Node.js 18+ and pnpm
+- Python 3.12+
+- Supabase account (free tier)
+- Cloudflare R2 bucket
+- Upstash Redis database
+- Mistral API key (required — used for OCR and embeddings)
+- At least one LLM provider key: Groq, OpenAI, Anthropic, or Mistral
+
+---
+
+## Setup
+
+### 1. Clone and install
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourhandle/mediq.git
+cd mediq
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Frontend environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create `apps/web/.env.local`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-## Learn More
+### 3. Backend environment
 
-To learn more about Next.js, take a look at the following resources:
+Create `apps/api/.env`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+CLOUDFLARE_R2_ENDPOINT=https://your_account_id.r2.cloudflarestorage.com
+CLOUDFLARE_R2_ACCESS_KEY=your_r2_access_key
+CLOUDFLARE_R2_SECRET_KEY=your_r2_secret_key
+CLOUDFLARE_R2_BUCKET=mediq-documents
+UPSTASH_REDIS_URL=rediss://:token@host:6379
+ENCRYPTION_KEY=your_fernet_key
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Generate encryption key:
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
 
-## Deploy on Vercel
+### 4. Database setup
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Run the schema in your Supabase SQL editor:
+```bash
+# Schema file located at:
+apps/api/schema.sql
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Enable pgvector extension in Supabase dashboard → Database → Extensions → vector.
+
+### 5. Run locally
+
+```bash
+# Terminal 1 — Frontend
+cd apps/web && pnpm dev
+
+# Terminal 2 — API
+cd apps/api
+python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+
+# Terminal 3 — Celery worker
+cd apps/api
+source .venv/bin/activate
+celery -A tasks.ocr worker --loglevel=info
+```
+
+Or with Docker:
+```bash
+docker-compose up
+```
+
+### 6. Add your API keys
+
+1. Open `http://localhost:3000`
+2. Sign up and go to **API Keys**
+3. Add your Mistral key as OCR key (required)
+4. Add at least one LLM provider key (Groq recommended — generous free tier)
+
+---
+
+## How It Works

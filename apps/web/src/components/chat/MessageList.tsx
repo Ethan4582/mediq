@@ -103,8 +103,8 @@ export default function MessageList({
           </AiMessage>
         )}
 
-        {draft && (
-          <AiMessage message={{ role: "assistant", content: "", id: "draft-msg", created_at: "", session_id: "", metadata: {} }}>
+        {draft && !messages.some(m => (m.metadata as any)?.type === "draft_generated") && (
+          <AiMessage message={{ role: "assistant", content: "", id: "draft-msg-legacy", created_at: "", session_id: "", metadata: {} }}>
               <div 
                 className="flex items-center gap-4 p-5 rounded-2xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-md cursor-pointer bg-white shadow-sm transition-all max-w-md w-[400px]" 
                 onClick={() => { 
@@ -133,11 +133,31 @@ export default function MessageList({
           const isSummary =
             (m.metadata as Record<string, unknown>)?.type === "summary";
 
+          const isDraftMessage = (m.metadata as Record<string, unknown>)?.type === "draft_generated";
+
           const isFirstSummary = isSummary && messages.findIndex(msg => (msg.metadata as Record<string, unknown>)?.type === "summary") === i;
 
           return (
             <AiMessage key={m.id ?? i} message={m}>
-              {isSummary && m.metadata?.content ? (
+              {isDraftMessage ? (
+                <div 
+                  className="flex items-center gap-4 p-5 rounded-2xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-md cursor-pointer bg-white shadow-sm transition-all max-w-md w-[400px]" 
+                  onClick={() => { 
+                    const { setFileViewMode } = useSessionStore.getState();
+                    setFileViewMode(true); 
+                  }}
+                >
+                  <div className="shrink-0 p-2.5 bg-[#f9fafb] rounded-xl border border-[#f3f4f6]">
+                    <Image src="/compress-pdf-flat.svg" alt="PDF" width={32} height={32} className="opacity-90" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-[15px] font-semibold text-[#111827] mb-0.5">Discharge summary generated</h4>
+                    <p className="text-[13px] text-[#6b7280] font-medium flex items-center">
+                      Click to view full summary <span className="ml-1 text-[14px]">&rarr;</span>
+                    </p>
+                  </div>
+                </div>
+              ) : isSummary && m.metadata?.content ? (
                 <SummaryCard
                   rawText={typeof m.metadata.content === 'string' ? m.metadata.content : JSON.stringify(m.metadata.content)}
                   fileName={String((m.metadata as Record<string, unknown>).file_name ?? "Unknown")}

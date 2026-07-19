@@ -54,7 +54,7 @@ export function ImpactSection() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             
             {/* Card 1: Accurate & Reliable */}
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 flex flex-col items-center text-center">
+            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
               <div className="relative h-40 w-full flex items-center justify-center mb-4">
                 {/* Decorative background elements */}
                 <motion.div 
@@ -92,24 +92,22 @@ export function ImpactSection() {
             </motion.div>
 
             {/* Card 2: Secure by default */}
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 flex flex-col items-center text-center">
+            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
               <div className="relative h-40 w-full flex items-center justify-center mb-4">
                 <motion.div 
-                  animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.3, 0.1] }}
+                  animate={{ scale: [1, 1.25, 1], opacity: [0.2, 0.6, 0.2] }}
                   transition={{ duration: 3, repeat: Infinity }}
-                  className="absolute w-32 h-32 rounded-full bg-blue-50 border border-blue-100"
+                  className="absolute w-32 h-32 rounded-full bg-blue-100 border border-blue-200"
                 />
                 <motion.div 
-                  animate={{ scale: [1, 1.05, 1], opacity: [0.2, 0.5, 0.2] }}
+                  animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.8, 0.4] }}
                   transition={{ duration: 3, delay: 0.5, repeat: Infinity }}
-                  className="absolute w-24 h-24 rounded-full bg-blue-100 border border-blue-200"
+                  className="absolute w-24 h-24 rounded-full bg-blue-200 border border-blue-300"
                 />
                 <div className="w-12 h-16 rounded-xl border-[2.5px] border-[#2563eb] flex items-center justify-center relative z-10 bg-white">
                   <div className="w-6 h-6 border-[2px] border-[#2563eb] rounded-full absolute -top-3" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 50%, 0 50%)' }}></div>
                   <Lock className="w-5 h-5 text-[#2563eb]" />
                 </div>
-                {/* Decorative dot */}
-                <div className="absolute top-8 right-16 w-2 h-2 rounded-full bg-[#2563eb]"></div>
               </div>
               <h3 className="text-xl font-bold text-[#0f172a] mb-3">Secure by default</h3>
               <p className="text-[#475569] text-sm mb-6 leading-relaxed">
@@ -122,7 +120,7 @@ export function ImpactSection() {
             </motion.div>
 
             {/* Card 3: Time saved */}
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 flex flex-col relative overflow-hidden group">
+            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col relative overflow-hidden group">
               <div className="flex justify-between items-center w-full mb-6 relative z-10">
                 <div className="w-8 h-8 rounded-full bg-[#eff6ff] flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-[#2563eb]" />
@@ -188,7 +186,7 @@ export function ImpactSection() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             
             {/* Card 4: Reduce clinical risk */}
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 flex flex-col justify-between relative overflow-hidden">
+            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
               <div className="flex flex-col md:flex-row justify-between w-full h-full gap-8">
                 
                 {/* Left content */}
@@ -235,29 +233,45 @@ export function ImpactSection() {
                     {/* SVG Chart */}
                     <div className="absolute left-8 right-0 top-1 bottom-5">
                       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full overflow-visible">
+                        <defs>
+                          <linearGradient id="chartGradient2" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#2563eb" stopOpacity="0.2"/>
+                            <stop offset="100%" stopColor="#2563eb" stopOpacity="0"/>
+                          </linearGradient>
+                        </defs>
+                        
+                        {/* Area */}
+                        <motion.path 
+                          initial={{ opacity: 0 }}
+                          whileInView={{ opacity: 1 }}
+                          transition={{ duration: 1, delay: 0.5 }}
+                          d="M0,70 C 30,30 50,60 70,25 C 85,35 95,15 100,10 L100,100 L0,100 Z" 
+                          fill="url(#chartGradient2)" 
+                          stroke="none"
+                        />
+                        
+                        {/* Line */}
                         <motion.path 
                           initial={{ pathLength: 0 }}
                           whileInView={{ pathLength: 1 }}
                           transition={{ duration: 1.5, ease: "easeOut" }}
-                          d="M0,5 L25,25 L50,45 L75,70 L100,90" 
+                          d="M0,70 C 30,30 50,60 70,25 C 85,35 95,15 100,10" 
                           fill="none" 
                           stroke="#2563eb" 
                           strokeWidth="3"
+                          strokeLinecap="round"
                           vectorEffect="non-scaling-stroke"
                         />
-                        {[
-                          {x: 0, y: 5}, {x: 25, y: 25}, {x: 50, y: 45}, {x: 75, y: 70}, {x: 100, y: 90}
-                        ].map((point, i) => (
-                          <motion.circle 
-                            key={i}
-                            initial={{ scale: 0, opacity: 0 }}
-                            whileInView={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.5 + i * 0.15 }}
-                            cx={point.x} cy={point.y} r="4" 
-                            className="fill-[#2563eb] stroke-white stroke-2" 
-                            vectorEffect="non-scaling-stroke"
-                          />
-                        ))}
+                        
+                        {/* Point */}
+                        <motion.circle 
+                          initial={{ scale: 0, opacity: 0 }}
+                          whileInView={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: 1.5 }}
+                          cx="100" cy="10" r="4" 
+                          className="fill-[#2563eb] stroke-white stroke-[2px]" 
+                          vectorEffect="non-scaling-stroke"
+                        />
                       </svg>
                     </div>
 
@@ -275,7 +289,7 @@ export function ImpactSection() {
             </motion.div>
 
             {/* Card 5: Trusted by clinicians */}
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 flex flex-col justify-between">
+            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
               <div className="flex flex-col md:flex-row justify-between w-full h-full gap-8">
                 
                 {/* Left content */}
