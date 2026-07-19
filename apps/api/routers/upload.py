@@ -1,7 +1,7 @@
 import asyncio
 import json
 import uuid
-from fastapi import APIRouter, Request, HTTPException, UploadFile, File
+from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 import fitz
 
@@ -24,6 +24,7 @@ MAX_FILES = 5
 async def upload_documents(
     request: Request,
     files: list[UploadFile] = File(...),
+    session_id: str | None = Form(None),
 ):
     user = await require_keys(request)
     user_id = user["user_id"]
@@ -50,13 +51,16 @@ async def upload_documents(
         total_pages += pages
         file_data.append({"file": f, "contents": contents, "pages": pages})
 
-    # Create session
-    session_row = (
-        db.table("sessions")
-        .insert({"user_id": user_id, "status": "processing"})
-        .execute()
-    )
-    session_id = session_row.data[0]["id"]
+    # Create session if not provided
+    if not session_id:
+        session_row = (
+            db.table("sessions")
+            .insert({"user_id": user_id, "status": "processing"})
+            .execute()
+        )
+        session_id = session_row.data[0]["id"]
+    else:
+        db.table("sessions").update({"status": "processing"}).eq("id", session_id).execute()
 
     # Get OCR key
     ocr_key_row = (

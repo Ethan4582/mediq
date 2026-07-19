@@ -38,9 +38,12 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     setOptimisticMessages(updater);
   }, []);
   
-  const { upload, pendingUpload, ocrResult } = useDocumentUpload(sessionId, (newSessionId) => {
+  const [activeDocumentId, setActiveDocumentId] = useState<string | undefined>(undefined);
+  const { upload, pendingUpload, ocrResult } = useDocumentUpload(sessionId, (newSessionId, docId) => {
     if (isNew) {
       router.replace(`/chat/${newSessionId}`);
+    } else if (docId) {
+      setActiveDocumentId(docId);
     }
   });
 
@@ -139,7 +142,10 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ llm_provider: selectedProvider || "openai" }),
+            body: JSON.stringify({ 
+              llm_provider: selectedProvider || "openai",
+              document_id: activeDocumentId || undefined
+            }),
           });
           
           if (res.ok) {

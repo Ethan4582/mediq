@@ -1,7 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+import uuid
 from core.supabase import db
 from core.encryption import decrypt
+from core.auth import get_current_user
 
 router = APIRouter(tags=["agent"])
 
@@ -22,10 +25,13 @@ async def get_ocr_result(session_id: str):
         "chunk_count": chunk_count
     }
 
-from pydantic import BaseModel
-import uuid
-from core.auth import get_current_user
-from fastapi import Depends
+@router.get("/patient/{session_id}/documents")
+async def get_documents(session_id: str, user=Depends(get_current_user)):
+    docs = db.table("documents")\
+        .select("id, file_name, page_count, ocr_status, created_at, r2_key")\
+        .eq("session_id", session_id)\
+        .execute()
+    return {"documents": docs.data}
 
 @router.get("/patient/{session_id}/chunks-debug")
 async def debug_chunks(session_id: str, user=Depends(get_current_user)):
@@ -38,6 +44,7 @@ async def debug_chunks(session_id: str, user=Depends(get_current_user)):
 
 class RunAgentRequest(BaseModel):
     llm_provider: str = "openai"
+    document_id: str | None = None
 
 @router.post("/patient/{session_id}/run")
 async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(get_current_user)):
@@ -70,13 +77,12 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
     if not mistral_key or not llm_key:
         raise HTTPException(status_code=400, detail="Missing required API keys (OCR and LLM)")
         
-    # Check if a completed run already exists for this session
-    existing = db.table("runs")\
-        .select("id, status")\
-        .eq("session_id", session_id)\
-        .eq("status", "done")\
-        .limit(1)\
-        .execute()
+    # Check if a completed run already exists for this session/document
+    query = db.table("runs").select("id, status").eq("session_id", session_id).eq("status", "done")
+    if req.document_id:
+        query = query.eq("document_id", req.document_id)
+        
+    existing = query.limit(1).execute()
 
     if existing.data:
         # Return existing draft instead of running again
@@ -100,17 +106,22 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
         return { "run_id": running.data[0]["id"], "status": "running", "cached": True }
             
     run_id = str(uuid.uuid4())
-    db.table("runs").insert({
+    run_insert = {
         "id": run_id,
         "session_id": session_id,
         "status": "running",
         "provider_used": req.llm_provider
-    }).execute()
+    }
+    if req.document_id:
+        run_insert["document_id"] = req.document_id
+        
+    db.table("runs").insert(run_insert).execute()
     
     from agent.graph import build_graph
     
     initial_state = {
         "session_id": session_id,
+        "document_id": req.document_id,
         "user_id": user_id,
         "mistral_key": mistral_key,
         "llm_key": llm_key,

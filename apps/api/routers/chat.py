@@ -50,8 +50,39 @@ async def chat(req: ChatRequest, user: dict = Depends(get_current_user)):
 
     # Retrieve context
     rag_result = retrieve_context(req.message, req.session_id, mistral_key)
+    
+    # Layer 3: Expand context window for vital signs
+    vitals_triggers = ["vital", "bp", "pulse", "temperature", "spo2", "hr", "rr", "map", "weight", "height"]
+    if any(word in req.message.lower() for word in vitals_triggers):
+        page_nums = list(set(c.get("page_num") for c in rag_result.get("chunks", []) if c.get("page_num")))
+        if page_nums:
+            # Fetch extra chunks from these pages
+            extra = db.table("chunks").select("id, text, page_num, metadata, chunk_text, content")\
+                .eq("session_id", req.session_id)\
+                .in_("page_num", page_nums)\
+                .execute()
+            extra_chunks = extra.data or []
+            existing_ids = {c["id"] for c in rag_result.get("chunks", []) if c.get("id")}
+            for c in extra_chunks:
+                if c["id"] not in existing_ids:
+                    rag_result["chunks"].append(c)
+                    
+            def extract_text(c: dict) -> str:
+                return c.get("text") or c.get("chunk_text") or c.get("content") or ""
+                
+            rag_result["context_text"] = "\n---\n".join(extract_text(c) for c in rag_result["chunks"] if extract_text(c))
+    
     context_text = rag_result["context_text"]
-    chunk_ids = [c["id"] for c in rag_result["chunks"] if c.get("id")]
+    
+    detailed_sources = [
+        {
+            "chunk_id": c["id"],
+            "page_num": c.get("page_num", 1),
+            "source_file": c.get("metadata", {}).get("source_file", "Document") if isinstance(c.get("metadata"), dict) else "Document",
+            "excerpt": (c.get("text") or c.get("chunk_text") or c.get("content") or "")[:150]
+        }
+        for c in rag_result.get("chunks", []) if c.get("id")
+    ]
 
     if not context_text.strip():
         answer = "I could not find relevant information in the uploaded documents."
@@ -92,7 +123,7 @@ async def chat(req: ChatRequest, user: dict = Depends(get_current_user)):
         else:
             response = plain_client.chat.completions.create(model=model, messages=messages)
             answer = response.choices[0].message.content
-        sources = chunk_ids
+        sources = detailed_sources
 
     # Persist messages
     db.table("messages").insert({

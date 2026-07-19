@@ -69,7 +69,8 @@ export default function AiMessage({
   children?: React.ReactNode;
 }) {
   const [showSources, setShowSources] = useState(false);
-  const sourceCount = message.metadata?.source_count;
+  const sources = (message.metadata?.sources || []) as any[];
+  const sourceCount = message.metadata?.source_count || sources.length;
 
   return (
     <div className="w-full mb-2 relative group">
@@ -89,32 +90,50 @@ export default function AiMessage({
       )}
 
       {!children && (
-        <div className="flex items-center gap-2 mt-3">
-          {sourceCount > 0 ? (
-            <div className="flex flex-col gap-1">
-              <button
-                onClick={() => setShowSources(!showSources)}
-                className="flex items-center gap-1.5 text-xs font-medium hover:text-[--text-primary] transition-colors"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                Sources ({sourceCount})
-                <ChevronDown className={`w-3 h-3 transition-transform ${showSources ? "rotate-180" : ""}`} />
-              </button>
-              {showSources && (
-                <div className="mt-1 text-xs rounded-lg px-3 py-2 bg-gray-50 border border-gray-100" style={{ color: "var(--text-secondary)" }}>
-                  Answer grounded in {sourceCount} document section{sourceCount !== 1 ? "s" : ""}
-                </div>
-              )}
+        <div className="mt-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5" style={{ color: "var(--text-secondary)" }}>
+              <FileText className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">Sources</span>
             </div>
-          ) : (
-            <button
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-gray-200 text-[11px] font-medium hover:bg-gray-50 transition-colors"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              <FileText size={11} />
-              Sources
-            </button>
+            {sources.length > 0 ? (
+              <>
+                {sources.slice(0, 2).map((src, idx) => (
+                  <div key={idx} className="rounded-full px-2 py-0.5 text-xs bg-gray-50 text-gray-600 border border-gray-200">
+                    {src.source_file} · Page {src.page_num}
+                  </div>
+                ))}
+                {sources.length > 2 && (
+                  <button 
+                    onClick={() => setShowSources(!showSources)}
+                    className="rounded-full px-2 py-0.5 text-xs bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 transition-colors flex items-center gap-1"
+                  >
+                    +{sources.length - 2} more
+                    <ChevronDown className={`w-3 h-3 transition-transform ${showSources ? "rotate-180" : ""}`} />
+                  </button>
+                )}
+              </>
+            ) : (
+              <span className="text-xs text-gray-400">0</span>
+            )}
+          </div>
+          
+          {showSources && sources.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {sources.map((src, idx) => (
+                <div key={idx} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs font-medium text-gray-600">
+                      {src.source_file} · Page {src.page_num}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                    {src.excerpt}
+                  </p>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

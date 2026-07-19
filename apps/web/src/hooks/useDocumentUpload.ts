@@ -22,7 +22,7 @@ export type OcrResult = {
   chunkCount: number;
 };
 
-export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: string) => void) {
+export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: string, documentId?: string) => void) {
   const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(null);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const { triggerRefresh } = useSessionStore();
@@ -80,6 +80,9 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
 
       const form = new FormData();
       form.append("files", file);
+      if (sessionId && sessionId !== "new") {
+        form.append("session_id", sessionId);
+      }
 
       try {
         const res = await fetch(`${API_URL}/api/upload`, {
@@ -98,7 +101,7 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
           return;
         }
 
-        const { session_id, job_id } = await res.json();
+        const { session_id, job_id, document_ids } = await res.json();
         setPendingUpload(prev => prev ? { ...prev, jobId: job_id } : null);
         triggerRefresh();
 
@@ -128,7 +131,7 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
 
             useSessionStore.getState().setPendingPipelineStatus("agent_running");
             
-            onComplete?.(session_id);
+            onComplete?.(session_id, document_ids?.[0]);
           } else if (data.status === "error") {
             es.close();
             setPendingUpload(prev => prev ? { ...prev, status: "error", errorMessage: data.error } : null);

@@ -69,24 +69,28 @@ def _ocr_image(img_bytes: bytes, content_type: str, mistral_key: str) -> str:
 
 
 def _chunk_text(text: str) -> list[str]:
-    raw = text.split("\n\n")
+    import re
+    # Detect vital signs blocks — keep together
+    VITAL_PATTERN = r'((?:(?:BP|Temp|HR|RR|Sp[O0]2|Pulse|SpO2|MAP|GCS|Weight|Height|BMI)[:\s\-]+[\d\.\/]+[^\n]*\n?){2,})'
+    
+    vital_blocks = re.findall(VITAL_PATTERN, text, re.IGNORECASE)
+    
     chunks = []
-    for block in raw:
-        if len(block) > 500:
-            sub = block.split("\n")
-            buf = ""
-            for line in sub:
-                if len(buf) + len(line) < 500:
-                    buf += line + "\n"
-                else:
-                    if buf.strip():
-                        chunks.append(buf.strip())
-                    buf = line + "\n"
-            if buf.strip():
-                chunks.append(buf.strip())
-        else:
-            chunks.append(block.strip())
-    return [c for c in chunks if len(c) >= 20]
+    # Standard chunking on double newline
+    raw_chunks = [c.strip() for c in text.split("\n\n") if len(c.strip()) > 20]
+    
+    # Merge consecutive short chunks (< 200 chars) with next chunk
+    merged = []
+    buffer = ""
+    for chunk in raw_chunks:
+        buffer += "\n\n" + chunk if buffer else chunk
+        if len(buffer) >= 200:
+            merged.append(buffer)
+            buffer = ""
+    if buffer:
+        merged.append(buffer)
+    
+    return merged
 
 
 @celery_app.task(bind=True, name="tasks.ocr.process_document")
