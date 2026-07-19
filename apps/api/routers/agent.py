@@ -63,6 +63,25 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
     if not mistral_key or not llm_key:
         raise HTTPException(status_code=400, detail="Missing required API keys (OCR and LLM)")
         
+    # Check if a completed run already exists for this session
+    existing = db.table("runs")\
+        .select("id, status")\
+        .eq("session_id", session_id)\
+        .eq("status", "done")\
+        .limit(1)\
+        .execute()
+
+    if existing.data:
+        # Return existing draft instead of running again
+        draft = db.table("drafts")\
+            .select("*")\
+            .eq("session_id", session_id)\
+            .order("created_at", desc=True)\
+            .limit(1)\
+            .execute()
+        if draft.data:
+            return { "run_id": existing.data[0]["id"], "draft_id": draft.data[0]["id"], "status": "done", "cached": True }
+            
     run_id = str(uuid.uuid4())
     db.table("runs").insert({
         "id": run_id,

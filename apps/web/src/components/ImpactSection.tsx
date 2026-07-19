@@ -363,63 +363,7 @@ export function ImpactSection() {
 
           </div>
 
-          {/* Bottom Row */}
-          <motion.div variants={itemVariants} className="w-full bg-white rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 flex flex-col lg:flex-row items-center gap-8 justify-between">
-            
-            <div className="flex items-center gap-5 lg:w-1/3">
-              <div className="w-14 h-14 rounded-[16px] bg-[#2563eb] flex items-center justify-center shrink-0 relative overflow-hidden">
-                <motion.div 
-                  animate={{ rotate: 180 }}
-                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0"
-                />
-                <TrendingDown className="w-7 h-7 text-white relative z-10 scale-y-[-1]" />
-              </div>
-              <p className="font-bold text-[#0f172a] text-[15px] leading-snug">
-                Better documentation leads to<br />
-                <span className="text-[#2563eb]">better care and better business.</span>
-              </p>
-            </div>
-
-            <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-6 w-full lg:w-2/3">
-              {/* Stat 1 */}
-              <div className="flex flex-col flex-1 min-w-[120px]">
-                <div className="flex items-center gap-1.5 text-[#2563eb] mb-1">
-                  <FileCheck className="w-4 h-4" />
-                  <span className="font-bold text-2xl">10x</span>
-                </div>
-                <span className="text-[#64748b] text-[13px] font-medium">Faster summaries</span>
-              </div>
-              
-              {/* Stat 2 */}
-              <div className="flex flex-col flex-1 min-w-[120px]">
-                <div className="flex items-center gap-1.5 text-[#2563eb] mb-1">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span className="font-bold text-2xl">90%</span>
-                </div>
-                <span className="text-[#64748b] text-[13px] font-medium">Source coverage</span>
-              </div>
-              
-              {/* Stat 3 */}
-              <div className="flex flex-col flex-1 min-w-[120px]">
-                <div className="flex items-center gap-1.5 text-[#2563eb] mb-1">
-                  <Users className="w-4 h-4" />
-                  <span className="font-bold text-2xl">70%</span>
-                </div>
-                <span className="text-[#64748b] text-[13px] font-medium">Less manual effort</span>
-              </div>
-              
-              {/* Stat 4 */}
-              <div className="flex flex-col flex-1 min-w-[120px]">
-                <div className="flex items-center gap-1.5 text-[#2563eb] mb-1">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span className="font-bold text-2xl">100%</span>
-                </div>
-                <span className="text-[#64748b] text-[13px] font-medium">Audit-ready</span>
-              </div>
-            </div>
-
-          </motion.div>
+         
 
         </motion.div>
       </div>

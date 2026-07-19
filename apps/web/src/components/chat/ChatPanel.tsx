@@ -63,12 +63,30 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   // Auto-trigger agent run when OCR is completely done and we transition to agent_running
   useEffect(() => {
     if (pipelineStatus === "agent_running" && sessionId && sessionId !== "new" && !draft) {
-      const runAgent = async () => {
+      const checkAndRunAgent = async () => {
         try {
           const supabase = createClient();
           const { data: { session } } = await supabase.auth.getSession();
           const token = session?.access_token;
           
+          // First check if a draft already exists
+          const draftRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/draft`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          
+          if (draftRes.ok) {
+            const data = await draftRes.json();
+            if (data && data.content) {
+              const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+              setDraft(content);
+              setPipelineStatus("done");
+              // useSessionStore.getState().setRightPanelOpen(true);
+              // useSessionStore.getState().setRightPanelTab("summary");
+              return; // Stop here, don't run the agent
+            }
+          }
+
+          // No draft exists, run the agent
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/run`, {
             method: "POST",
             headers: { 
@@ -77,6 +95,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
             },
             body: JSON.stringify({ llm_provider: selectedProvider || "openai" }),
           });
+          
           if (res.ok) {
             pollDraft();
           } else {
@@ -111,8 +130,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
                 const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
                 setDraft(content);
                 setPipelineStatus("done");
-                useSessionStore.getState().setRightPanelOpen(true);
-                useSessionStore.getState().setRightPanelTab("summary");
+                useSessionStore.getState().setFileViewMode(true);
                 clearInterval(interval);
               }
             }
@@ -122,7 +140,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
         }, 2000);
       };
 
-      runAgent();
+      checkAndRunAgent();
     }
   }, [pipelineStatus, sessionId, draft, selectedProvider]);
 
