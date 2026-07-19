@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/hooks/useSession";
 import { useMessages } from "@/hooks/useMessages";
 import { useSessionStore } from "@/stores/sessionStore";
+import { useChat } from "@/hooks/useChat";
 import TopBar from "@/components/layout/TopBar";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
@@ -32,6 +33,10 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   const { messages, loading: messagesLoading } = useMessages(isNew ? "" : sessionId);
   const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const router = useRouter();
+  
+  const setAllOptimistic = useCallback((updater: (prev: Message[]) => Message[]) => {
+    setOptimisticMessages(updater);
+  }, []);
   
   const { upload, pendingUpload, ocrResult } = useDocumentUpload(sessionId, (newSessionId) => {
     if (isNew) {
@@ -66,7 +71,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
       else if (pendingUpload.status === "done") setPipelineStatus("agent_running");
     } else if (session?.status === "done") {
       setPipelineStatus("done");
-    } else if (session?.status === "processing") {
+    } else if (session?.status === "processing" || session?.status === "processed") {
       setPipelineStatus("agent_running");
     } else if (ocrResult && !draft && sessionId !== "new" && pipelineStatus === "idle" && session?.status !== "done") {
       setPipelineStatus("agent_running");
@@ -107,8 +112,11 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     if (pipelineStatus === "agent_running" && sessionId && sessionId !== "new" && !draft) {
       const checkAndRunAgent = async () => {
         try {
-          // If the session was already completed before we got here (should be caught above, but just in case)
-          if (session?.status === "done") return;
+          // If session was already completed before we got here, try to fetch the draft
+          if (session?.status === "done") {
+            // Try to load the draft silently
+            return;
+          }
 
           const supabase = createClient();
           const { data: { session: authSession } } = await supabase.auth.getSession();
@@ -133,13 +141,10 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
             }
           }
 
-          // If session is processing on the backend, just poll. Don't trigger another run.
-          if (session?.status === "processing") {
-            pollDraft();
-            return;
-          }
-
-          // No draft exists and not processing, run the agent
+          // The backend now has a duplicate run guard. 
+          // We can safely call POST /run. If it's already running, it will return { status: 'running' }
+          // and we can just poll. If it's done, it will return { status: 'done' }.
+          
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patient/${sessionId}/run`, {
             method: "POST",
             headers: { 
@@ -200,39 +205,11 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
 
   const allMessages = [...messages, ...optimisticMessages];
 
-  const handleSend = async (text: string) => {
-    const optimistic: Message = {
-      id: `opt-${Date.now()}`,
-      session_id: sessionId,
-      role: "user",
-      content: text,
-      metadata: {},
-      created_at: new Date().toISOString(),
-    };
-    setOptimisticMessages((prev) => [...prev, optimistic]);
+  const { sendMessage, isSending } = useChat(allMessages, setAllOptimistic);
 
-    try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/chat`,
-        {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ session_id: sessionId, message: text }),
-        }
-      );
-      if (!res.ok) {
-        console.warn("Chat API not yet implemented");
-      }
-    } catch {
-      console.warn("Chat coming soon");
-    }
+  const handleSend = async (text: string) => {
+    if (pipelineStatus !== "done") return;
+    await sendMessage(text, sessionId);
   };
 
   const handleUpload = async (file: File) => {
@@ -278,7 +255,9 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
               <ChatInput
                 onSend={handleSend}
                 onUpload={handleUpload}
-                disabled={session?.status === "processing"}
+                disabled={pipelineStatus !== "done" || isSending}
+                isSending={isSending}
+                pipelineStatus={pipelineStatus}
                 pendingUpload={pendingUpload}
                 selectedProvider={selectedProvider}
                 onProviderChange={setSelectedProvider}

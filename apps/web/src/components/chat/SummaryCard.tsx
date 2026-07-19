@@ -1,4 +1,4 @@
-import { FileText, MoreHorizontal, Download, Share, MessageSquare, Copy } from "lucide-react";
+import { FileText, MoreHorizontal, Download, Share, MessageSquare, Copy, AlertTriangle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +53,33 @@ function parseOcrText(raw: string) {
   }
 }
 
+function isMissing(val: any) {
+  if (!val) return true;
+  if (typeof val === 'string') {
+    return val === "—" || val.includes("MISSING") || val.includes("Pending");
+  }
+  return false;
+}
+
+function inferDocType(parsed: any, draft: any) {
+  const v = draft?.vitals || parsed?.vitals;
+  const m = draft?.medications || parsed?.medications;
+  const l = draft?.investigations || parsed?.investigations;
+  
+  if (v) return "nursing document";
+  if (m) return "discharge sheet";
+  if (l) return "lab report";
+  return "clinical document";
+}
+
+const AmberChip = () => (
+  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[13px] font-medium w-fit">
+    <AlertTriangle size={14} />
+    Not documented
+    <span className="text-amber-600/70 font-normal ml-1 border-l border-amber-200/60 pl-2">Not found in this document</span>
+  </span>
+);
+
 interface SummaryCardProps {
   draft?: any;
   rawText?: string;
@@ -78,7 +105,7 @@ export default function SummaryCard({
   // Safely extract fields with null-checks
   const principalDiagnosis = draft?.diagnoses?.principal_diagnosis 
     ?? parsed.diagnoses?.[0] 
-    ?? "MISSING — clinician review required";
+    ?? "MISSING";
     
   const secondaryDiagnoses = draft?.diagnoses?.secondary_diagnoses 
     ?? parsed.diagnoses?.slice(1) 
@@ -86,7 +113,7 @@ export default function SummaryCard({
     
   const courseSummary = draft?.course?.summary 
     ?? parsed.course 
-    ?? "Pending — clinician review required";
+    ?? "MISSING";
     
   const vitalsText = draft?.vitals 
     ? `PR: ${draft.vitals.pulse_rate}, BP: ${draft.vitals.blood_pressure}, RR: ${draft.vitals.respiratory_rate}, SpO2: ${draft.vitals.oxygen_saturation}`
@@ -104,33 +131,7 @@ export default function SummaryCard({
     ? `Admission: ${medsAdmit.length} | Discharge: ${medsDischarge.length}` 
     : parsed.medications;
 
-  const handleDownloadPdf = () => {
-    const printWindow = window.open('', '', 'width=800,height=600');
-    if (!printWindow) return;
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Discharge Summary</title>
-          <style>
-            body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; padding: 40px; color: #111827; max-width: 800px; margin: 0 auto; }
-            pre { white-space: pre-wrap; font-family: inherit; margin-top: 20px; }
-            h2 { color: #2563eb; }
-          </style>
-        </head>
-        <body>
-          <h2>Discharge Summary (Draft)</h2>
-          <hr />
-          <pre>${rawText}</pre>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
-  };
+  const hasMinimalData = isMissing(principalDiagnosis) && isMissing(courseSummary);
 
   return (
     <div className="w-full flex flex-col gap-6 text-[#111827]">
@@ -150,75 +151,113 @@ export default function SummaryCard({
         </h1>
       )}
 
-      {/* Basic Info */}
-      <div className="flex flex-col gap-1.5 text-[15px] leading-relaxed">
-        <p><strong className="font-semibold text-[#111827]">Patient:</strong> <span className="text-[#374151]">Unknown</span></p>
-        <p><strong className="font-semibold text-[#111827]">Admission Date:</strong> <span className="text-[#374151]">—</span></p>
-        <p><strong className="font-semibold text-[#111827]">Discharge Date:</strong> <span className="text-[#374151]">—</span></p>
-      </div>
-
-      <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
-        <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Principal Diagnosis</h2>
-        {principalDiagnosis ? (
-           <p className="text-[#374151]">{principalDiagnosis}</p>
-        ) : (
-           <p className="text-[#6b7280] italic">Not found in document</p>
-        )}
-
-        {secondaryDiagnoses && secondaryDiagnoses.length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-[17px] font-semibold text-[#111827]">Secondary Diagnoses</h3>
-            <ul className="list-disc pl-5 mt-2.5 space-y-2 text-[#374151] marker:text-[#2563eb]">
-              {secondaryDiagnoses.map((d: string, i: number) => (
-                <li key={i}>{d}</li>
-              ))}
-            </ul>
+      {hasMinimalData ? (
+        <div className="border-amber-200 bg-amber-50 rounded-2xl p-5 border">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="text-amber-600" size={20} />
+            <h2 className="text-amber-800 font-medium text-lg">Limited clinical data extracted</h2>
           </div>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
-        <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Hospital Course</h2>
-        {courseSummary ? (
-          <p className="text-[#374151] whitespace-pre-wrap">{courseSummary}</p>
-        ) : (
-          <p className="text-[#6b7280] italic">Pending — clinician review required</p>
-        )}
-      </div>
-
-      {examText && (
-        <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
-          <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Physical Examination</h2>
-          {vitalsText && (
-            <p className="text-[#374151] mb-1">
-              <strong className="font-semibold text-[#111827]">Vitals:</strong> {vitalsText}
+          <p className="text-amber-700/80 text-sm mb-5">
+            This document appears to be a {inferDocType(parsed, draft)} — it may not contain all required discharge summary fields.
+          </p>
+          
+          <div className="flex flex-col gap-3 mb-5">
+            {vitalsText && (
+              <p className="text-sm"><strong className="text-amber-900 font-semibold">Vitals:</strong> <span className="text-amber-800">{vitalsText}</span></p>
+            )}
+            {examText && (
+              <p className="text-sm"><strong className="text-amber-900 font-semibold">Physical Exam:</strong> <span className="text-amber-800">{typeof examText === 'string' ? examText : JSON.stringify(examText)}</span></p>
+            )}
+            {invText && (
+              <p className="text-sm"><strong className="text-amber-900 font-semibold">Investigations:</strong> <span className="text-amber-800">{typeof invText === 'string' ? invText : JSON.stringify(invText)}</span></p>
+            )}
+            {medsText && (
+              <p className="text-sm"><strong className="text-amber-900 font-semibold">Medications:</strong> <span className="text-amber-800">{typeof medsText === 'string' ? medsText : JSON.stringify(medsText)}</span></p>
+            )}
+            {followUpText && (
+              <p className="text-sm"><strong className="text-amber-900 font-semibold">Follow Up:</strong> <span className="text-amber-800">{typeof followUpText === 'string' ? followUpText : JSON.stringify(followUpText)}</span></p>
+            )}
+          </div>
+          
+          <div className="bg-white rounded-xl p-3 border border-amber-200/60 shadow-sm">
+            <p className="text-amber-800 text-sm">
+              <strong className="font-semibold">Tip:</strong> For a complete summary, upload all patient documents including discharge sheet, drug chart, and clinical notes.
             </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Basic Info */}
+          <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+            <p className="flex items-center gap-2"><strong className="font-semibold text-[#111827] min-w-[120px]">Patient:</strong> <span className="text-[#374151]">Unknown</span></p>
+            <div className="flex items-center gap-2"><strong className="font-semibold text-[#111827] min-w-[120px]">Admission Date:</strong> <AmberChip /></div>
+            <div className="flex items-center gap-2"><strong className="font-semibold text-[#111827] min-w-[120px]">Discharge Date:</strong> <AmberChip /></div>
+          </div>
+
+          <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+            <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Principal Diagnosis</h2>
+            {isMissing(principalDiagnosis) ? (
+               <AmberChip />
+            ) : (
+               <p className="text-[#374151]">{principalDiagnosis}</p>
+            )}
+
+            {secondaryDiagnoses && secondaryDiagnoses.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-[17px] font-semibold text-[#111827]">Secondary Diagnoses</h3>
+                <ul className="list-disc pl-5 mt-2.5 space-y-2 text-[#374151] marker:text-[#2563eb]">
+                  {secondaryDiagnoses.map((d: string, i: number) => (
+                    <li key={i}>{d}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+            <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Hospital Course</h2>
+            {isMissing(courseSummary) ? (
+              <AmberChip />
+            ) : (
+              <p className="text-[#374151] whitespace-pre-wrap">{courseSummary}</p>
+            )}
+          </div>
+
+          {examText && (
+            <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+              <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Physical Examination</h2>
+              {vitalsText && (
+                <p className="text-[#374151] mb-1">
+                  <strong className="font-semibold text-[#111827]">Vitals:</strong> {vitalsText}
+                </p>
+              )}
+              <p className="text-[#374151] whitespace-pre-wrap">{typeof examText === 'string' ? examText : JSON.stringify(examText)}</p>
+            </div>
           )}
-          <p className="text-[#374151] whitespace-pre-wrap">{typeof examText === 'string' ? examText : JSON.stringify(examText)}</p>
-        </div>
-      )}
 
-      {invText && (
-        <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
-          <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Investigations</h2>
-          <p className="text-[#374151] whitespace-pre-wrap">{typeof invText === 'string' ? invText : JSON.stringify(invText)}</p>
-        </div>
-      )}
+          {invText && (
+            <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+              <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Investigations</h2>
+              <p className="text-[#374151] whitespace-pre-wrap">{typeof invText === 'string' ? invText : JSON.stringify(invText)}</p>
+            </div>
+          )}
 
-      {medsText && (
-        <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
-          <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Medications</h2>
-          <p className="text-[#374151] whitespace-pre-wrap">{typeof medsText === 'string' ? medsText : JSON.stringify(draft?.medications || medsText)}</p>
-        </div>
-      )}
+          {medsText && (
+            <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+              <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Medications</h2>
+              <p className="text-[#374151] whitespace-pre-wrap">{typeof medsText === 'string' ? medsText : JSON.stringify(draft?.medications || medsText)}</p>
+            </div>
+          )}
 
-      {followUpText && (
-        <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
-          <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Follow-up</h2>
-          <p className="text-[#374151] whitespace-pre-wrap">{typeof followUpText === 'string' ? followUpText : JSON.stringify(followUpText)}</p>
-        </div>
+          {followUpText && (
+            <div className="flex flex-col gap-2.5 text-[15px] leading-relaxed">
+              <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">Follow-up</h2>
+              <p className="text-[#374151] whitespace-pre-wrap">{typeof followUpText === 'string' ? followUpText : JSON.stringify(followUpText)}</p>
+            </div>
+          )}
+        </>
       )}
-
     </div>
   );
 }
+

@@ -13,6 +13,8 @@ export default function ChatInput({
   onSend,
   onUpload,
   disabled,
+  isSending,
+  pipelineStatus,
   pendingUpload,
   selectedProvider,
   onProviderChange,
@@ -20,6 +22,8 @@ export default function ChatInput({
   onSend: (text: string) => void;
   onUpload?: (file: File) => void;
   disabled?: boolean;
+  isSending?: boolean;
+  pipelineStatus?: string;
   pendingUpload?: { stage: string; status: string } | null;
   selectedProvider?: string | null;
   onProviderChange?: (provider: string) => void;
@@ -73,6 +77,7 @@ export default function ChatInput({
     if (text.trim() && !disabled) {
       onSend(text.trim());
       setText("");
+      setTimeout(() => textareaRef.current?.focus(), 50);
     }
   };
 
@@ -102,7 +107,11 @@ export default function ChatInput({
               onChange={(e) => setText(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={disabled}
-              placeholder={disabled ? "Processing document…" : "Type your message here..."}
+              placeholder={
+                isSending ? "MediQ is thinking…" :
+                pipelineStatus !== "done" && pipelineStatus !== "idle" && pipelineStatus !== undefined ? "Waiting for document processing…" :
+                "Type your message here..."
+              }
               className="flex-1 resize-none outline-none text-[15px] bg-transparent min-h-[44px] max-h-[160px] py-2 placeholder-gray-400 font-medium"
               style={{ color: "var(--text-primary)" }}
               rows={1}
@@ -209,7 +218,7 @@ export default function ChatInput({
                 color: text.trim() && !disabled ? "#ffffff" : "#9ca3af"
               }}
             >
-              <Send size={15} className={text.trim() && !disabled ? "mr-[1px] mt-[1px]" : ""} />
+              {isSending ? <Spinner className="w-4 h-4" /> : <Send size={15} className={text.trim() && !disabled ? "mr-[1px] mt-[1px]" : ""} />}
             </button>
           </div>
         </div>

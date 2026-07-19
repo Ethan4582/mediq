@@ -89,6 +89,16 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
         if draft.data:
             return { "run_id": existing.data[0]["id"], "draft_id": draft.data[0]["id"], "status": "done", "cached": True }
             
+    running = db.table("runs")\
+        .select("id, status")\
+        .eq("session_id", session_id)\
+        .eq("status", "running")\
+        .limit(1)\
+        .execute()
+        
+    if running.data:
+        return { "run_id": running.data[0]["id"], "status": "running", "cached": True }
+            
     run_id = str(uuid.uuid4())
     db.table("runs").insert({
         "id": run_id,
@@ -147,6 +157,8 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
             "trace": result.get("trace", []),
             "iteration_count": result.get("iteration", 0)
         }).eq("id", run_id).execute()
+        
+        db.table("sessions").update({"status": "done"}).eq("id", session_id).execute()
         
         try:
             diag = draft.get("diagnoses", {}).get("principal_diagnosis")

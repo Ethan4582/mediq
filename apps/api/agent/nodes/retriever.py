@@ -42,7 +42,7 @@ def run(state: AgentState) -> AgentState:
         result = db.rpc("match_chunks", {
             "query_embedding": vector_str,
             "session_id": state["session_id"],
-            "match_count": 8
+            "match_count": 15
         }).execute()
         
         if not result.data or len(result.data) == 0:
@@ -50,10 +50,24 @@ def run(state: AgentState) -> AgentState:
                 .select("id, text")\
                 .eq("session_id", state["session_id"])\
                 .not_.is_("embedding", "null")\
-                .limit(8)\
+                .limit(15)\
                 .execute()
         
         chunks = result.data
+        
+        # RPC may return 'text' or 'chunk_text' depending on function definition
+        def extract_text(chunk: dict) -> str:
+            return chunk.get("text") or chunk.get("chunk_text") or chunk.get("content") or ""
+
+        total_chars = sum(len(extract_text(c)) for c in chunks)
+        if total_chars < 500:
+            fallback = db.table("chunks").select("id, text").eq("session_id", state["session_id"]).limit(15).execute()
+            fallback_chunks = fallback.data or []
+            existing_ids = {c["id"] for c in chunks}
+            for c in fallback_chunks:
+                if c["id"] not in existing_ids:
+                    chunks.append(c)
+            total_chars = sum(len(extract_text(c)) for c in chunks)
         
         # Debug: log what keys the RPC returned
         if chunks:
@@ -65,13 +79,9 @@ def run(state: AgentState) -> AgentState:
             state["source_citations"] = {}
         state["source_citations"][section] = chunk_ids
         
-        # RPC may return 'text' or 'chunk_text' depending on function definition
-        def extract_text(chunk: dict) -> str:
-            return chunk.get("text") or chunk.get("chunk_text") or chunk.get("content") or ""
-        
         state["_current_chunks"] = [extract_text(c) for c in chunks if extract_text(c)]
         
-        print(f"Retrieved {len(chunks)} chunks, total chars: {sum(len(extract_text(c)) for c in chunks)}")
+        print(f"Retrieved {len(chunks)} chunks, total chars: {total_chars}")
     except Exception as e:
         print(f"Retriever error: {e}")
         state["_current_chunks"] = []

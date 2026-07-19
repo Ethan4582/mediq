@@ -1,9 +1,9 @@
 "use client";
 
-import { FileText } from "lucide-react";
+import { useState } from "react";
+import { FileText, ChevronDown } from "lucide-react";
 import type { Message } from "@/types/app";
 import MessageActions from "./MessageActions";
-import { format } from "date-fns";
 
 function parseMarkdown(text: string) {
   const blocks = text.split(/\n\n+/);
@@ -68,10 +68,12 @@ export default function AiMessage({
   message: Message;
   children?: React.ReactNode;
 }) {
+  const [showSources, setShowSources] = useState(false);
+  const sourceCount = message.metadata?.source_count;
+
   return (
     <div className="w-full mb-2 relative group">
       
-      {/* Action buttons at the top right, visible on hover */}
       {!children && (
         <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity z-30">
           <MessageActions content={message.content} />
@@ -87,14 +89,33 @@ export default function AiMessage({
       )}
 
       {!children && (
-        <div className="flex items-center gap-2 mt-4">
-          <button
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-gray-200 text-[11px] font-medium hover:bg-gray-50 transition-colors"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            <FileText size={11} />
-            Sources
-          </button>
+        <div className="flex items-center gap-2 mt-3">
+          {sourceCount > 0 ? (
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => setShowSources(!showSources)}
+                className="flex items-center gap-1.5 text-xs font-medium hover:text-[--text-primary] transition-colors"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Sources ({sourceCount})
+                <ChevronDown className={`w-3 h-3 transition-transform ${showSources ? "rotate-180" : ""}`} />
+              </button>
+              {showSources && (
+                <div className="mt-1 text-xs rounded-lg px-3 py-2 bg-gray-50 border border-gray-100" style={{ color: "var(--text-secondary)" }}>
+                  Answer grounded in {sourceCount} document section{sourceCount !== 1 ? "s" : ""}
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-gray-200 text-[11px] font-medium hover:bg-gray-50 transition-colors"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              <FileText size={11} />
+              Sources
+            </button>
+          )}
         </div>
       )}
     </div>
