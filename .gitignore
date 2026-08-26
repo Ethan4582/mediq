@@ -17,6 +17,8 @@ out/
 dist/
 build/
 
+skills/
+Agent.md
 # Environment
 .env
 .env.*

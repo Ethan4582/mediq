@@ -44,7 +44,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
   // Track which docId the active run is for — prevents concurrent duplicate runs
   const activeRunDocId = useRef<string | null | undefined>(undefined);
 
-  const { upload, pendingUpload, ocrResult } = useDocumentUpload(sessionId, (newSessionId, docId) => {
+  const { upload, pendingUpload, setPendingUpload, ocrResult } = useDocumentUpload(sessionId, (newSessionId, docId) => {
     if (isNew) {
       router.replace(`/chat/${newSessionId}`);
     } else if (docId) {
@@ -192,6 +192,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
             }
             if (docIdForThisRun) processedDocIds.current.add(docIdForThisRun);
             activeRunDocId.current = null;
+            setPendingUpload(null);
             console.log("[AGENT UI] ✅ Setting pipelineStatus to 'done' (run completed)");
             setPipelineStatus("done");
             refetchMessages();
@@ -240,6 +241,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
               setLatestDraft(content);
               if (docId) processedDocIds.current.add(docId);
               activeRunDocId.current = null;
+              setPendingUpload(null);
               setPipelineStatus("done");
               refetchMessages();
               toast.success("Summary ready", { description: "Discharge summary has been generated.", duration: 5000 });
@@ -288,6 +290,29 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
     );
   }
 
+  const handleSelectDraft = useCallback(async (draftId: string) => {
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/patient/${sessionId}/draft/${draftId}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.content) {
+          const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+          setLatestDraft(content);
+          useSessionStore.getState().setRightPanelTab("summary");
+          useSessionStore.getState().setFileViewMode(true);
+          useSessionStore.getState().setRightPanelOpen(true);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load specific draft:", e);
+    }
+  }, [sessionId]);
+
   return (
     <div className="flex h-full overflow-hidden bg-white relative">
       <div 
@@ -305,6 +330,7 @@ export default function ChatPanel({ sessionId }: { sessionId: string }) {
             pendingUpload={pendingUpload}
             ocrResult={ocrResult}
             pipelineStatus={pipelineStatus}
+            onSelectDraft={handleSelectDraft}
           />
           
           <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-white via-white/85 to-transparent pt-8 pointer-events-none">

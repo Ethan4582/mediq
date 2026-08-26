@@ -230,6 +230,13 @@ async def get_draft(session_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Draft not found")
     return res.data[0]
 
+@router.get("/patient/{session_id}/draft/{draft_id}")
+async def get_draft_by_id(session_id: str, draft_id: str, user: dict = Depends(get_current_user)):
+    res = db.table("drafts").select("*").eq("session_id", session_id).eq("id", draft_id).maybe_single().execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Draft not found")
+    return res.data
+
 @router.get("/patient/{session_id}/trace")
 async def get_trace(session_id: str, user: dict = Depends(get_current_user)):
     res = db.table("runs").select("trace").eq("session_id", session_id).eq("status", "done").order("created_at", desc=True).limit(1).execute()

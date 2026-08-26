@@ -39,19 +39,23 @@ def run(state: AgentState) -> AgentState:
         # Supabase API format for Postgres arrays/vectors expects a string like '[0.1, 0.2, ...]'
         vector_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
         
-        result = db.rpc("match_chunks", {
+        rpc_params = {
             "query_embedding": vector_str,
             "session_id": state["session_id"],
             "match_count": 15
-        }).execute()
+        }
+        if state.get("document_id"):
+            rpc_params["document_id"] = state["document_id"]
+        result = db.rpc("match_chunks", rpc_params).execute()
         
         if not result.data or len(result.data) == 0:
-            result = db.table("chunks")\
+            q = db.table("chunks")\
                 .select("id, text")\
                 .eq("session_id", state["session_id"])\
-                .not_.is_("embedding", "null")\
-                .limit(15)\
-                .execute()
+                .not_.is_("embedding", "null")
+            if state.get("document_id"):
+                q = q.eq("document_id", state["document_id"])
+            result = q.limit(15).execute()
         
         chunks = result.data
         
@@ -61,7 +65,10 @@ def run(state: AgentState) -> AgentState:
 
         total_chars = sum(len(extract_text(c)) for c in chunks)
         if total_chars < 500:
-            fallback = db.table("chunks").select("id, text").eq("session_id", state["session_id"]).limit(15).execute()
+            fb_q = db.table("chunks").select("id, text").eq("session_id", state["session_id"])
+            if state.get("document_id"):
+                fb_q = fb_q.eq("document_id", state["document_id"])
+            fallback = fb_q.limit(15).execute()
             fallback_chunks = fallback.data or []
             existing_ids = {c["id"] for c in chunks}
             for c in fallback_chunks:

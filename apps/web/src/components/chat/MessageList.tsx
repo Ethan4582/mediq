@@ -24,6 +24,7 @@ export default function MessageList({
   pendingUpload,
   ocrResult,
   pipelineStatus,
+  onSelectDraft,
 }: {
   messages: Message[];
   loading: boolean;
@@ -31,6 +32,7 @@ export default function MessageList({
   pendingUpload?: PendingUpload | null;
   ocrResult?: OcrResult | null;
   pipelineStatus?: PipelineStatus;
+  onSelectDraft?: (draftId: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
@@ -114,8 +116,13 @@ export default function MessageList({
                   <div 
                     className="flex items-center gap-4 p-5 rounded-2xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-md cursor-pointer bg-white shadow-sm transition-all max-w-md w-[400px]" 
                     onClick={() => { 
-                      const { setFileViewMode } = useSessionStore.getState();
-                      setFileViewMode(true); 
+                      const draftId = (m.metadata as Record<string, unknown>)?.draft_id as string;
+                      if (draftId && onSelectDraft) {
+                        onSelectDraft(draftId);
+                      } else {
+                        const { setFileViewMode } = useSessionStore.getState();
+                        setFileViewMode(true);
+                      }
                     }}
                   >
                     <div className="shrink-0 p-2.5 bg-[#f9fafb] rounded-xl border border-[#f3f4f6]">

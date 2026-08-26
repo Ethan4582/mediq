@@ -17,7 +17,11 @@ def run(state: AgentState) -> AgentState:
     state["iteration"] += 1
     print(f"[PLANNER] Starting iteration {state['iteration']} for session {state['session_id']}", flush=True)
     
-    res = db.table("chunks").select("text").eq("session_id", state["session_id"]).limit(5).execute()
+    res = db.table("chunks").select("text").eq("session_id", state["session_id"])
+    # Scope to the specific document if provided so each run is document-isolated
+    if state.get("document_id"):
+        res = res.eq("document_id", state["document_id"])
+    res = res.limit(5).execute()
     sample_texts = [row["text"] for row in res.data]
     context = "\n---\n".join(sample_texts)
     print(f"[PLANNER] Sampled {len(sample_texts)} chunks from database", flush=True)
