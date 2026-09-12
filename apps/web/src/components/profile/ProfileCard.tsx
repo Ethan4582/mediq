@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Avatar from "@/components/shared/Avatar";
 import Spinner from "@/components/shared/Spinner";
 import { Pencil, Check, X } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function ProfileCard({
   user,
@@ -31,45 +33,36 @@ export default function ProfileCard({
   };
 
   return (
-    <div
-      className="rounded-xl border p-6 flex items-center gap-4"
-      style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-    >
-      <Avatar name={displayName} src={user?.user_metadata?.avatar_url} size="lg" />
-      <div className="flex-1 min-w-0">
-        {editing ? (
-          <div className="flex items-center gap-2">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="text-lg font-semibold rounded border px-2 py-0.5 outline-none flex-1"
-              style={{
-                borderColor: "var(--border-default)",
-                color: "var(--text-primary)",
-              }}
-            />
-            <button onClick={handleSave} disabled={saving} className="p-1">
-              {saving ? <Spinner /> : <Check size={16} className="text-green-600" />}
-            </button>
-            <button onClick={() => setEditing(false)} className="p-1">
-              <X size={16} style={{ color: "var(--text-muted)" }} />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
-              {displayName}
-            </h2>
-            <button onClick={() => setEditing(true)} className="p-1">
-              <Pencil size={14} style={{ color: "var(--text-muted)" }} />
-            </button>
-          </div>
-        )}
-        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          {user?.email}
-        </p>
-        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-      </div>
-    </div>
+    <Card className="shadow-sm">
+      <CardContent className="p-6 flex items-center gap-4">
+        <Avatar name={displayName} src={user?.user_metadata?.avatar_url} size="lg" />
+        <div className="flex-1 min-w-0">
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="h-8 text-sm max-w-xs"
+              />
+              <Button size="icon" variant="ghost" onClick={handleSave} disabled={saving} className="size-8 text-emerald-600">
+                {saving ? <Spinner className="size-3.5" /> : <Check className="size-4" />}
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => setEditing(false)} className="size-8 text-muted-foreground">
+                <X className="size-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold text-foreground truncate">{displayName}</h2>
+              <Button size="icon" variant="ghost" onClick={() => setEditing(true)} className="size-7 text-muted-foreground">
+                <Pencil className="size-3.5" />
+              </Button>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">{user?.email}</p>
+          {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

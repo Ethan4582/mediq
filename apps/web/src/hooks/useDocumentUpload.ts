@@ -32,7 +32,9 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
     if (!sessionId || sessionId === "new") return;
 
     let mounted = true;
-    const fetchExistingDoc = async () => {
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const fetchOcrResult = async (): Promise<boolean> => {
       try {
         const res = await fetch(`${API_URL}/api/patient/${sessionId}/ocr-result`);
         if (res.ok) {
@@ -44,17 +46,27 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
               pageCount: result.page_count,
               chunkCount: result.chunk_count,
             });
+            return true;
           }
         }
       } catch (err) {
         console.error("Failed to fetch existing document", err);
       }
+      return false;
     };
 
-    fetchExistingDoc();
+    const poll = async () => {
+      const done = await fetchOcrResult();
+      if (!done && mounted) {
+        pollTimer = setTimeout(poll, 2000);
+      }
+    };
+
+    poll();
 
     return () => {
       mounted = false;
+      if (pollTimer) clearTimeout(pollTimer);
     };
   }, [sessionId]);
 
@@ -103,6 +115,10 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
 
         const { session_id, job_id, document_ids } = await res.json();
         setPendingUpload(prev => prev ? { ...prev, jobId: job_id } : null);
+        
+        // Notify parent immediately so activeDocumentId is set BEFORE SSE finishes
+        onComplete?.(session_id, document_ids?.[0]);
+        
         triggerRefresh();
 
         // Poll SSE stream
@@ -112,7 +128,7 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
           
           if (data.status === "done") {
             es.close();
-            setPendingUpload(prev => prev ? { ...prev, status: "done", progress: 100 } : null);
+            setPendingUpload(prev => prev ? { ...prev, status: "done", progress: 100, stage: "ready" } : null);
             
             try {
                const ocrRes = await fetch(`${API_URL}/api/patient/${session_id}/ocr-result`);
@@ -130,8 +146,6 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
             }
 
             useSessionStore.getState().setPendingPipelineStatus("agent_running");
-            
-            onComplete?.(session_id, document_ids?.[0]);
           } else if (data.status === "error") {
             es.close();
             setPendingUpload(prev => prev ? { ...prev, status: "error", errorMessage: data.error } : null);

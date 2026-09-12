@@ -1,14 +1,14 @@
 import asyncio
 import json
 import uuid
-from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import StreamingResponse
 import fitz
 
-from core.auth import get_current_user, require_keys
+from core.auth import require_keys
 from core.supabase import db
 from core.r2 import upload_file
-from core.redis import set_job_progress, get_job_progress
+from core.progress import get_doc_progress
 from core.encryption import decrypt
 from models.upload import UploadResponse, JobStatus
 
@@ -23,6 +23,7 @@ MAX_FILES = 5
 @router.post("/upload", response_model=UploadResponse)
 async def upload_documents(
     request: Request,
+    background_tasks: BackgroundTasks,
     files: list[UploadFile] = File(...),
     session_id: str | None = Form(None),
 ):
@@ -92,18 +93,19 @@ async def upload_documents(
                 "r2_key": r2_key,
                 "page_count": pages,
                 "ocr_status": "pending",
+                "progress": 0,
+                "stage": "queued",
             })
             .execute()
         )
         doc_id = doc_row.data[0]["id"]
         document_ids.append(doc_id)
 
-        # Dispatch Celery task
         from tasks.ocr import process_document
-        task = process_document.delay(doc_id, session_id, mistral_key)
+        background_tasks.add_task(process_document, doc_id, session_id, mistral_key)
+
         if job_id is None:
-            job_id = task.id
-            set_job_progress(job_id, "pending", 0, "uploading")
+            job_id = doc_id
 
     return UploadResponse(
         session_id=session_id,
@@ -117,16 +119,14 @@ async def upload_documents(
 @router.get("/upload/{job_id}/status")
 async def job_status_stream(job_id: str):
     async def stream():
-        for _ in range(300):  # max 5min polling
-            data = get_job_progress(job_id)
+        for _ in range(300):  # max 5 min
+            data = get_doc_progress(job_id)
             if data:
                 yield f"data: {json.dumps(data)}\n\n"
-                if data.get("status") in ("done", "error"):
+                if data.get("status") in ("done", "failed", "error"):
                     break
             else:
                 yield f"data: {json.dumps({'job_id': job_id, 'status': 'pending', 'progress': 0, 'stage': 'queued'})}\n\n"
             await asyncio.sleep(1)
 
     return StreamingResponse(stream(), media_type="text/event-stream")
-
-

@@ -4,9 +4,19 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { ExternalLink } from "lucide-react";
 import Image from "next/image";
-import { RecentSession } from "@/types/app";
+import type { RecentSession } from "@/types/app";
 import StatusBadge from "@/components/shared/StatusBadge";
-import SkeletonLine from "@/components/shared/SkeletonLine";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 export default function RecentSessionsTable({
   data,
@@ -16,71 +26,78 @@ export default function RecentSessionsTable({
   loading: boolean;
 }) {
   return (
-    <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--card-border)" }}>
-      <div className="px-6 py-5 border-b border-gray-100">
-        <h2 className="font-bold text-base" style={{ color: "var(--text-primary)" }}>Recent Sessions</h2>
-      </div>
+    <Card className="shadow-sm overflow-hidden">
+      <CardHeader className="px-6 py-4 border-b">
+        <CardTitle className="text-base font-semibold">Recent Sessions</CardTitle>
+      </CardHeader>
 
-      {loading ? (
-        <div className="px-6 py-4 space-y-4">
-          {[0, 1, 2].map((i) => <SkeletonLine key={i} className="h-10" />)}
-        </div>
-      ) : data.length === 0 ? (
-        <div className="py-16 text-center text-sm text-gray-500">
-          No sessions yet. Upload your first document to get started.
-        </div>
-      ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500">
-              {["Session", "Date", "Pages", "Provider", "Status", "Action"].map((h) => (
-                <th key={h} className="text-left px-6 py-3 font-medium">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((s) => (
-              <tr key={s.session_id} className="border-b border-gray-100 last:border-none hover:bg-gray-50/50 transition-colors">
-                <td className="px-6 py-4 font-medium text-gray-900 max-w-[180px] truncate">
-                  {(s.title || `Case #${s.session_id.slice(0, 6)}`).slice(0, 30)}
-                </td>
-                <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
-                  {format(parseISO(s.created_at), "MMM d, yyyy HH:mm")}
-                </td>
-                <td className="px-6 py-4 text-gray-700 font-medium">{s.page_count}</td>
-                <td className="px-6 py-4">
-                  {s.provider_used ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full pl-1.5 pr-2.5 py-0.5 text-xs bg-gray-100/80 border border-gray-200/60 text-gray-700 font-medium capitalize">
-                      <Image 
-                        src={`/${s.provider_used.toLowerCase()}.svg`} 
-                        alt={s.provider_used} 
-                        width={14} 
-                        height={14} 
-                        className="object-contain"
-                        onError={(e) => e.currentTarget.style.display = 'none'}
-                      />
-                      {s.provider_used}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">—</span>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <StatusBadge status={s.status as "done" | "pending" | "error"} />
-                </td>
-                <td className="px-6 py-4">
-                  <Link
-                    href={`/chat/${s.session_id}`}
-                    className="inline-flex items-center gap-1 text-blue-600 hover:underline"
-                  >
-                    Open <ExternalLink size={12} />
-                  </Link>
-                </td>
-              </tr>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-10 w-full" />
             ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+          </div>
+        ) : data.length === 0 ? (
+          <div className="py-16 text-center text-xs text-muted-foreground">
+            No sessions recorded yet. Start a new session to see analytics.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40 text-xs">
+                <TableHead>Case / Session</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Pages</TableHead>
+                <TableHead>Provider</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((s) => (
+                <TableRow key={s.session_id} className="text-xs">
+                  <TableCell className="font-medium max-w-[200px] truncate">
+                    {(s.title || `Case #${s.session_id.slice(0, 6)}`).slice(0, 35)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
+                    {format(parseISO(s.created_at), "MMM d, yyyy HH:mm")}
+                  </TableCell>
+                  <TableCell className="font-medium">{s.page_count}</TableCell>
+                  <TableCell>
+                    {s.provider_used ? (
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted text-[11px] font-medium capitalize">
+                        <Image
+                          src={`/${s.provider_used.toLowerCase()}.svg`}
+                          alt={s.provider_used}
+                          width={14}
+                          height={14}
+                          className="object-contain"
+                          onError={(e) => (e.currentTarget.style.display = "none")}
+                        />
+                        <span>{s.provider_used}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={s.status} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild size="sm" variant="ghost" className="h-7 text-xs gap-1">
+                      <Link href={`/chat/${s.session_id}`}>
+                        <span>Open</span>
+                        <ExternalLink className="size-3" />
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }

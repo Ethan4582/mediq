@@ -81,6 +81,8 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
     if not mistral_key or not llm_key:
         raise HTTPException(status_code=400, detail="Missing required API keys (OCR and LLM)")
         
+    print(f"\n[AGENT] POST /run called for session {session_id} with document_id: {req.document_id}", flush=True)
+    
     # Check if a completed run already exists for this session/document
     query = db.table("runs").select("id, status").eq("session_id", session_id).eq("status", "done")
     if req.document_id:
@@ -89,26 +91,36 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
     existing = query.limit(1).execute()
 
     if existing.data:
-        # Return existing draft instead of running again
-        draft = db.table("drafts")\
-            .select("*")\
-            .eq("session_id", session_id)\
-            .order("created_at", desc=True)\
-            .limit(1)\
-            .execute()
-        if draft.data:
-            return { "run_id": existing.data[0]["id"], "draft_id": draft.data[0]["id"], "status": "done", "cached": True }
+        print(f"[AGENT] Found existing done run: {existing.data[0]['id']} - Returning cached response", flush=True)
+        # return the latest draft for this session
+        draft = db.table("drafts").select("id").eq("session_id", session_id).order("created_at", desc=True).limit(1).execute()
+        draft_id = draft.data[0]["id"] if draft.data else None
+        
+        # Insert a message into chat to maintain chronological flow
+        db.table("messages").insert({
+            "id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "role": "assistant",
+            "content": "This document was already processed recently. I've pulled up the existing summary for you.",
+            "metadata": {
+                "type": "draft_generated",
+                "draft_id": draft_id
+            }
+        }).execute()
+        
+        return {"status": "done", "run_id": existing.data[0]["id"], "draft_id": draft_id, "cached": True}
             
-    running = db.table("runs")\
-        .select("id, status")\
-        .eq("session_id", session_id)\
-        .eq("status", "running")\
-        .limit(1)\
-        .execute()
+    running_query = db.table("runs").select("id, status").eq("session_id", session_id).eq("status", "running")
+    if req.document_id:
+        running_query = running_query.eq("document_id", req.document_id)
+        
+    running = running_query.limit(1).execute()
         
     if running.data:
+        print(f"[AGENT] Found existing running run: {running.data[0]['id']}", flush=True)
         return { "run_id": running.data[0]["id"], "status": "running", "cached": True }
             
+    print(f"[AGENT] No existing run found. Starting new agent execution for doc: {req.document_id}...", flush=True)
     run_id = str(uuid.uuid4())
     run_insert = {
         "id": run_id,
@@ -167,11 +179,21 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
             "content": draft
         }).execute()
         
+        flags = draft.get("flags", {})
+        missing = flags.get("missing_fields", [])
+        
+        if missing and "diagnoses.principal_diagnosis" in missing:
+            msg_content = "Processed as a supplementary document (no principal diagnosis found). The summary may be incomplete, but you can now ask questions about it in the chat."
+        elif missing:
+            msg_content = f"Processed document. Some fields are missing ({', '.join(missing[:2])}), but you can now ask questions about it in the chat."
+        else:
+            msg_content = "Document processed and draft updated. You can view the summary or ask questions about the data here."
+
         # Insert a message into the chat stream so the user sees the summary in the conversation flow
         db.table("messages").insert({
             "session_id": session_id,
             "role": "assistant",
-            "content": "I have generated a discharge summary based on the document.",
+            "content": msg_content,
             "metadata": {
                 "type": "draft_generated",
                 "draft_id": draft_id
@@ -207,6 +229,13 @@ async def get_draft(session_id: str, user: dict = Depends(get_current_user)):
     if not res.data:
         raise HTTPException(status_code=404, detail="Draft not found")
     return res.data[0]
+
+@router.get("/patient/{session_id}/draft/{draft_id}")
+async def get_draft_by_id(session_id: str, draft_id: str, user: dict = Depends(get_current_user)):
+    res = db.table("drafts").select("*").eq("session_id", session_id).eq("id", draft_id).maybe_single().execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Draft not found")
+    return res.data
 
 @router.get("/patient/{session_id}/trace")
 async def get_trace(session_id: str, user: dict = Depends(get_current_user)):

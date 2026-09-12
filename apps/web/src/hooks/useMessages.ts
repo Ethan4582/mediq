@@ -59,5 +59,18 @@ export function useMessages(sessionId: string) {
     };
   }, [sessionId]);
 
-  return { messages: currentMessages, loading: currentLoading };
+  const refetch = async () => {
+    if (!sessionId || sessionId === "new") return;
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true });
+
+    if (!error && data) {
+      setMessages(data as Message[]);
+    }
+  };
+
+  return { messages: currentMessages, loading: currentLoading, refetch };
 }

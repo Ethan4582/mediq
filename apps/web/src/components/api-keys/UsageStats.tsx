@@ -1,67 +1,60 @@
-import SkeletonLine from "@/components/shared/SkeletonLine";
 import { BarChart2, FileText, Crown } from "lucide-react";
-import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const stats = [
-  { 
-    label: "Runs today", 
-    value: "0", 
+  {
+    label: "Runs today",
+    value: "0",
     limit: "/ 1 limit",
-    icon: <BarChart2 size={22} className="text-blue-600" />,
-    iconBg: "bg-blue-50"
+    icon: BarChart2,
+    iconColor: "text-blue-600 dark:text-blue-400",
+    bgColor: "bg-blue-500/10",
   },
-  { 
-    label: "Pages processed", 
-    value: "0", 
+  {
+    label: "Pages processed",
+    value: "0",
     limit: "/ 300 today",
-    icon: <FileText size={22} className="text-green-600" />,
-    iconBg: "bg-green-50"
+    icon: FileText,
+    iconColor: "text-emerald-600 dark:text-emerald-400",
+    bgColor: "bg-emerald-500/10",
   },
-  { 
-    label: "Active tier", 
-    value: "Free", 
+  {
+    label: "Active tier",
+    value: "Free Tier",
     limit: "",
-    icon: <Crown size={22} className="text-purple-600" />,
-    iconBg: "bg-purple-50"
+    icon: Crown,
+    iconColor: "text-purple-600 dark:text-purple-400",
+    bgColor: "bg-purple-500/10",
   },
 ];
 
 export default function UsageStats({ loading }: { loading?: boolean }) {
   return (
-    <div className="grid grid-cols-3 gap-6">
-      {stats.map((s) => (
-        <div
-          key={s.label}
-          className="rounded-2xl border p-6 flex items-start gap-4 shadow-sm bg-white"
-          style={{ borderColor: "var(--card-border)" }}
-        >
-          {/* Icon Block */}
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${s.iconBg}`}>
-            {s.icon}
-          </div>
-
-          {/* Text Content */}
-          <div className="flex flex-col mt-0.5">
-            <p className="text-xs font-medium text-gray-500 mb-1">
-              {s.label}
-            </p>
-            {loading ? (
-              <SkeletonLine className="w-16 h-7" />
-            ) : (
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-[28px] leading-none font-semibold text-gray-900">
-                  {s.value}
-                </span>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {stats.map((s) => {
+        const Icon = s.icon;
+        return (
+          <Card key={s.label} className="p-5 shadow-sm">
+            <CardContent className="flex items-center gap-4 p-0">
+              <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${s.bgColor} ${s.iconColor}`}>
+                <Icon className="size-5" />
               </div>
-            )}
-            {!loading && s.limit && (
-              <span className="text-xs text-gray-400 font-medium mt-1">
-                {s.limit}
-              </span>
-            )}
-          </div>
-        </div>
-      ))}
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-muted-foreground">{s.label}</span>
+                {loading ? (
+                  <Skeleton className="h-6 w-16 my-0.5" />
+                ) : (
+                  <div className="flex items-baseline gap-1.5 mt-0.5">
+                    <span className="text-xl font-bold tracking-tight text-foreground">{s.value}</span>
+                    {s.limit && <span className="text-xs text-muted-foreground">{s.limit}</span>}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

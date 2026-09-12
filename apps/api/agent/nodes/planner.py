@@ -8,19 +8,27 @@ class PlannerResult(BaseModel):
     sections_present: list[str]
 
 def run(state: AgentState) -> AgentState:
-    print("\n--- PLANNER NODE START ---")
+    print("\n--- PLANNER NODE START ---", flush=True)
     if state["iteration"] >= state["max_iterations"]:
+        print(f"[PLANNER] Max iterations reached ({state['iteration']}/{state['max_iterations']}), stopping.", flush=True)
         state["status"] = "done"
         return state
     
     state["iteration"] += 1
+    print(f"[PLANNER] Starting iteration {state['iteration']} for session {state['session_id']}", flush=True)
     
-    res = db.table("chunks").select("text").eq("session_id", state["session_id"]).limit(5).execute()
+    res = db.table("chunks").select("text").eq("session_id", state["session_id"])
+    # Scope to the specific document if provided so each run is document-isolated
+    if state.get("document_id"):
+        res = res.eq("document_id", state["document_id"])
+    res = res.limit(5).execute()
     sample_texts = [row["text"] for row in res.data]
     context = "\n---\n".join(sample_texts)
+    print(f"[PLANNER] Sampled {len(sample_texts)} chunks from database", flush=True)
     
     client = get_llm_client(state["llm_provider"], state["llm_key"])
     model = get_llm_model(state["llm_provider"])
+    print(f"[PLANNER] Calling LLM model: {model} (provider: {state['llm_provider']})", flush=True)
     
     try:
         kwargs = {
@@ -37,12 +45,13 @@ def run(state: AgentState) -> AgentState:
         # Ensure medications_admission and medications_discharge are always present to trigger reconciliation
         if "medications_admission" not in sections: sections.append("medications_admission")
         if "medications_discharge" not in sections: sections.append("medications_discharge")
+        print(f"[PLANNER] LLM identified sections: {sections}", flush=True)
     except Exception as e:
-        print(f"Planner LLM failed: {e}")
+        print(f"[PLANNER] LLM call failed ({e}), using default sections fallback", flush=True)
         sections = ["diagnoses", "medications_admission", "medications_discharge", "vitals", "labs", "course", "follow_up"]
         
     state["sections_to_extract"] = sections
-    print(f"Planned sections: {sections}")
+    print(f"[PLANNER] Extraction plan set: {sections}", flush=True)
     
     trace = emit_trace(
         state=state,

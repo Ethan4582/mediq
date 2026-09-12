@@ -1,42 +1,44 @@
-export default function Avatar({
-  name,
-  src,
-  size = "md",
-}: {
+"use client";
+
+import {
+  Avatar as ShadcnAvatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+
+interface AvatarProps {
   name?: string;
   src?: string;
   size?: "sm" | "md" | "lg";
-}) {
-  const sizeClasses = {
-    sm: "w-8 h-8 text-xs",
-    md: "w-10 h-10 text-sm",
-    lg: "w-10 h-10 text-sm",
-  };
+  className?: string;
+}
 
+const sizeClasses = {
+  sm: "size-7 text-xs",
+  md: "size-9 text-sm",
+  lg: "size-12 text-base",
+};
+
+export default function Avatar({
+  name = "User",
+  src,
+  size = "md",
+  className,
+}: AvatarProps) {
   const initials = name
-    ? name
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase() ?? "")
-        .join("")
-    : "?";
-
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={name ?? "avatar"}
-        className={`${sizeClasses[size]} rounded-full object-cover flex-shrink-0`}
-      />
-    );
-  }
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
-    <div
-      className={`${sizeClasses[size]} rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0`}
-      style={{ background: "var(--brand-primary)" }}
-    >
-      {initials}
-    </div>
+    <ShadcnAvatar className={cn(sizeClasses[size], "border border-border", className)}>
+      {src && <AvatarImage src={src} alt={name} />}
+      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+        {initials || "U"}
+      </AvatarFallback>
+    </ShadcnAvatar>
   );
 }

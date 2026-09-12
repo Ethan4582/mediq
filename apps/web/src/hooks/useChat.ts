@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { API_URL } from "@/lib/constants";
 import type { Message } from "@/types/app";
 
-export function useChat(messages: Message[], setMessages: (updater: (prev: Message[]) => Message[]) => void) {
+export function useChat(messages: Message[], setMessages: (updater: (prev: Message[]) => Message[]) => void, onComplete?: () => void) {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,17 +50,9 @@ export function useChat(messages: Message[], setMessages: (updater: (prev: Messa
         throw new Error(err?.detail?.message || err?.detail || "Failed to send message");
       }
 
-      const data = await res.json();
-      const assistantMsg: Message = {
-        id: `ai-${Date.now()}`,
-        session_id: sessionId,
-        role: "assistant",
-        content: data.answer,
-        metadata: { sources: data.sources, source_count: data.source_count },
-        created_at: new Date().toISOString(),
-      };
-
-      setMessages(prev => [...prev, assistantMsg]);
+      // Remove the optimistic user message since it's now in the DB
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      if (onComplete) onComplete();
     } catch (err: any) {
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setError(err.message || "Failed to send message");

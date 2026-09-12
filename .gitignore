@@ -1,10 +1,3 @@
-
-.env*
-__pycache__
-.next
-notes.md
-
-```gitignore
 # Dependencies
 node_modules/
 .pnpm-store/
@@ -17,11 +10,19 @@ out/
 dist/
 build/
 
+# Skills & Notes
+skills/
+Agent.md
+notes/
+**/notes/
+*.context.md
+src/
+
 # Environment
 .env
 .env.*
 !.env.example
-**/notes/
+
 # Logs
 *.log
 npm-debug.log*
@@ -65,4 +66,3 @@ temp/
 
 # Misc
 .cache/
-```

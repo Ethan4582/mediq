@@ -1,14 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import Image from "next/image";
+import { Eye, EyeOff, CheckCircle2, XCircle, ExternalLink, ArrowLeft } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import Spinner from "@/components/shared/Spinner";
 import { createClient } from "@/lib/supabase/client";
 import { PROVIDERS, API_URL } from "@/lib/constants";
-import { LLMProvider } from "@/types/app";
+import type { LLMProvider } from "@/types/app";
+import { cn } from "@/lib/utils";
 
 type Step = 1 | 2 | 3;
 type KeyType = "ocr" | "llm";
@@ -39,7 +47,6 @@ export default function AddKeyDialog({
   };
 
   const close = () => { reset(); onOpenChange(false); };
-
   const effectiveProvider: LLMProvider = keyType === "ocr" ? "mistral" : provider;
 
   const validateKey = async () => {
@@ -82,87 +89,73 @@ export default function AddKeyDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) close(); }}>
-      <DialogContent className="max-w-[480px]">
+    <Dialog open={open} onOpenChange={(v) => !v && close()}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add API Key</DialogTitle>
+          <DialogTitle className="text-base">Add API Key</DialogTitle>
         </DialogHeader>
 
-        {/* Step 1 — Key type */}
         {step === 1 && (
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-gray-500">What type of key are you adding?</p>
-            <div className="space-y-3">
+          <div className="space-y-3 py-1">
+            <p className="text-xs text-muted-foreground">Select the type of key to connect:</p>
+            <div className="space-y-2.5">
               {[
-                { type: "ocr" as KeyType, title: "Mistral OCR Key", desc: "Required. Reads and extracts text from uploaded documents.", badge: "Required" },
-                { type: "llm" as KeyType, title: "AI Provider Key", desc: "Required. Generates discharge summaries.", badge: "Required" },
+                { type: "ocr" as KeyType, title: "Mistral OCR Key", desc: "Extracts clinical text from scanned records & charts.", badge: "Required" },
+                { type: "llm" as KeyType, title: "AI Reasoning Provider Key", desc: "Synthesizes structured discharge summaries.", badge: "Required" },
               ].map((opt) => (
                 <button
                   key={opt.type}
                   onClick={() => { setKeyType(opt.type); setStep(opt.type === "ocr" ? 3 : 2); }}
-                  className="w-full text-left border rounded-2xl p-4 transition-all hover:border-blue-400"
-                  style={{ borderColor: "var(--border-default)" }}
+                  className="w-full text-left border rounded-xl p-3.5 transition-colors hover:border-primary/50 hover:bg-muted/40"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{opt.title}</span>
-                    <span className="text-[11px] bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5 font-semibold">{opt.badge}</span>
+                    <span className="font-semibold text-xs text-foreground">{opt.title}</span>
+                    <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">{opt.badge}</Badge>
                   </div>
-                  <p className="text-xs text-gray-500">{opt.desc}</p>
+                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 text-center">Mistral can serve as both OCR and AI provider</p>
           </div>
         )}
 
-        {/* Step 2 — Provider selection (LLM only) */}
         {step === 2 && (
-          <div className="space-y-4 py-2">
-            <button onClick={() => setStep(1)} className="text-xs text-blue-600 hover:underline">← Back</button>
-            <p className="text-sm text-gray-500">Select your AI provider:</p>
-            <div className="grid grid-cols-2 gap-3">
-              {(Object.entries(PROVIDERS) as [LLMProvider, typeof PROVIDERS[LLMProvider]][]).map(([key, val]) => (
-                <div key={key} className="space-y-1">
-                  <button
-                    onClick={() => setProvider(key)}
-                    className="w-full border rounded-xl py-3 px-4 text-sm font-semibold transition-all flex flex-col items-center justify-center gap-2"
-                    style={{
-                      borderColor: provider === key ? "var(--brand-primary)" : "var(--border-default)",
-                      background: provider === key ? "#eff6ff" : "transparent",
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    <img src={`/${key}.svg`} alt={val.name} className="h-6 w-auto object-contain" />
-                    <span>{val.name}</span>
-                  </button>
-                  <a href={val.docsUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center justify-center gap-1 mt-1">
-                    Get key <ExternalLink size={10} />
-                  </a>
-                </div>
+          <div className="space-y-3 py-1">
+            <Button variant="ghost" size="sm" onClick={() => setStep(1)} className="gap-1 text-xs -ml-2 h-7">
+              <ArrowLeft className="size-3.5" /> Back
+            </Button>
+            <p className="text-xs text-muted-foreground">Choose your LLM provider:</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {(Object.entries(PROVIDERS) as [LLMProvider, (typeof PROVIDERS)[LLMProvider]][]).map(([pKey, val]) => (
+                <button
+                  key={pKey}
+                  onClick={() => setProvider(pKey)}
+                  className={cn(
+                    "border rounded-xl p-3 text-xs font-medium transition-all flex flex-col items-center gap-2",
+                    provider === pKey ? "border-primary bg-primary/5 text-primary" : "border-border hover:bg-muted/40"
+                  )}
+                >
+                  <Image src={`/${pKey}.svg`} alt={val.name} width={20} height={20} className="object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
+                  <span>{val.name}</span>
+                </button>
               ))}
             </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setStep(3)}>Next →</Button>
+            <div className="flex justify-end pt-2">
+              <Button size="sm" onClick={() => setStep(3)}>Next</Button>
             </div>
           </div>
         )}
 
-        {/* Step 3 — Key input */}
         {step === 3 && (
-          <div className="space-y-4 py-2">
-            <button onClick={() => setStep(keyType === "ocr" ? 1 : 2)} className="text-xs text-blue-600 hover:underline">← Back</button>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                  {keyType === "ocr" ? "Mistral API Key" : `${PROVIDERS[effectiveProvider].name} API Key`}
-                </p>
-                <a 
-                  href={PROVIDERS[effectiveProvider].docsUrl} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                >
-                  Get key <ExternalLink size={10} />
+          <div className="space-y-3 py-1">
+            <Button variant="ghost" size="sm" onClick={() => setStep(keyType === "ocr" ? 1 : 2)} className="gap-1 text-xs -ml-2 h-7">
+              <ArrowLeft className="size-3.5" /> Back
+            </Button>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium">{keyType === "ocr" ? "Mistral API Key" : `${PROVIDERS[effectiveProvider]?.name} API Key`}</span>
+                <a href={PROVIDERS[effectiveProvider]?.docsUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                  Get key <ExternalLink className="size-3" />
                 </a>
               </div>
               <div className="relative">
@@ -172,24 +165,23 @@ export default function AddKeyDialog({
                   value={key}
                   onChange={(e) => { setKey(e.target.value); setValidState("idle"); setError(""); }}
                   onBlur={validateKey}
-                  className="pr-20"
+                  className="pr-20 font-mono text-xs"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  {validating && <Spinner />}
-                  {!validating && validState === "valid" && <CheckCircle2 size={16} className="text-green-500" />}
-                  {!validating && validState === "invalid" && <XCircle size={16} className="text-red-500" />}
-                  <button type="button" onClick={() => setShow((v) => !v)} className="text-gray-400 hover:text-gray-600">
-                    {show ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                  {validating && <Spinner className="size-3.5" />}
+                  {!validating && validState === "valid" && <CheckCircle2 className="size-4 text-emerald-500" />}
+                  {!validating && validState === "invalid" && <XCircle className="size-4 text-destructive" />}
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setShow(!show)} className="size-6 text-muted-foreground">
+                    {show ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                  </Button>
                 </div>
               </div>
-              {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-              {validState === "valid" && <p className="text-xs text-green-600 mt-1">✓ Key validated successfully</p>}
+              {error && <p className="text-xs text-destructive">{error}</p>}
+              {validState === "valid" && <p className="text-xs text-emerald-600 dark:text-emerald-400">✓ Key validated</p>}
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={close}>Cancel</Button>
-              <Button onClick={handleSave} disabled={saving || validating || !key.trim()}>
-                {saving && <Spinner />}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button size="sm" variant="outline" onClick={close}>Cancel</Button>
+              <Button size="sm" onClick={handleSave} disabled={saving || validating || !key.trim()}>
                 {saving ? "Saving…" : "Save Key"}
               </Button>
             </div>
