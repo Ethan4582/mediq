@@ -2,10 +2,19 @@
 
 import { format, parseISO } from "date-fns";
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
 } from "recharts";
-import { ActivityEntry } from "@/types/app";
-import SkeletonLine from "@/components/shared/SkeletonLine";
+import type { ActivityEntry } from "@/types/app";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const DAY_OPTIONS = [7, 30, 90];
 
@@ -26,59 +35,62 @@ export default function ActivityChart({
   }));
 
   return (
-    <div className="rounded-2xl border p-6 bg-white shadow-sm" style={{ borderColor: "var(--card-border)" }}>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-bold text-base" style={{ color: "var(--text-primary)" }}>Activity</h2>
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+    <Card className="shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <CardTitle className="text-base font-semibold">Activity Progression</CardTitle>
+        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
           {DAY_OPTIONS.map((d) => (
-            <button
+            <Button
               key={d}
+              variant={days === d ? "secondary" : "ghost"}
+              size="sm"
               onClick={() => onDaysChange(d)}
-              className="px-3 py-1 text-xs font-semibold rounded-md transition-all"
-              style={{
-                background: days === d ? "white" : "transparent",
-                color: days === d ? "var(--brand-primary)" : "var(--text-muted)",
-                boxShadow: days === d ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-              }}
+              className="h-6 px-2.5 text-xs"
             >
               {d}d
-            </button>
+            </Button>
           ))}
         </div>
-      </div>
+      </CardHeader>
 
-      {loading ? (
-        <SkeletonLine className="h-64 w-full rounded-xl" />
-      ) : formatted.length === 0 ? (
-        <div className="h-64 flex items-center justify-center text-gray-400 text-sm">
-          No activity data yet
-        </div>
-      ) : (
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={formatted} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-            <defs>
-              <linearGradient id="runsGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="pagesGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-            <Tooltip
-              contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }}
-              formatter={(val: any, name: any) => [val, name === "runs" ? "Runs" : "Pages"]}
-            />
-            <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-            <Area type="monotone" dataKey="runs" stroke="#3b82f6" strokeWidth={2} fill="url(#runsGrad)" name="Runs" />
-            <Area type="monotone" dataKey="pages" stroke="#14b8a6" strokeWidth={2} fill="url(#pagesGrad)" name="Pages" />
-          </AreaChart>
-        </ResponsiveContainer>
-      )}
-    </div>
+      <CardContent>
+        {loading ? (
+          <Skeleton className="h-64 w-full rounded-xl" />
+        ) : formatted.length === 0 ? (
+          <div className="h-64 flex items-center justify-center text-muted-foreground text-xs">
+            No activity recorded in this time range
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart data={formatted} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+              <defs>
+                <linearGradient id="runsGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
+                </linearGradient>
+                <linearGradient id="docsGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border" opacity={0.4} />
+              <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="currentColor" className="text-muted-foreground" />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="currentColor" className="text-muted-foreground" />
+              <Tooltip
+                contentStyle={{
+                  background: "var(--background)",
+                  borderColor: "var(--border)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+              <Area type="monotone" dataKey="runs" name="Agent Runs" stroke="#2563eb" fillOpacity={1} fill="url(#runsGrad)" />
+              <Area type="monotone" dataKey="documents" name="Docs Processed" stroke="#10b981" fillOpacity={1} fill="url(#docsGrad)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
   );
 }

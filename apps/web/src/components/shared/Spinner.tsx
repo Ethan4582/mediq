@@ -1,8 +1,10 @@
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
 export default function Spinner({ className }: { className?: string }) {
   return (
-    <div
-      className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${className ?? ""}`}
-      style={{ borderColor: "var(--brand-primary)", borderTopColor: "transparent" }}
+    <Loader2
+      className={cn("size-4 animate-spin text-muted-foreground", className)}
     />
   );
 }

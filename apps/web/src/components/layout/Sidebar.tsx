@@ -1,48 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import {
-  Plus,
-  ChevronsLeft,
-  Search,
-  Key,
-  User,
-  ChevronDown,
-  BarChart2,
-  MoreHorizontal,
-  Pin,
-  Trash,
-  FolderOpen,
-  FolderClosed,
-  Share,
-  FolderPlus,
-  Edit2,
-  MessageSquare
-} from "lucide-react";
+import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { Plus, Search, BarChart3, FolderPlus, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useSessions } from "@/hooks/useSessions";
 import { useSessionStore } from "@/stores/sessionStore";
-import { createClient } from "@/lib/supabase/client";
-import Avatar from "@/components/shared/Avatar";
-import SkeletonLine from "@/components/shared/SkeletonLine";
-import { useState, useMemo } from "react";
-import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
+import type { AppSession } from "@/types/app";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -54,472 +27,240 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import type { AppSession, Folder } from "@/types/app";
+import SidebarSessionList from "./SidebarSessionList";
+import SidebarFolderItem from "./SidebarFolderItem";
+import SidebarUserMenu from "./SidebarUserMenu";
 
 export default function Sidebar({
   user,
 }: {
   user: { email?: string; user_metadata?: { full_name?: string; avatar_url?: string } };
 }) {
-  const { 
-    sessions, 
+  const pathname = usePathname();
+  const activeSessionId = pathname?.startsWith("/chat/") ? pathname.split("/")[2] : undefined;
+
+  const {
+    sessions,
     folders,
-    loading, 
-    renameSession, 
-    deleteSession, 
-    togglePin, 
-    moveToFolder, 
-    createFolder 
+    renameSession,
+    deleteSession,
+    togglePin,
+    moveToFolder,
+    createFolder,
   } = useSessions();
   const { isSidebarOpen, toggleSidebar } = useSessionStore();
-  const [showUserMenu, setShowUserMenu] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
-
-  const toggleFolder = (folderId: string) => {
-    setCollapsedFolders(prev => ({ ...prev, [folderId]: !prev[folderId] }));
-  };
-
   const [sessionToRename, setSessionToRename] = useState<AppSession | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [sessionToDelete, setSessionToDelete] = useState<AppSession | null>(null);
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [createFolderValue, setCreateFolderValue] = useState("");
 
-  const router = useRouter();
-  const pathname = usePathname();
-  const supabase = createClient();
-
-  const displayName = user?.user_metadata?.full_name ?? user?.email ?? "User";
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
-
-  const filteredSessions = useMemo(() => {
-    if (!searchQuery) return sessions;
-    const lower = searchQuery.toLowerCase();
-    return sessions.filter((s) => {
-      const name = s.patient_name ?? s.title ?? "Unnamed case";
-      return name.toLowerCase().includes(lower);
-    });
-  }, [sessions, searchQuery]);
-
+  const filteredSessions = sessions.filter((s) =>
+    (s.title || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
   const pinnedSessions = filteredSessions.filter((s) => s.is_pinned);
-  const unpinnedSessions = filteredSessions.filter((s) => !s.is_pinned);
-  
-  // Group by folder
-  const folderGroups = useMemo(() => {
-    const map = new Map<string, AppSession[]>();
-    folders.forEach(f => map.set(f.id, []));
-    unpinnedSessions.forEach(s => {
-      if (s.folder_id && map.has(s.folder_id)) {
-        map.get(s.folder_id)!.push(s);
-      }
-    });
-    return map;
-  }, [unpinnedSessions, folders]);
+  const unpinnedRootSessions = filteredSessions.filter((s) => !s.is_pinned && !s.folder_id);
 
-  const recentSessions = unpinnedSessions.filter(s => !s.folder_id);
-
-  const SessionItem = ({ session }: { session: AppSession }) => {
-    const isActive = pathname === `/chat/${session.id}`;
-    const name = session.patient_name ?? session.title ?? "Unnamed case";
-
-    const handleRename = () => {
-      setRenameValue(name);
-      setSessionToRename(session);
-    };
-
-    const handleDelete = () => {
-      setSessionToDelete(session);
-    };
-
-    const handleShare = () => {
-      toast.info("Share feature coming soon!");
-    };
-
-    const handleCreateFolder = () => {
-      setCreateFolderValue("");
-      setIsCreateFolderOpen(true);
-    };
-
-    return (
-      <div
-        className={`group relative flex items-center gap-2.5 w-full rounded-xl transition-colors text-left hover:bg-[#f4f6f8] ${isActive ? 'bg-[#eff6ff]' : ''}`}
-      >
-        <Link
-          href={`/chat/${session.id}`}
-          className="flex-1 min-w-0 py-2.5 px-3 flex items-center gap-2"
-        >
-          <MessageSquare size={14} className={`shrink-0 ${isActive ? 'text-[#2563eb]' : 'text-muted-foreground'}`} />
-          <p
-            className={`text-sm font-medium truncate ${isActive ? 'text-[#2563eb]' : 'text-[var(--text-primary)]'}`}
-          >
-            {name}
-          </p>
-        </Link>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="absolute right-2 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all">
-              <MoreHorizontal size={14} style={{ color: "var(--text-muted)" }} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleRename}>
-              <Edit2 className="mr-2 h-4 w-4" />
-              <span>Rename</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              togglePin(session.id, !session.is_pinned);
-              toast.success(session.is_pinned ? "Unpinned session" : "Pinned session");
-            }}>
-              <Pin className="mr-2 h-4 w-4" />
-              <span>{session.is_pinned ? "Unpin" : "Pin"}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleShare}>
-              <Share className="mr-2 h-4 w-4" />
-              <span>Share</span>
-            </DropdownMenuItem>
-            
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <FolderOpen className="mr-2 h-4 w-4" />
-                <span>Move to Folder</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={() => {
-                  moveToFolder(session.id, null);
-                  toast.success("Removed from folder");
-                }}>
-                  No Folder
-                </DropdownMenuItem>
-                {folders.map(f => (
-                  <DropdownMenuItem key={f.id} onClick={() => {
-                    moveToFolder(session.id, f.id);
-                    toast.success(`Moved to ${f.name}`);
-                  }}>
-                    {f.name}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleCreateFolder}>
-                  <FolderPlus className="mr-2 h-4 w-4" />
-                  <span>Create new...</span>
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600">
-              <Trash className="mr-2 h-4 w-4" />
-              <span>Delete</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    );
+  const handleRenameConfirm = async () => {
+    if (sessionToRename && renameValue.trim()) {
+      await renameSession(sessionToRename.id, renameValue.trim());
+      setSessionToRename(null);
+    }
   };
 
-  const firstName = displayName.split(" ")[0];
+  const handleCreateFolderConfirm = async () => {
+    if (createFolderValue.trim()) {
+      await createFolder(createFolderValue.trim());
+      setCreateFolderValue("");
+      setIsCreateFolderOpen(false);
+    }
+  };
 
   return (
-    <div
-      className="w-full h-full flex flex-col shrink-0 bg-[#f9fafb] px-3 py-4 gap-1"
-    >
-      {/* Logo Row */}
-      <div className="flex items-center justify-between px-2 pt-1 pb-2">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-[34px]">
-            <img src="/logo.png" alt="MediQ" width={34} height={34} />
-          </div>
-          {isSidebarOpen && (
-            <span className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>
-              MediQ
-            </span>
-          )}
-        </div>
-        {isSidebarOpen && (
-          <button
-            onClick={toggleSidebar}
-            className="p-1 rounded hover:bg-[var(--bg-hover)] transition-colors shrink-0"
-            style={{ color: "var(--text-muted)" }}
-          >
-            <img src="/sidebar.svg" alt="Toggle Sidebar" className="w-[18px] h-[18px] opacity-70 hover:opacity-100 transition-opacity" />
-          </button>
-        )}
+    <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none">
+      {/* Top Header */}
+      <div className="flex items-center justify-between p-3 border-b border-sidebar-border/60">
+        <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
+          <Image src="/logo.png" alt="MediQ" width={22} height={22} className="object-contain" />
+          {isSidebarOpen && <span>MediQ</span>}
+        </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="size-7 text-muted-foreground hover:text-foreground"
+        >
+          {isSidebarOpen ? <ChevronsLeft className="size-4" /> : <ChevronsRight className="size-4" />}
+        </Button>
       </div>
 
-      {/* New Session Button */}
-      <div className="px-2 pb-2">
-        <Link
-          href="/chat/new"
-          className="flex items-center justify-center gap-2 w-full rounded-lg py-2 text-sm font-medium text-white transition-colors"
-          style={{ background: "var(--brand-primary)" }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "var(--brand-hover)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "var(--brand-primary)")
-          }
-          title="New Session"
-        >
-          <Plus size={16} />
-          {isSidebarOpen && "New Session"}
-        </Link>
-      </div>
-
-      {/* Search Bar */}
-      <div className="px-2 pb-2">
-        <div
-          className={`relative flex items-center ${isSidebarOpen ? "gap-2 px-3 justify-start" : "justify-center"} rounded-md py-1.5 focus-within:ring-1 focus-within:ring-blue-500 transition-all`}
-          style={{ background: "var(--bg-hover)" }}
-          title={!isSidebarOpen ? "Search sessions (⌘K)" : undefined}
-        >
-          <Search size={14} style={{ color: "var(--text-muted)" }} />
-          {isSidebarOpen && (
-            <>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search sessions"
-                className="flex-1 text-sm bg-transparent outline-none pr-8"
-                style={{ color: "var(--text-primary)" }}
-              />
-              <span
-                className="absolute right-2 text-[10px] px-1.5 py-0.5 rounded border font-mono pointer-events-none"
-                style={{ color: "var(--text-muted)", borderColor: "var(--border-default)" }}
-              >
-                ⌘K
-              </span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Middle: Nav Links */}
-      <div className="px-2 space-y-1">
-        <Link
-          href="/api-keys"
-          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3 justify-start" : "justify-center"}`}
-          style={{ color: "var(--text-secondary)" }}
-          title="API Keys"
-        >
-          <Key size={16} />
-          {isSidebarOpen && "API Keys"}
-        </Link>
-        <Link
-          href="/analytics"
-          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3 justify-start" : "justify-center"}`}
-          style={{ color: "var(--text-secondary)" }}
-          title="Analytics"
-        >
-          <BarChart2 size={16} />
-          {isSidebarOpen && "Analytics"}
-        </Link>
-        <Link
-          href="/profile"
-          className={`flex items-center gap-2 w-full rounded-md py-2 text-sm transition-colors hover:bg-[var(--bg-hover)] ${isSidebarOpen ? "px-3 justify-start" : "justify-center"}`}
-          style={{ color: "var(--text-secondary)" }}
-          title="Profile"
-        >
-          <User size={16} />
-          {isSidebarOpen && "Profile"}
-        </Link>
-      </div>
-
-      {/* Sessions List */}
       {isSidebarOpen && (
-        <>
-          <hr className="mx-1 my-1" style={{ borderColor: "var(--border-default)" }} />
-          <div className="flex-1 overflow-y-auto px-2 space-y-4 pb-4">
-            {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2.5">
-                  <div
-                    className="w-4 h-4 rounded animate-pulse shrink-0"
-                    style={{ background: "var(--bg-hover)" }}
-                  />
-                  <div className="flex-1 space-y-1.5">
-                    <SkeletonLine className="w-3/4 h-3" />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="space-y-4">
-                {/* Pinned Sessions */}
-                {pinnedSessions.length > 0 && (
-                  <div className="space-y-0.5">
-                    <span className="px-3 py-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
-                      <Pin size={12} />
-                      Pinned
-                    </span>
-                    {pinnedSessions.map((s) => (
-                      <SessionItem key={s.id} session={s} />
-                    ))}
-                  </div>
-                )}
+        <div className="flex flex-col flex-1 min-h-0 px-2 py-3 gap-3 overflow-hidden">
+          {/* Actions */}
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <Button asChild className="w-full justify-start gap-2 h-9 font-medium text-xs shadow-sm">
+              <Link href="/chat/new">
+                <Plus className="size-4" />
+                <span>New Session</span>
+              </Link>
+            </Button>
+            <div className="flex items-center gap-1">
+              <div className="relative flex-1">
+                <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search cases..."
+                  className="h-8 pl-8 text-xs bg-muted/40"
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsCreateFolderOpen(true)}
+                title="Create Folder"
+                className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+              >
+                <FolderPlus className="size-4" />
+              </Button>
+            </div>
+          </div>
 
-                {/* Folders */}
-                {folders.map(f => {
-                  const folderSesh = folderGroups.get(f.id) || [];
-                  if (folderSesh.length === 0) return null;
-                  const isCollapsed = collapsedFolders[f.id];
-                  return (
-                    <div key={f.id} className="space-y-0.5">
-                      <button 
-                        onClick={() => toggleFolder(f.id)}
-                        className="w-full text-left px-3 py-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5 hover:text-foreground transition-colors"
-                      >
-                        {isCollapsed ? <FolderClosed size={12} /> : <FolderOpen size={12} />}
-                        {f.name}
-                      </button>
-                      {!isCollapsed && folderSesh.map((s) => (
-                        <SessionItem key={s.id} session={s} />
-                      ))}
-                    </div>
-                  );
-                })}
-
-                {/* Recent Sessions */}
-                {recentSessions.length > 0 && (
-                  <div className="space-y-0.5">
-                    <span className="px-3 py-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                      Recent
-                    </span>
-                    {recentSessions.map((s) => (
-                      <SessionItem key={s.id} session={s} />
-                    ))}
-                  </div>
-                )}
-
-                {filteredSessions.length === 0 && (
-                  <p className="text-center text-sm text-muted-foreground pt-4">
-                    No sessions found
-                  </p>
-                )}
+          {/* Session List */}
+          <div className="flex-1 overflow-y-auto flex flex-col gap-3 pr-1">
+            {pinnedSessions.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase px-2 tracking-wider">
+                  Pinned
+                </span>
+                <SidebarSessionList
+                  sessions={pinnedSessions}
+                  folders={folders}
+                  activeSessionId={activeSessionId}
+                  onTogglePin={togglePin}
+                  onRename={(s) => { setSessionToRename(s); setRenameValue(s.title || ""); }}
+                  onDelete={setSessionToDelete}
+                  onMoveToFolder={moveToFolder}
+                />
               </div>
             )}
-          </div>
-        </>
-      )}
-      {!isSidebarOpen && <div className="flex-1" />}
 
-      {/* Bottom User Row */}
-      <div
-        className="mt-auto px-2 py-3 border-t relative group"
-        style={{ borderColor: "var(--border-default)" }}
-      >
-        <div className={`flex items-center gap-2 w-full rounded-lg py-2 ${isSidebarOpen ? "px-2 justify-start" : "justify-center"} hover:bg-[var(--bg-hover)] transition-colors cursor-pointer`}>
-          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-semibold shrink-0">
-            {firstName.charAt(0).toUpperCase()}
-          </div>
-          {isSidebarOpen && (
-            <div className="flex-1 min-w-0 text-left pl-1">
-              <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
-                {firstName}
-              </p>
+            {folders.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase px-2 tracking-wider">
+                  Folders
+                </span>
+                {folders.map((folder) => (
+                  <SidebarFolderItem
+                    key={folder.id}
+                    folder={folder}
+                    sessions={filteredSessions}
+                    activeSessionId={activeSessionId}
+                    onRenameSession={(s) => { setSessionToRename(s); setRenameValue(s.title || ""); }}
+                    onDeleteSession={setSessionToDelete}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase px-2 tracking-wider">
+                Recents
+              </span>
+              <SidebarSessionList
+                sessions={unpinnedRootSessions}
+                folders={folders}
+                activeSessionId={activeSessionId}
+                onTogglePin={togglePin}
+                onRename={(s) => { setSessionToRename(s); setRenameValue(s.title || ""); }}
+                onDelete={setSessionToDelete}
+                onMoveToFolder={moveToFolder}
+              />
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Hover Logout */}
-        <div className={`absolute bottom-full mb-1 rounded-lg border shadow-md overflow-hidden bg-white opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 ${isSidebarOpen ? "left-2 right-2" : "left-2 w-32"}`}>
-          <button
-            onClick={handleSignOut}
-            className="w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--bg-hover)] transition-colors text-red-600 font-medium"
-          >
-            Sign out
-          </button>
+          {/* Navigation Links */}
+          <div className="shrink-0 pt-2 border-t border-sidebar-border/60">
+            <Button
+              asChild
+              variant={pathname === "/analytics" ? "secondary" : "ghost"}
+              className="w-full justify-start gap-2 h-8 text-xs font-normal"
+            >
+              <Link href="/analytics">
+                <BarChart3 className="size-4 opacity-70" />
+                <span>Analytics</span>
+              </Link>
+            </Button>
+          </div>
         </div>
+      )}
+
+      {/* User Footer */}
+      <div className="p-2 border-t border-sidebar-border/60 mt-auto">
+        <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
       </div>
 
-      {/* Rename Dialog */}
-      <Dialog open={!!sessionToRename} onOpenChange={(o) => !o && setSessionToRename(null)}>
+      {/* Dialogs */}
+      <Dialog open={!!sessionToRename} onOpenChange={(open) => !open && setSessionToRename(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename Session</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <Input 
-              value={renameValue} 
-              onChange={(e) => setRenameValue(e.target.value)}
-              placeholder="Session name"
-              autoFocus
-            />
-          </div>
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            placeholder="Session title"
+            onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm()}
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setSessionToRename(null)}>Cancel</Button>
-            <Button onClick={() => {
-              if (sessionToRename && renameValue && renameValue !== (sessionToRename.patient_name ?? sessionToRename.title)) {
-                renameSession(sessionToRename.id, renameValue);
-                toast.success("Session renamed");
-              }
-              setSessionToRename(null);
-            }}>Save</Button>
+            <Button onClick={handleRenameConfirm}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete AlertDialog */}
-      <AlertDialog open={!!sessionToDelete} onOpenChange={(o) => !o && setSessionToDelete(null)}>
+      <Dialog open={isCreateFolderOpen} onOpenChange={setIsCreateFolderOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Folder</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={createFolderValue}
+            onChange={(e) => setCreateFolderValue(e.target.value)}
+            placeholder="Folder name"
+            onKeyDown={(e) => e.key === "Enter" && handleCreateFolderConfirm()}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateFolderOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateFolderConfirm}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!sessionToDelete} onOpenChange={(open) => !open && setSessionToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Session</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your session and all its data.
+              Are you sure you want to delete this session and all its data? This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => {
-                if (sessionToDelete) {
-                  const isActive = pathname === `/chat/${sessionToDelete.id}`;
-                  deleteSession(sessionToDelete.id);
-                  toast.success("Session deleted");
-                  if (isActive) router.push("/chat/new");
-                }
+                if (sessionToDelete) deleteSession(sessionToDelete.id);
+                setSessionToDelete(null);
               }}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Create Folder Dialog */}
-      <Dialog open={isCreateFolderOpen} onOpenChange={setIsCreateFolderOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Folder</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input 
-              placeholder="Folder name" 
-              value={createFolderValue} 
-              onChange={(e) => setCreateFolderValue(e.target.value)} 
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateFolderOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              if (createFolderValue.trim()) {
-                createFolder(createFolderValue.trim());
-                toast.success("Folder created");
-                setIsCreateFolderOpen(false);
-              }
-            }}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </aside>
   );
 }

@@ -1,55 +1,39 @@
-import type { SessionStatus } from "@/types/app";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const config: Record<
-  SessionStatus,
-  { dot: string; text: string; bg: string; color: string; label: string }
+type StatusType = "done" | "pending" | "error" | "processing" | "active" | "inactive";
+
+const statusConfig: Record<
+  StatusType,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof CheckCircle2; className?: string }
 > = {
-  done: {
-    dot: "bg-green-500",
-    text: "",
-    bg: "var(--status-active-bg)",
-    color: "var(--status-active-text)",
-    label: "Active",
-  },
-  processing: {
-    dot: "bg-amber-400",
-    text: "",
-    bg: "var(--status-pending-bg)",
-    color: "var(--status-pending-text)",
-    label: "Processing",
-  },
-  processed: {
-    dot: "bg-green-400",
-    text: "",
-    bg: "var(--status-active-bg)",
-    color: "var(--status-active-text)",
-    label: "Processed",
-  },
-  pending: {
-    dot: "bg-gray-400",
-    text: "",
-    bg: "#f3f4f6",
-    color: "#6b7280",
-    label: "Pending",
-  },
-  error: {
-    dot: "bg-red-500",
-    text: "",
-    bg: "var(--status-error-bg)",
-    color: "var(--status-error-text)",
-    label: "Error",
-  },
+  done: { label: "Done", variant: "secondary", icon: CheckCircle2, className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" },
+  active: { label: "Active", variant: "secondary", icon: CheckCircle2, className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" },
+  pending: { label: "Pending", variant: "outline", icon: Clock, className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20" },
+  processing: { label: "Processing", variant: "outline", icon: Clock, className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 animate-pulse" },
+  error: { label: "Error", variant: "destructive", icon: AlertCircle, className: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20" },
+  inactive: { label: "Inactive", variant: "outline", icon: Clock, className: "text-muted-foreground" },
 };
 
-export default function StatusBadge({ status }: { status: SessionStatus }) {
-  const c = config[status] ?? config.pending;
+export default function StatusBadge({
+  status,
+  className,
+}: {
+  status: string;
+  className?: string;
+}) {
+  const key = (status?.toLowerCase() as StatusType) || "pending";
+  const config = statusConfig[key] || statusConfig.pending;
+  const IconComponent = config.icon;
+
   return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
-      style={{ background: c.bg, color: c.color }}
+    <Badge
+      variant={config.variant}
+      className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium", config.className, className)}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-      {c.label}
-    </span>
+      <IconComponent className="size-3.5" />
+      <span>{config.label}</span>
+    </Badge>
   );
 }

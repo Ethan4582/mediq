@@ -4,15 +4,16 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import Spinner from "@/components/shared/Spinner";
 
 export default function PasswordForm() {
   const supabase = createClient();
-  const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [show, setShow] = useState({ current: false, next: false, confirm: false });
+  const [showNext, setShowNext] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -28,108 +29,80 @@ export default function PasswordForm() {
       setStatus({ type: "error", msg: error.message });
     } else {
       setStatus({ type: "success", msg: "Password updated successfully." });
-      setCurrent(""); setNext(""); setConfirm("");
+      setNext("");
+      setConfirm("");
     }
     setLoading(false);
   };
 
-  const toggleShow = (field: keyof typeof show) => {
-    setShow((prev) => ({ ...prev, [field]: !prev[field] }));
-  };
-
   return (
-    <div
-      className="rounded-xl border p-6 space-y-5"
-      style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-    >
-      <div>
-        <h3 className="font-semibold text-base" style={{ color: "var(--text-primary)" }}>
-          Password
-        </h3>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
-          Update your password to keep your account secure.
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Current Password</label>
-          <div className="relative">
-            <Input
-              type={show.current ? "text" : "password"}
-              placeholder="Enter current password"
-              value={current}
-              onChange={(e) => setCurrent(e.target.value)}
-              className="pr-10"
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              onClick={() => toggleShow("current")}
-            >
-              {show.current ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
+    <Card className="shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-base">Password & Security</CardTitle>
+        <CardDescription className="text-xs">Update your credentials to keep your clinical account secure.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-foreground">New Password</label>
+            <div className="relative">
+              <Input
+                type={showNext ? "text" : "password"}
+                placeholder="••••••••"
+                value={next}
+                onChange={(e) => setNext(e.target.value)}
+                required
+                minLength={8}
+                className="h-9 pr-9 text-xs"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowNext(!showNext)}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 size-7 text-muted-foreground"
+              >
+                {showNext ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>New Password</label>
-          <div className="relative">
-            <Input
-              type={show.next ? "text" : "password"}
-              placeholder="Enter new password"
-              value={next}
-              onChange={(e) => setNext(e.target.value)}
-              className="pr-10"
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              onClick={() => toggleShow("next")}
-            >
-              {show.next ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-foreground">Confirm New Password</label>
+            <div className="relative">
+              <Input
+                type={showConfirm ? "text" : "password"}
+                placeholder="••••••••"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                minLength={8}
+                className="h-9 pr-9 text-xs"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 size-7 text-muted-foreground"
+              >
+                {showConfirm ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Confirm New Password</label>
-          <div className="relative">
-            <Input
-              type={show.confirm ? "text" : "password"}
-              placeholder="Confirm new password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className="pr-10"
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              onClick={() => toggleShow("confirm")}
-            >
-              {show.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-        </div>
+          {status && (
+            <p className={`text-xs ${status.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+              {status.msg}
+            </p>
+          )}
 
-        {status && (
-          <p className={`text-sm ${status.type === "error" ? "text-red-500" : "text-green-600"}`}>
-            {status.msg}
-          </p>
-        )}
-
-        <div className="flex justify-end pt-2">
-          <Button
-            type="submit"
-            disabled={loading || !current || !next || !confirm}
-            className="flex items-center gap-2"
-            style={{ background: "var(--brand-primary)", color: "#fff" }}
-          >
-            {loading && <Spinner />}
+          <Button type="submit" size="sm" disabled={loading} className="text-xs shadow-sm">
+            {loading ? <Spinner className="size-3.5 mr-1.5" /> : null}
             {loading ? "Updating…" : "Update Password"}
           </Button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
