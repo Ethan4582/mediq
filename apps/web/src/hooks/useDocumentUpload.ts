@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { API_URL } from "@/lib/constants";
 import { toast } from "sonner";
@@ -27,6 +27,10 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const { triggerRefresh } = useSessionStore();
 
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     if (!sessionId || sessionId === "new") return;
@@ -82,7 +86,6 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
         stage: "uploading",
       });
 
-
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -116,12 +119,10 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
         const { session_id, job_id, document_ids } = await res.json();
         setPendingUpload(prev => prev ? { ...prev, jobId: job_id } : null);
         
-        // Notify parent immediately so activeDocumentId is set BEFORE SSE finishes
-        onComplete?.(session_id, document_ids?.[0]);
+        onCompleteRef.current?.(session_id, document_ids?.[0]);
         
         triggerRefresh();
 
-        // Poll SSE stream
         const es = new EventSource(`${API_URL}/api/upload/${job_id}/status`);
         es.onmessage = async (e) => {
           const data = JSON.parse(e.data);
@@ -165,11 +166,11 @@ export function useDocumentUpload(sessionId: string, onComplete?: (sessionId: st
           es.close();
           setPendingUpload(prev => prev ? { ...prev, status: "error", errorMessage: "Connection lost" } : null);
         };
-      } catch (err) {
+      } catch {
         setPendingUpload(prev => prev ? { ...prev, status: "error", errorMessage: "Upload failed" } : null);
       }
     },
-    [onComplete, triggerRefresh]
+    [sessionId, triggerRefresh]
   );
 
   return { upload, pendingUpload, setPendingUpload, ocrResult, setOcrResult };

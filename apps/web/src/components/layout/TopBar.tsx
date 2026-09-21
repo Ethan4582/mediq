@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, FileText, Sparkles } from "lucide-react";
+import { Menu, FileText } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { AppSession } from "@/types/app";
 import { Button } from "@/components/ui/button";

@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { API_URL } from "@/lib/constants";
 import type { Message } from "@/types/app";
 
-export function useChat(messages: Message[], setMessages: (updater: (prev: Message[]) => Message[]) => void, onComplete?: () => void) {
+export function useChat(
+  messages: Message[],
+  setMessages: (updater: (prev: Message[]) => Message[]) => void,
+  onComplete?: () => void
+) {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   const sendMessage = useCallback(async (text: string, sessionId: string) => {
     if (!text.trim() || isSending) return;
@@ -46,16 +55,16 @@ export function useChat(messages: Message[], setMessages: (updater: (prev: Messa
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.detail?.message || err?.detail || "Failed to send message");
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.detail?.message || errData?.detail || "Failed to send message");
       }
 
-      // Remove the optimistic user message since it's now in the DB
       setMessages(prev => prev.filter(m => m.id !== tempId));
-      if (onComplete) onComplete();
-    } catch (err: any) {
+      onCompleteRef.current?.();
+    } catch (err: unknown) {
       setMessages(prev => prev.filter(m => m.id !== tempId));
-      setError(err.message || "Failed to send message");
+      const message = err instanceof Error ? err.message : "Failed to send message";
+      setError(message);
     } finally {
       setIsSending(false);
     }

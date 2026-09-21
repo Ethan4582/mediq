@@ -54,17 +54,14 @@ class RunAgentRequest(BaseModel):
 async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(get_current_user)):
     user_id = user["user_id"]
     
-    # 1. Fetch keys
     keys_res = db.table("api_keys").select("*").eq("user_id", user_id).execute()
     keys = keys_res.data
     mistral_key_obj = next((k for k in keys if k["key_type"] == "ocr" and k.get("is_active")), None)
     mistral_key = decrypt(mistral_key_obj["key_encrypted"]) if mistral_key_obj else None
     
-    # Find requested LLM key
     llm_key_obj_req = next((k for k in keys if k["key_type"] == "llm" and k["provider"] == req.llm_provider), None)
     llm_key = decrypt(llm_key_obj_req["key_encrypted"]) if llm_key_obj_req else None
     
-    # Fallback
     if not llm_key:
         profile_res = db.table("profiles").select("active_llm_provider").eq("id", user_id).maybe_single().execute()
         active_provider = profile_res.data.get("active_llm_provider") if profile_res.data else None
@@ -83,7 +80,6 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
         
     print(f"\n[AGENT] POST /run called for session {session_id} with document_id: {req.document_id}", flush=True)
     
-    # Check if a completed run already exists for this session/document
     query = db.table("runs").select("id, status").eq("session_id", session_id).eq("status", "done")
     if req.document_id:
         query = query.eq("document_id", req.document_id)
@@ -92,11 +88,9 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
 
     if existing.data:
         print(f"[AGENT] Found existing done run: {existing.data[0]['id']} - Returning cached response", flush=True)
-        # return the latest draft for this session
         draft = db.table("drafts").select("id").eq("session_id", session_id).order("created_at", desc=True).limit(1).execute()
         draft_id = draft.data[0]["id"] if draft.data else None
         
-        # Insert a message into chat to maintain chronological flow
         db.table("messages").insert({
             "id": str(uuid.uuid4()),
             "session_id": session_id,
@@ -189,7 +183,6 @@ async def run_agent(session_id: str, req: RunAgentRequest, user: dict = Depends(
         else:
             msg_content = "Document processed and draft updated. You can view the summary or ask questions about the data here."
 
-        # Insert a message into the chat stream so the user sees the summary in the conversation flow
         db.table("messages").insert({
             "session_id": session_id,
             "role": "assistant",
@@ -229,6 +222,11 @@ async def get_draft(session_id: str, user: dict = Depends(get_current_user)):
     if not res.data:
         raise HTTPException(status_code=404, detail="Draft not found")
     return res.data[0]
+
+@router.get("/patient/{session_id}/drafts")
+async def get_all_drafts(session_id: str, user: dict = Depends(get_current_user)):
+    res = db.table("drafts").select("*").eq("session_id", session_id).order("created_at", desc=True).execute()
+    return {"drafts": res.data or []}
 
 @router.get("/patient/{session_id}/draft/{draft_id}")
 async def get_draft_by_id(session_id: str, draft_id: str, user: dict = Depends(get_current_user)):

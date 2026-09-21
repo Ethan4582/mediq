@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, ShieldCheck, Lock, Clock, TrendingDown, Users, FileCheck, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
+import { Sparkles, ShieldCheck, Lock, Clock, TrendingDown, Users, CheckCircle2 } from "lucide-react";
 
 export function ImpactSection() {
   const containerVariants = {
@@ -21,7 +22,6 @@ export function ImpactSection() {
     <section className="relative py-24 px-4 overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10">
         
-        {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -43,20 +43,16 @@ export function ImpactSection() {
           </p>
         </motion.div>
 
-        {/* Grid */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
         >
-          {/* Top Row (3 columns) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             
-            {/* Card 1: Accurate & Reliable */}
             <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
               <div className="relative h-40 w-full flex items-center justify-center mb-4">
-                {/* Decorative background elements */}
                 <motion.div 
                   animate={{ rotate: 360 }}
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
@@ -91,7 +87,6 @@ export function ImpactSection() {
               </div>
             </motion.div>
 
-            {/* Card 2: Secure by default */}
             <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
               <div className="relative h-40 w-full flex items-center justify-center mb-4">
                 <motion.div 
@@ -119,7 +114,6 @@ export function ImpactSection() {
               </div>
             </motion.div>
 
-            {/* Card 3: Time saved */}
             <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col relative overflow-hidden group">
               <div className="flex justify-between items-center w-full mb-6 relative z-10">
                 <div className="w-8 h-8 rounded-full bg-[#eff6ff] flex items-center justify-center">
@@ -138,7 +132,6 @@ export function ImpactSection() {
                     </linearGradient>
                   </defs>
                   
-                  {/* Area */}
                   <motion.path 
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
@@ -147,7 +140,6 @@ export function ImpactSection() {
                     className="fill-[url(#gradientArea)] stroke-none" 
                   />
                   
-                  {/* Line */}
                   <motion.path 
                     initial={{ pathLength: 0 }}
                     whileInView={{ pathLength: 1 }}
@@ -158,7 +150,6 @@ export function ImpactSection() {
                     strokeLinejoin="round"
                   />
                   
-                  {/* Point */}
                   <motion.circle 
                     initial={{ scale: 0, opacity: 0 }}
                     whileInView={{ scale: 1, opacity: 1 }}
@@ -182,14 +173,11 @@ export function ImpactSection() {
 
           </div>
 
-          {/* Middle Row (2 columns) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             
-            {/* Card 4: Reduce clinical risk */}
             <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
               <div className="flex flex-col md:flex-row justify-between w-full h-full gap-8">
                 
-                {/* Left content */}
                 <div className="flex flex-col justify-between max-w-[240px] z-10">
                   <div>
                     <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center mb-6">
@@ -206,7 +194,6 @@ export function ImpactSection() {
                   </div>
                 </div>
 
-                {/* Right chart */}
                 <div className="flex-1 min-w-[200px] flex flex-col">
                   <div className="flex justify-between items-center mb-6">
                     <span className="text-xs text-[#64748b] font-medium">Documentation errors</span>
@@ -214,7 +201,6 @@ export function ImpactSection() {
                   </div>
                   
                   <div className="relative flex-1 min-h-[140px] w-full mt-2">
-                    {/* Y-axis labels */}
                     <div className="absolute left-0 h-full flex flex-col justify-between text-[10px] text-[#94a3b8] font-medium pb-5 z-10">
                       <span>100%</span>
                       <span>75%</span>
@@ -223,14 +209,12 @@ export function ImpactSection() {
                       <span>0%</span>
                     </div>
                     
-                    {/* Grid lines */}
                     <div className="absolute left-8 right-0 h-full flex flex-col justify-between pb-5">
                       {[0, 1, 2, 3, 4].map((i) => (
                         <div key={i} className="w-full h-px bg-gray-100"></div>
                       ))}
                     </div>
 
-                    {/* SVG Chart */}
                     <div className="absolute left-8 right-0 top-1 bottom-5">
                       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full overflow-visible">
                         <defs>
@@ -240,7 +224,6 @@ export function ImpactSection() {
                           </linearGradient>
                         </defs>
                         
-                        {/* Area */}
                         <motion.path 
                           initial={{ opacity: 0 }}
                           whileInView={{ opacity: 1 }}
@@ -250,7 +233,6 @@ export function ImpactSection() {
                           stroke="none"
                         />
                         
-                        {/* Line */}
                         <motion.path 
                           initial={{ pathLength: 0 }}
                           whileInView={{ pathLength: 1 }}
@@ -263,7 +245,6 @@ export function ImpactSection() {
                           vectorEffect="non-scaling-stroke"
                         />
                         
-                        {/* Point */}
                         <motion.circle 
                           initial={{ scale: 0, opacity: 0 }}
                           whileInView={{ scale: 1, opacity: 1 }}
@@ -275,7 +256,6 @@ export function ImpactSection() {
                       </svg>
                     </div>
 
-                    {/* X-axis labels */}
                     <div className="absolute left-8 right-0 bottom-0 flex justify-between text-[10px] text-[#94a3b8] font-medium">
                       <span>Week 1</span>
                       <span>Week 2</span>
@@ -288,11 +268,9 @@ export function ImpactSection() {
               </div>
             </motion.div>
 
-            {/* Card 5: Trusted by clinicians */}
             <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
               <div className="flex flex-col md:flex-row justify-between w-full h-full gap-8">
                 
-                {/* Left content */}
                 <div className="flex flex-col justify-between max-w-[240px] z-10">
                   <div>
                     <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center mb-6">
@@ -309,14 +287,11 @@ export function ImpactSection() {
                   </div>
                 </div>
 
-                {/* Right Timeline */}
                 <div className="flex-1 relative flex items-center justify-center py-4 min-w-[220px]">
-                  {/* Vertical dashed line */}
                   <div className="absolute left-12 top-6 bottom-6 w-px border-l border-dashed border-gray-300"></div>
                   
                   <div className="flex flex-col gap-6 w-full ml-4">
                     
-                    {/* User 1 */}
                     <motion.div 
                       initial={{ opacity: 0, x: 20 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -325,7 +300,7 @@ export function ImpactSection() {
                     >
                       <div className="w-2 h-2 rounded-full bg-gray-300 absolute -left-[37px]"></div>
                       <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
-                        <img src="https://i.pravatar.cc/150?img=47" alt="Dr. Sarah W." className="w-full h-full object-cover" />
+                        <Image unoptimized src="https://i.pravatar.cc/150?img=47" alt="Dr. Sarah W." width={40} height={40} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold text-[#0f172a]">Dr. Sarah W.</span>
@@ -333,7 +308,6 @@ export function ImpactSection() {
                       </div>
                     </motion.div>
 
-                    {/* User 2 */}
                     <motion.div 
                       initial={{ opacity: 0, x: 20 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -344,7 +318,7 @@ export function ImpactSection() {
                         <CheckCircle2 className="w-3 h-3 text-white" />
                       </div>
                       <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
-                        <img src="https://i.pravatar.cc/150?img=11" alt="Dr. Michael T." className="w-full h-full object-cover" />
+                        <Image unoptimized src="https://i.pravatar.cc/150?img=11" alt="Dr. Michael T." width={40} height={40} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold text-[#0f172a]">Dr. Michael T.</span>
@@ -352,7 +326,6 @@ export function ImpactSection() {
                       </div>
                     </motion.div>
 
-                    {/* User 3 */}
                     <motion.div 
                       initial={{ opacity: 0, x: 20 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -361,7 +334,7 @@ export function ImpactSection() {
                     >
                       <div className="w-2 h-2 rounded-full bg-gray-300 absolute -left-[37px]"></div>
                       <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
-                        <img src="https://i.pravatar.cc/150?img=44" alt="Dr. Priya K." className="w-full h-full object-cover" />
+                        <Image unoptimized src="https://i.pravatar.cc/150?img=44" alt="Dr. Priya K." width={40} height={40} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold text-[#0f172a]">Dr. Priya K.</span>
@@ -376,9 +349,6 @@ export function ImpactSection() {
             </motion.div>
 
           </div>
-
-         
-
         </motion.div>
       </div>
     </section>

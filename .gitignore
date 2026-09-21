@@ -16,7 +16,7 @@ Agent.md
 notes/
 **/notes/
 *.context.md
-src/
+/src/
 
 # Environment
 .env

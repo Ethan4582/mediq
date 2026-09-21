@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,19 +17,15 @@ function AuthForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState(errorParam || "");
+  const [authError, setAuthError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    if (errorParam) {
-      setError(errorParam);
-    }
-  }, [errorParam]);
+  const displayError = authError !== null ? authError : errorParam || "";
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setAuthError("");
     setLoading(true);
 
     if (isSignUp) {
@@ -40,15 +36,15 @@ function AuthForm() {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      if (error) setError(error.message);
-      else setError("Check your email for the confirmation link.");
+      if (error) setAuthError(error.message);
+      else setAuthError("Check your email for the confirmation link.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) setError(error.message);
-      else router.push("/chat"); // Redirect to chat on success
+      if (error) setAuthError(error.message);
+      else router.push("/chat");
     }
     setLoading(false);
   };
@@ -65,10 +61,7 @@ function AuthForm() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fb] flex items-center justify-center">
-      {/* Outer wrapper to prevent ultra-wide distortion while keeping it full-screen feeling */}
       <div className="w-full h-full min-h-screen max-w-[1920px] relative flex items-center justify-center lg:justify-end overflow-hidden shadow-2xl bg-white">
-        
-        {/* Background Image Container */}
         <div 
           className="absolute inset-0 z-0 pointer-events-none"
           style={{
@@ -80,12 +73,9 @@ function AuthForm() {
           }}
         />
         
-        {/* Auth Card Container (50/50 split) */}
         <div className="relative z-10 w-full h-full flex lg:grid lg:grid-cols-2">
-          {/* Left half is empty (transparent) so the background image shows */}
           <div className="hidden lg:block"></div>
           
-          {/* Right half contains the centered card */}
           <div className="flex flex-col items-center justify-center p-4 lg:p-12 h-full relative">
             <div
               className="w-full max-w-[440px] bg-white rounded-2xl p-8 shadow-xl border relative"
@@ -179,8 +169,8 @@ function AuthForm() {
                     </div>
                   )}
 
-                  {error && (
-                    <p className="text-sm text-red-500 text-center">{error}</p>
+                  {displayError && (
+                    <p className="text-sm text-red-500 text-center">{displayError}</p>
                   )}
 
                   <Button
@@ -200,7 +190,7 @@ function AuthForm() {
                   <button
                     onClick={() => {
                       setIsSignUp(!isSignUp);
-                      setError("");
+                      setAuthError("");
                     }}
                     className="font-medium text-blue-600 hover:underline"
                   >
@@ -210,7 +200,6 @@ function AuthForm() {
               </div>
             </div>
             
-            {/* Centered secure text below the card */}
             <div className="mt-8 flex items-center justify-center gap-2 text-sm text-gray-500 font-medium w-full max-w-[440px]">
               <CheckCircle2 size={16} className="text-gray-400" />
               Your data is secure with MediQ

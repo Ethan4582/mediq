@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Key, RefreshCw, Trash2 } from "lucide-react";
+import { Plus, Key, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import StatusBadge from "@/components/shared/StatusBadge";
 import AddKeyDialog from "./AddKeyDialog";
 import { useKeyStatus } from "@/hooks/useKeyStatus";
 import { createClient } from "@/lib/supabase/client";

@@ -12,7 +12,7 @@ const cards = [
     icon: FolderOpen,
     color: "text-blue-600 dark:text-blue-400",
     bg: "bg-blue-500/10",
-    sub: (_: OverviewStats) => "All time",
+    sub: () => "All time",
   },
   {
     key: "total_documents",
@@ -28,7 +28,7 @@ const cards = [
     icon: ClipboardList,
     color: "text-purple-600 dark:text-purple-400",
     bg: "bg-purple-500/10",
-    sub: (_: OverviewStats) => "Discharge drafts",
+    sub: () => "Discharge drafts",
   },
   {
     key: "runs_this_week",

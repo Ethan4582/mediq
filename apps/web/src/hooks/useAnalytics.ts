@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { OverviewStats, ActivityEntry, RecentSession } from "@/types/app";
 import { API_URL } from "@/lib/constants";
@@ -22,29 +22,46 @@ export function useAnalytics() {
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [loadingRecent, setLoadingRecent] = useState(true);
 
-  const fetchAll = useCallback(async (d: number) => {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const token = session.access_token;
+  useEffect(() => {
+    let mounted = true;
 
-    setLoadingOverview(true);
-    apiGet<OverviewStats>("/api/analytics/overview", token)
-      .then(setOverview)
-      .finally(() => setLoadingOverview(false));
+    const load = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !mounted) return;
+      const token = session.access_token;
 
-    setLoadingActivity(true);
-    apiGet<{ activity: ActivityEntry[] }>(`/api/analytics/activity?days=${d}`, token)
-      .then((r) => setActivity(r.activity))
-      .finally(() => setLoadingActivity(false));
+      apiGet<OverviewStats>("/api/analytics/overview", token)
+        .then(data => {
+          if (mounted) setOverview(data);
+        })
+        .finally(() => {
+          if (mounted) setLoadingOverview(false);
+        });
 
-    setLoadingRecent(true);
-    apiGet<{ recent: RecentSession[] }>("/api/analytics/sessions?limit=5", token)
-      .then((r) => setRecentSessions(r.recent))
-      .finally(() => setLoadingRecent(false));
-  }, []);
+      apiGet<{ activity: ActivityEntry[] }>(`/api/analytics/activity?days=${days}`, token)
+        .then((r) => {
+          if (mounted) setActivity(r.activity);
+        })
+        .finally(() => {
+          if (mounted) setLoadingActivity(false);
+        });
 
-  useEffect(() => { fetchAll(days); }, [days, fetchAll]);
+      apiGet<{ recent: RecentSession[] }>("/api/analytics/sessions?limit=5", token)
+        .then((r) => {
+          if (mounted) setRecentSessions(r.recent);
+        })
+        .finally(() => {
+          if (mounted) setLoadingRecent(false);
+        });
+    };
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, [days]);
 
   return { overview, activity, recentSessions, loadingOverview, loadingActivity, loadingRecent, days, setDays };
 }
