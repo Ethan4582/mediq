@@ -1,5 +1,5 @@
 allowBuilds:
-  '@astryxdesign/core': set this to true or false
+  '@astryxdesign/core': false
   sharp: false
   unrs-resolver: false
 ignoredBuiltDependencies:
