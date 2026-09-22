@@ -1,106 +1,100 @@
-# MediQ: clinical document intelligence
+# MediQ
 
-MediQ is an agentic clinical documentation platform that converts unstructured medical records (such as handwritten doctor notes, scanned admission records, medication charts, and lab reports) into structured discharge summary drafts for clinician review.
+MediQ is an AI-powered clinical documentation platform that transforms unstructured medical records—such as handwritten clinician notes, scanned admission documents, medication charts, and lab reports—into structured, verifiable discharge summary drafts.
 
-## System architecture
+---
 
-The application is structured as a monorepo containing a Next.js web application and a FastAPI agent service:
+## Overview
 
-- **Web interface (`apps/web`)**: Next.js 16 with App Router, React 19, TypeScript, Astryx Design System, and Tailwind CSS.
-- **Database layer (`apps/web/src/db`)**: Drizzle ORM 0.45 communicating with PostgreSQL through Supabase connection poolers. All database interactions occur server-side through Next.js Server Actions.
-- **Agent engine (`apps/api`)**: Python 3.12, FastAPI, and LangGraph. Executes multi-step extraction, vector retrieval over document chunks, medication reconciliation, and conflict detection.
-- **Document extraction**: Mistral OCR processes uploaded PDF and image documents into structured markdown.
-- **Vector search**: pgvector with embeddings generated via Mistral Embed.
-- **Asynchronous tasks**: Celery and Upstash Redis for asynchronous OCR extraction pipelines.
+MediQ accelerates clinical workflows by combining optical character recognition (OCR), semantic search, and agentic multi-step reasoning to extract, synthesize, and reconcile clinical information while highlighting potential documentation conflicts.
 
-## Clinical result workflows
-
-The result workflow is implemented across both the chat interface and the dedicated artifact drawer:
-
-1. **Artifact inspection drawer (`ArtifactPanelAstryx.tsx`)**:
-   - **Summary view**: Displays structured clinical sections including principal diagnosis, secondary diagnoses, hospital course, discharge medications with dosage and frequency, and follow-up directives.
-   - **Conflict detection**: Highlights contradictions across multidisciplinary notes and lab findings using warning indicators.
-   - **Source documents view**: Lists uploaded documents with page counts, status, and raw extracted OCR text.
-   - **Historical versions**: Tracks past draft versions for a session, allowing clinicians to inspect and restore earlier summaries.
-   - **Export actions**: Supports markdown copy, file download, and direct print formatting.
-
-2. **In-stream summary cards (`ChatMessageItemAstryx.tsx`)**:
-   - Renders interactive cards in the message timeline whenever a discharge summary draft is emitted.
-   - Allows one-click expansion directly into the artifact panel.
-
-3. **Responsive layout**:
-   - On desktop, displays side-by-side with chat and resizable panel widths.
-   - On mobile viewports, transitions automatically to a full-screen dialog overlay.
-
-## Database schema and orm
-
-All database operations use Drizzle ORM. Client components interact exclusively through server actions; no direct database clients or credentials run in the browser.
-
-### Managed tables
-
-- `profiles`: User profile data and preferences.
-- `folders`: Organizational folders for grouping clinical patient sessions.
-- `sessions`: Clinical consultation sessions linked to users and optional folders.
-- `documents`: Uploaded clinical records and storage metadata.
-- `chunks`: Embedded text segments with pgvector vector representations.
-- `runs`: LangGraph agent execution states and progress records.
-- `drafts`: Structured clinical discharge summaries and JSON payloads.
-- `messages`: Chat message history between clinician and assistant.
-- `api_keys`: Encrypted provider credentials for OCR and LLM services.
-
-### Database indexes
-
-Targeted indexes exist on relational join and ordering columns:
-
-- `sessions_user_id_created_at_idx`: Fast session listing filtered by user.
-- `sessions_folder_id_idx`: Folder navigation lookups.
-- `folders_user_id_idx`: Folder retrieval per user.
-- `documents_session_id_idx`: Document listing by session.
-- `chunks_session_id_idx`: Chunk retrieval for session context.
-- `drafts_session_id_created_at_idx`: Chronological draft history per patient.
-- `messages_session_id_created_at_idx`: Chronological chat replay.
-- `runs_session_id_idx`: Execution tracking per session.
-- `api_keys_user_id_idx`: User credential lookups.
-
-## Testing
-
-The project uses Vitest for testing server actions and utility functions in `apps/web`.
-
-Tests run without monkeypatching or module mocks. Instead, server actions support dependency injection seams (`MessageReader`, `SessionReader`), allowing deterministic tests that pass strict Oxlint anti-slop guidelines.
-
-Run the test suite:
-
-```bash
-pnpm --filter web test
+```
+┌─────────────────────────────────┐
+│     Clinical Document Upload    │ (PDFs, Scans, Handwritten Notes)
+└────────────────┬────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│   Mistral OCR & Chunk Embed     │
+└────────────────┬────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│  LangGraph Clinical Agent Flow  │ ──► Diagnoses, Course, Medications
+└────────────────┬────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│    Interactive Review Panel     │ (Conflict Alerts, Source Grounding, Export)
+└─────────────────────────────────┘
 ```
 
-## Linting and validation
+---
 
-Code is verified against Oxlint with customized anti-slop rules, enforcing explicit type boundaries, readable spacing, and the removal of artificial AI writing patterns:
+## Key Features
 
-```bash
-# Run oxlint on server actions and tests
-pnpm exec oxlint apps/web/src/actions apps/web/src/lib/__tests__
+- **Agentic Discharge Summaries**: Generates principal diagnoses, secondary diagnoses, hospital course narratives, and reconciled discharge medication plans.
+- **Clinical Conflict Detection**: Flags contradictions between multidisciplinary clinician notes, lab results, and medication orders.
+- **Source Grounding & OCR Inspection**: Direct access to raw extracted text and original source document pages alongside generated summaries.
+- **Version History & Restoration**: Tracks draft iterations across clinical runs with one-click revision restoration.
+- **Multimodal Chat Workspace**: Split-pane interface featuring inline artifact cards, slash commands (`/summarize`, `/reconcile`), and mention triggers.
+- **Multi-Provider BYOK**: Support for OpenAI, Anthropic, Gemini, Mistral, and Groq reasoning backends with encrypted key management.
 
-# Run TypeScript type check across the web workspace
-pnpm --filter web exec tsc --noEmit
+---
+
+## Monorepo Architecture
+
+```
+mediq/
+├── apps/
+│   ├── web/        # Next.js 16 (App Router), React 19, Astryx UI, Drizzle ORM, Supabase
+│   └── api/        # FastAPI, LangGraph, Mistral OCR, pgvector, Celery / Redis
+└── tools/          # anti-slop rules, linters, and repository configs
 ```
 
-## Getting started
+### Technology Stack
 
-### Environment variables
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | Next.js 16, React 19, TypeScript, Astryx Design System, Tailwind CSS |
+| **Data & ORM** | Supabase (PostgreSQL), Drizzle ORM, pgvector |
+| **Backend & Agents** | Python 3.12, FastAPI, LangGraph, Mistral OCR |
+| **Task Queue & Cache** | Celery, Upstash Redis, Cloudflare R2 |
 
-In `apps/web/.env`:
+---
+
+## Quickstart
+
+### Prerequisites
+
+- **Node.js**: `v20+` and **pnpm**: `v9+`
+- **Python**: `3.12+`
+- **Supabase** instance (PostgreSQL with `pgvector` enabled)
+
+### 1. Clone & Install Dependencies
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/mediq.git
+cd mediq
+
+# Install frontend dependencies
+pnpm install
+```
+
+### 2. Environment Setup
+
+Configure environment variables in `apps/web/.env`:
 
 ```env
-DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require
-DIRECT_URL=postgresql://postgres.<project-ref>:<password>@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 NEXT_PUBLIC_API_URL=http://localhost:8000
+DATABASE_URL=postgresql://postgres.<project-ref>:<password>@<pooler-host>:6543/postgres?sslmode=require
+DIRECT_URL=postgresql://postgres.<project-ref>:<password>@<direct-host>:5432/postgres?sslmode=require
 ```
 
-In `apps/api/.env`:
+Configure environment variables in `apps/api/.env`:
 
 ```env
 SUPABASE_URL=https://<project-ref>.supabase.co
@@ -110,22 +104,41 @@ CLOUDFLARE_R2_ACCESS_KEY=<access-key>
 CLOUDFLARE_R2_SECRET_KEY=<secret-key>
 CLOUDFLARE_R2_BUCKET=mediq-documents
 UPSTASH_REDIS_URL=rediss://default:<token>@<host>:6379
-ENCRYPTION_KEY=<fernet-key>
+ENCRYPTION_KEY=<fernet-encryption-key>
+MISTRAL_API_KEY=<mistral-key>
 ```
 
-### Local execution
+### 3. Run Development Servers
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Start Next.js development server
+# Start Next.js frontend (http://localhost:3000)
 pnpm --filter web dev
 
-# Start FastAPI server
+# Start FastAPI backend (http://localhost:8000)
 cd apps/api
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Windows: .venv\Scripts\activate | Unix: source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
+
+---
+
+## Testing & Linting
+
+```bash
+# Run frontend unit & integration tests
+pnpm --filter web test
+
+# Run ESLint & type checking
+pnpm --filter web lint
+pnpm --filter web build
+```
+
+---
+
+## Security & Privacy
+
+- Client components communicate with the database exclusively via authenticated Server Actions.
+- Patient health identifiers (PHI) and third-party API keys are encrypted at rest.
+- Designed with HIPAA compliance guardrails and deterministic clinical extraction boundaries.
