@@ -1,77 +1,100 @@
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useSessionStore } from "@/stores/sessionStore";
-import type { AppSession, Folder } from "@/types/app";
+import { useCallback, useEffect, useState } from 'react';
+import {
+  createFolderAction,
+  deleteSessionAction,
+  getSessionsAndFoldersAction,
+  moveSessionToFolderAction,
+  renameSessionAction,
+  togglePinAction,
+} from '@/actions/sessions';
+import { useSessionStore } from '@/stores/sessionStore';
+import type { AppSession, Folder } from '@/types/app';
 
 export function useSessions() {
   const [sessions, setSessions] = useState<AppSession[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
   const { refreshKey } = useSessionStore();
 
-  const fetchSessionsAndFolders = async () => {
+  const refetch = useCallback(async () => {
     setLoading(true);
-    const { data: user } = await supabase.auth.getUser();
-    
-    if (user.user) {
-      const [sessionsRes, foldersRes] = await Promise.all([
-        supabase
-          .from("sessions")
-          .select("id, title, patient_name, status, created_at, is_pinned, folder_id")
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("folders")
-          .select("*")
-          .order("created_at", { ascending: true })
-      ]);
 
-      if (!sessionsRes.error && sessionsRes.data) {
-        setSessions(sessionsRes.data as AppSession[]);
-      }
-      if (!foldersRes.error && foldersRes.data) {
-        setFolders(foldersRes.data as Folder[]);
-      }
+    try {
+      const data = await getSessionsAndFoldersAction();
+      setSessions(data.sessions);
+      setFolders(data.folders);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchSessionsAndFolders();
+    let ignore = false;
+
+    async function load() {
+      try {
+        const data = await getSessionsAndFoldersAction();
+
+        if (!ignore) {
+          setSessions(data.sessions);
+          setFolders(data.folders);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      ignore = true;
+    };
   }, [refreshKey]);
 
   const renameSession = async (id: string, newTitle: string) => {
-    await supabase.from("sessions").update({ title: newTitle }).eq("id", id);
     setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title: newTitle } : s)));
+    await renameSessionAction(id, newTitle);
   };
 
   const deleteSession = async (id: string) => {
-    await supabase.from("sessions").delete().eq("id", id);
     setSessions((prev) => prev.filter((s) => s.id !== id));
+    await deleteSessionAction(id);
   };
 
   const togglePin = async (id: string, isPinned: boolean) => {
-    await supabase.from("sessions").update({ is_pinned: isPinned }).eq("id", id);
-    setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, is_pinned: isPinned } : s)));
-  };
-
-  const moveToFolder = async (id: string, folderId: string | null) => {
-    await supabase.from("sessions").update({ folder_id: folderId }).eq("id", id);
-    setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, folder_id: folderId } : s)));
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, is_pinned: !isPinned } : s))
+    );
+    await togglePinAction(id, !isPinned);
   };
 
   const createFolder = async (name: string) => {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return;
-    const { data } = await supabase
-      .from("folders")
-      .insert({ user_id: user.user.id, name })
-      .select()
-      .single();
-    if (data) {
-      setFolders((prev) => [...prev, data as Folder]);
+    const created = await createFolderAction(name);
+
+    if (created) {
+      setFolders((prev) => [...prev, created]);
     }
   };
 
-  return { sessions, folders, loading, renameSession, deleteSession, togglePin, moveToFolder, createFolder };
+  const moveSessionToFolder = async (sessionId: string, folderId: string | null) => {
+    setSessions((prev) =>
+      prev.map((s) => (s.id === sessionId ? { ...s, folder_id: folderId } : s))
+    );
+    await moveSessionToFolderAction(sessionId, folderId);
+  };
+
+  return {
+    sessions,
+    folders,
+    loading,
+    refetch,
+    renameSession,
+    deleteSession,
+    togglePin,
+    createFolder,
+    moveToFolder: moveSessionToFolder,
+    moveSessionToFolder,
+  };
 }

@@ -37,21 +37,18 @@ export const useSessionStore = create<SessionState>()(
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   closeSidebar: () => set({ isSidebarOpen: false }),
   setRightPanelOpen: (open) => set((state) => {
-    // When opening right panel, automatically close the left sidebar
     if (open && state.isSidebarOpen) {
       return { isRightPanelOpen: true, isSidebarOpen: false, isFileViewMode: false };
     }
     if (!open) {
-      // When closing right panel, automatically open the left sidebar
       return { isRightPanelOpen: false, isFileViewMode: false, isSidebarOpen: true };
     }
     return { isRightPanelOpen: open, isFileViewMode: open ? state.isFileViewMode : false };
   }),
-  setFileViewMode: (open) => set((state) => {
+  setFileViewMode: (open) => set(() => {
     if (open) {
       return { isRightPanelOpen: true, isFileViewMode: true, isSidebarOpen: false, rightPanelTab: "summary" };
     }
-    // When closing file viewer, close the right panel and open the left sidebar
     return { isFileViewMode: false, isRightPanelOpen: false, isSidebarOpen: true };
   }),
   setRightPanelTab: (tab) => set({ rightPanelTab: tab, isFileViewMode: false }),
@@ -60,8 +57,8 @@ export const useSessionStore = create<SessionState>()(
   setSelectedProvider: (provider) => set({ selectedProvider: provider }),
     }),
     {
-      name: 'session-storage', // name of the item in the storage (must be unique)
-      partialize: (state) => ({ selectedProvider: state.selectedProvider }), // only persist selectedProvider
+      name: 'session-storage',
+      partialize: (state) => ({ selectedProvider: state.selectedProvider }),
     }
   )
 )

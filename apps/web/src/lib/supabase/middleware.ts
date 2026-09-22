@@ -6,6 +6,14 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith('sb-'))
+
+  if (!hasAuthCookie) {
+    return { supabaseResponse, user: null }
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -24,12 +32,30 @@ export async function updateSession(request: NextRequest) {
           )
         },
       },
+      global: {
+        fetch: (url: RequestInfo | URL, init?: RequestInit) => {
+          const timeoutSignal = AbortSignal.timeout(5000)
+          const signal = init?.signal
+            ? AbortSignal.any([init.signal, timeoutSignal])
+            : timeoutSignal
+          return fetch(url, { ...init, signal })
+        },
+      },
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
 
-  return { supabaseResponse, user }
+    if (error) {
+      return { supabaseResponse, user: null }
+    }
+
+    return { supabaseResponse, user }
+  } catch {
+    return { supabaseResponse, user: null }
+  }
 }

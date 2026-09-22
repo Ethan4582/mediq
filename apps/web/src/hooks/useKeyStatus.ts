@@ -14,7 +14,7 @@ export function useKeyStatus() {
   });
   const [loading, setLoading] = useState(true);
 
-  const fetchKeys = useCallback(async () => {
+  const refetch = useCallback(async () => {
     setLoading(true);
     try {
       const supabase = createClient();
@@ -38,13 +38,44 @@ export function useKeyStatus() {
     }
   }, []);
 
-  useEffect(() => { fetchKeys(); }, [fetchKeys]);
+  useEffect(() => {
+    let ignore = false;
+    async function init() {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || ignore) return;
+        const res = await fetch(`${API_URL}/api/keys`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok || ignore) return;
+        const data: ApiKey[] = await res.json();
+        if (ignore) return;
+        setKeys(data);
+        setStatus({
+          has_mistral_key: data.some((k) => k.key_type === "ocr" && k.is_active),
+          has_llm_key: data.some((k) => k.key_type === "llm" && k.is_active),
+          active_llm_provider: data.find((k) => k.key_type === "llm" && k.is_active)?.provider ?? null,
+        });
+      } catch (err) {
+        console.warn("Failed to fetch user key status:", err);
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    init();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   return {
     keys,
     ...status,
     isReady: status.has_mistral_key && status.has_llm_key,
     loading,
-    refetch: fetchKeys,
+    refetch,
   };
 }

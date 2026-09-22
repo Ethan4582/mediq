@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { ShieldCheck, Brain, Lock } from "lucide-react";
-import LandingHeroAstryx from "@/components/LandingHeroAstryx";
 import { ImpactSection } from "@/components/ImpactSection";
 import { Footer } from "@/components/Footer";
+
+const LandingHeroAstryx = dynamic(() => import("@/components/LandingHeroAstryx"), {
+  ssr: false,
+});
 
 export default function LandingPage() {
   return (
@@ -17,7 +21,7 @@ export default function LandingPage() {
         {/* Left - Logo */}
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-[28px] h-[28px]">
-            <Image src="/logo.png" alt="MediQ logo" width={28} height={28} className="object-contain" />
+            <Image src="/logo.png" alt="MediQ logo" width={28} height={28} style={{ width: "auto", height: "auto" }} className="object-contain" />
           </div>
         </div>
 

@@ -6,7 +6,6 @@ import { PROVIDERS } from "@/lib/constants";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import Image from "next/image";
 
 export default function KeyStatusCards() {
   const { keys, has_mistral_key, has_llm_key, active_llm_provider, loading } = useKeyStatus();
@@ -32,7 +31,6 @@ export default function KeyStatusCards() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* OCR Key Card */}
       <Card className="p-5">
         <CardContent className="flex items-start gap-4 p-0">
           <div className="size-11 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
@@ -50,7 +48,7 @@ export default function KeyStatusCards() {
                 <>
                   <CheckCircle2 className="size-4 text-emerald-500" />
                   <span className="text-emerald-600 dark:text-emerald-400">
-                    Connected ···{ocrKey?.key_last4}
+                    Connected ···{ocrKey?.key_last4 ?? ""}
                   </span>
                 </>
               ) : (
@@ -65,7 +63,6 @@ export default function KeyStatusCards() {
         </CardContent>
       </Card>
 
-      {/* LLM Provider Card */}
       <Card className="p-5">
         <CardContent className="flex items-start gap-4 p-0">
           <div className="size-11 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
@@ -83,7 +80,9 @@ export default function KeyStatusCards() {
                 <>
                   <CheckCircle2 className="size-4 text-emerald-500" />
                   <span className="text-emerald-600 dark:text-emerald-400">
-                    {active_llm_provider ? PROVIDERS[active_llm_provider]?.name : "Connected"} ···{llmKey?.key_last4}
+                    {active_llm_provider && active_llm_provider in PROVIDERS
+                      ? PROVIDERS[active_llm_provider as keyof typeof PROVIDERS].name
+                      : "Connected"} ···{llmKey?.key_last4 ?? ""}
                   </span>
                 </>
               ) : (

@@ -83,7 +83,7 @@ export default function Sidebar({
       {/* Top Header */}
       <div className="flex items-center justify-between p-3 border-b border-sidebar-border/60">
         <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
-          <Image src="/logo.png" alt="MediQ" width={22} height={22} className="object-contain" />
+          <Image src="/logo.png" alt="MediQ" width={22} height={22} style={{ width: "auto", height: "auto" }} className="object-contain" />
           {isSidebarOpen && <span>MediQ</span>}
         </Link>
         <Button
