@@ -3,16 +3,35 @@
 import { asc, eq } from 'drizzle-orm';
 import { db, messages } from '@/db';
 import type { Message } from '@/types/app';
+import type { Json } from '@/types/database';
 
-export async function getMessagesAction(sessionId: string): Promise<Message[]> {
+export interface MessageReader {
+  findMessages?: (sessionId: string) => Promise<
+    Array<{
+      id: string;
+      sessionId: string;
+      role: string;
+      content: string;
+      metadata: Json;
+      createdAt: string;
+    }>
+  >;
+}
+
+export async function getMessagesAction(
+  sessionId: string,
+  reader?: MessageReader
+): Promise<Message[]> {
   if (!sessionId || sessionId === 'new') {
     return [];
   }
 
-  const dbMessages = await db.query.messages.findMany({
-    where: eq(messages.sessionId, sessionId),
-    orderBy: [asc(messages.createdAt)],
-  });
+  const dbMessages = reader?.findMessages
+    ? await reader.findMessages(sessionId)
+    : await db.query.messages.findMany({
+        where: eq(messages.sessionId, sessionId),
+        orderBy: [asc(messages.createdAt)],
+      });
 
   return dbMessages.map((m) => ({
     id: m.id,

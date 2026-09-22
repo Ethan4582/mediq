@@ -5,8 +5,17 @@ import PasswordForm from "@/components/profile/PasswordForm";
 import DangerZone from "@/components/profile/DangerZone";
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.getUser();
+    if (!error) {
+      user = data.user;
+    }
+  } catch {
+    user = null;
+  }
+
   const isEmailUser = user?.app_metadata?.provider !== "google";
 
   return (
@@ -30,10 +39,6 @@ export default async function ProfilePage() {
         {isEmailUser && <PasswordForm />}
         <DangerZone />
       </div>
-
-      <p className="text-center text-xs py-6 mt-auto" style={{ color: "var(--text-muted)" }}>
-        MediQ can make mistakes. Please verify important information.
-      </p>
     </div>
   );
 }
