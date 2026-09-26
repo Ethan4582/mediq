@@ -1,6 +1,7 @@
 "use client";
 
-import { FileText, Eye, CheckCircle2, Clock } from "lucide-react";
+import Image from "next/image";
+import { Eye, CheckCircle2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface DocumentThumbnailCardProps {
@@ -28,6 +29,15 @@ export default function DocumentThumbnailCard({
   const safeName = typeof name === "string" && name.trim() ? name : "Document";
   const isDone = status === "ready" || status === "completed" || Boolean(rawText);
 
+  const formattedDate = createdAt ? (() => {
+    try {
+      const d = new Date(createdAt);
+      return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
+    } catch {
+      return "";
+    }
+  })() : "";
+
   const fileExtension = safeName.includes(".")
     ? safeName.split(".").pop()?.toUpperCase() || "DOC"
     : "DOC";
@@ -35,11 +45,15 @@ export default function DocumentThumbnailCard({
   const renderThumbnailVisual = () => {
     if (previewUrl) {
       return (
-        <img
-          src={previewUrl}
-          alt={safeName}
-          className="w-full h-full object-cover object-top"
-        />
+        <div className="relative w-full h-full">
+          <Image
+            src={previewUrl}
+            alt={safeName}
+            fill
+            unoptimized
+            className="object-cover object-top"
+          />
+        </div>
       );
     }
 
@@ -186,6 +200,12 @@ export default function DocumentThumbnailCard({
               <>
                 <span>•</span>
                 <span>{pageCount}p</span>
+              </>
+            ) : null}
+            {formattedDate ? (
+              <>
+                <span>•</span>
+                <span>{formattedDate}</span>
               </>
             ) : null}
           </div>
