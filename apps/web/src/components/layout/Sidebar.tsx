@@ -9,11 +9,10 @@ import { useSessionStore } from "@/stores/sessionStore";
 import type { AppSession } from "@/types/app";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import SidebarSessionList from "./SidebarSessionList";
 import SidebarFolderItem from "./SidebarFolderItem";
 import SidebarUserMenu from "./SidebarUserMenu";
+import SidebarDialogs from "./SidebarDialogs";
 
 export default function Sidebar({
   user,
@@ -210,67 +209,21 @@ export default function Sidebar({
         <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
       </div>
 
-      {/* Rename Dialog */}
-      <Dialog open={!!renameTarget} onOpenChange={(open) => !open && setRenameTarget(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Rename Session</DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
-            <Input
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              placeholder="Session title"
-              autoFocus
-              onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setRenameTarget(null)}>Cancel</Button>
-            <Button onClick={handleRenameConfirm}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Alert Dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Session</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deleteTarget?.title || "this session"}&quot;? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Create Folder Dialog */}
-      <Dialog open={isCreateFolderOpen} onOpenChange={setIsCreateFolderOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create New Folder</DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
-            <Input
-              value={createFolderValue}
-              onChange={(e) => setCreateFolderValue(e.target.value)}
-              placeholder="Folder name (e.g. Cardiology, Inpatients)"
-              autoFocus
-              onKeyDown={(e) => e.key === "Enter" && handleCreateFolderConfirm()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setIsCreateFolderOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateFolderConfirm}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SidebarDialogs
+        renameTarget={renameTarget}
+        renameValue={renameValue}
+        setRenameValue={setRenameValue}
+        onCloseRename={() => setRenameTarget(null)}
+        onConfirmRename={handleRenameConfirm}
+        deleteTarget={deleteTarget}
+        onCloseDelete={() => setDeleteTarget(null)}
+        onConfirmDelete={handleDeleteConfirm}
+        isCreateFolderOpen={isCreateFolderOpen}
+        createFolderValue={createFolderValue}
+        setCreateFolderValue={setCreateFolderValue}
+        onCloseCreateFolder={() => setIsCreateFolderOpen(false)}
+        onConfirmCreateFolder={handleCreateFolderConfirm}
+      />
     </aside>
   );
 }
