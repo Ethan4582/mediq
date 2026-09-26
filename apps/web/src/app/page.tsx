@@ -2,14 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import dynamic from "next/dynamic";
-import { ShieldCheck, Brain, Lock } from "lucide-react";
+import { LandingHero } from "@/components/LandingHero";
 import { ImpactSection } from "@/components/ImpactSection";
 import { Footer } from "@/components/Footer";
-
-const LandingHeroAstryx = dynamic(() => import("@/components/LandingHeroAstryx"), {
-  ssr: false,
-});
 
 export default function LandingPage() {
   return (
@@ -21,7 +16,7 @@ export default function LandingPage() {
         {/* Left - Logo */}
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-[28px] h-[28px]">
-            <Image src="/logo.png" alt="MediQ logo" width={28} height={28} style={{ width: "auto", height: "auto" }} className="object-contain" />
+            <Image src="/logo.png" alt="MediQ logo" width={28} height={28} priority className="w-7 h-7 object-contain" />
           </div>
         </div>
 
@@ -45,43 +40,8 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section with Astryx AI Chat Landing Component */}
-      <section className="pt-24 pb-12 px-4 flex flex-col items-center bg-gradient-to-b from-blue-50/30 via-white to-white">
-        <LandingHeroAstryx />
-
-        {/* Trust row */}
-        <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 w-full max-w-[800px]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5 text-[#2563eb]" />
-            </div>
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-[#0f172a]">Evidence-Based</span>
-              <span className="text-xs text-[#64748b]">Clinical source citations</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-              <Brain className="w-5 h-5 text-[#2563eb]" />
-            </div>
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-[#0f172a]">AI-Powered</span>
-              <span className="text-xs text-[#64748b]">Agentic reconciliation</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-              <Lock className="w-5 h-5 text-[#2563eb]" />
-            </div>
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-[#0f172a]">HIPAA-Compliant</span>
-              <span className="text-xs text-[#64748b]">Private & encrypted</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero Section */}
+      <LandingHero />
 
       {/* Impact Section */}
       <ImpactSection />

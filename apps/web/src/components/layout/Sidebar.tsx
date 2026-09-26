@@ -1,35 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { Plus, Search, BarChart3, FolderPlus, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Plus, Search, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useSessions } from "@/hooks/useSessions";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { AppSession } from "@/types/app";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import SidebarSessionList from "./SidebarSessionList";
 import SidebarFolderItem from "./SidebarFolderItem";
 import SidebarUserMenu from "./SidebarUserMenu";
+import SidebarDialogs from "./SidebarDialogs";
 
 export default function Sidebar({
   user,
@@ -37,6 +21,7 @@ export default function Sidebar({
   user: { email?: string; user_metadata?: { full_name?: string; avatar_url?: string } };
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const activeSessionId = pathname?.startsWith("/chat/") ? pathname.split("/")[2] : undefined;
 
   const {
@@ -45,28 +30,40 @@ export default function Sidebar({
     renameSession,
     deleteSession,
     togglePin,
-    moveToFolder,
+    moveSessionToFolder,
     createFolder,
   } = useSessions();
-  const { isSidebarOpen, toggleSidebar } = useSessionStore();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sessionToRename, setSessionToRename] = useState<AppSession | null>(null);
+  const { isSidebarOpen, toggleSidebar } = useSessionStore();
+  const [search, setSearch] = useState("");
+  const [renameTarget, setRenameTarget] = useState<AppSession | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [sessionToDelete, setSessionToDelete] = useState<AppSession | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AppSession | null>(null);
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [createFolderValue, setCreateFolderValue] = useState("");
 
-  const filteredSessions = sessions.filter((s) =>
-    (s.title || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const pinnedSessions = filteredSessions.filter((s) => s.is_pinned);
-  const unpinnedRootSessions = filteredSessions.filter((s) => !s.is_pinned && !s.folder_id);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toggleSidebar]);
 
   const handleRenameConfirm = async () => {
-    if (sessionToRename && renameValue.trim()) {
-      await renameSession(sessionToRename.id, renameValue.trim());
-      setSessionToRename(null);
+    if (renameTarget && renameValue.trim()) {
+      await renameSession(renameTarget.id, renameValue.trim());
+      setRenameTarget(null);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteTarget) {
+      await deleteSession(deleteTarget.id);
+      setDeleteTarget(null);
     }
   };
 
@@ -78,189 +75,150 @@ export default function Sidebar({
     }
   };
 
+  const filteredSessions = (sessions || []).filter((s) => {
+    if (!search.trim()) return true;
+    const query = search.toLowerCase();
+    return s.title?.toLowerCase().includes(query) || s.patient_name?.toLowerCase().includes(query);
+  });
+
   return (
-    <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none">
+    <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none overflow-hidden">
       {/* Top Header */}
-      <div className="flex items-center justify-between p-3 border-b border-sidebar-border/60">
-        <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
-          <Image src="/logo.png" alt="MediQ" width={22} height={22} style={{ width: "auto", height: "auto" }} className="object-contain" />
-          {isSidebarOpen && <span>MediQ</span>}
-        </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="size-7 text-muted-foreground hover:text-foreground"
-        >
-          {isSidebarOpen ? <ChevronsLeft className="size-4" /> : <ChevronsRight className="size-4" />}
-        </Button>
+      <div className="flex items-center justify-between p-2.5 border-b border-sidebar-border/60 shrink-0">
+        {isSidebarOpen ? (
+          <>
+            <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
+              <Image src="/logo.png" alt="MediQ" width={20} height={20} className="w-5 h-5 object-contain shrink-0" priority />
+              <span className="font-semibold text-sm tracking-tight text-foreground">MediQ</span>
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="size-7 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+              title="Collapse sidebar (Ctrl+B)"
+            >
+              <PanelLeftClose className="size-4" />
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="size-8 mx-auto text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+            title="Expand sidebar (Ctrl+B)"
+          >
+            <PanelLeft className="size-4" />
+          </Button>
+        )}
       </div>
 
-      {isSidebarOpen && (
-        <div className="flex flex-col flex-1 min-h-0 px-2 py-3 gap-3 overflow-hidden">
-          {/* Actions */}
-          <div className="flex flex-col gap-1.5 shrink-0">
-            <Button asChild className="w-full justify-start gap-2 h-9 font-medium text-xs shadow-sm">
-              <Link href="/chat/new">
-                <Plus className="size-4" />
-                <span>New Session</span>
-              </Link>
-            </Button>
-            <div className="flex items-center gap-1">
-              <div className="relative flex-1">
-                <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search cases..."
-                  className="h-8 pl-8 text-xs bg-muted/40"
-                />
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsCreateFolderOpen(true)}
-                title="Create Folder"
-                className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
-              >
-                <FolderPlus className="size-4" />
-              </Button>
-            </div>
+      {isSidebarOpen ? (
+        <div className="flex flex-col flex-1 min-h-0 px-2.5 py-3 gap-2.5 overflow-hidden">
+          {/* Compact New Session Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/chat/new")}
+            className="w-full justify-start gap-2 h-8 text-xs font-medium bg-sidebar-accent/40 hover:bg-sidebar-accent border-sidebar-border text-sidebar-foreground shadow-xs rounded-lg transition-all cursor-pointer"
+          >
+            <Plus className="size-3.5 text-primary shrink-0" />
+            <span>New Patient Session</span>
+          </Button>
+
+          {/* Full-width Search Input */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2 size-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search patients..."
+              className="h-8 pl-8 text-xs bg-sidebar-accent/30 border-sidebar-border rounded-lg placeholder:text-muted-foreground/70"
+            />
           </div>
 
-          {/* Session List */}
-          <div className="flex-1 overflow-y-auto flex flex-col gap-3 pr-1">
-            {pinnedSessions.length > 0 && (
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase px-2 tracking-wider">
-                  Pinned
-                </span>
-                <SidebarSessionList
-                  sessions={pinnedSessions}
-                  folders={folders}
-                  activeSessionId={activeSessionId}
-                  onTogglePin={togglePin}
-                  onRename={(s) => { setSessionToRename(s); setRenameValue(s.title || ""); }}
-                  onDelete={setSessionToDelete}
-                  onMoveToFolder={moveToFolder}
-                />
-              </div>
-            )}
-
-            {folders.length > 0 && (
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase px-2 tracking-wider">
+          {/* Scrollable list */}
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1 pt-1">
+            {(folders || []).length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
                   Folders
                 </span>
-                {folders.map((folder) => (
+                {(folders || []).map((folder) => (
                   <SidebarFolderItem
                     key={folder.id}
                     folder={folder}
                     sessions={filteredSessions}
                     activeSessionId={activeSessionId}
-                    onRenameSession={(s) => { setSessionToRename(s); setRenameValue(s.title || ""); }}
-                    onDeleteSession={setSessionToDelete}
+                    onRenameSession={(s) => {
+                      setRenameTarget(s);
+                      setRenameValue(s.title || "");
+                    }}
+                    onDeleteSession={(s) => setDeleteTarget(s)}
                   />
                 ))}
               </div>
             )}
 
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase px-2 tracking-wider">
-                Recents
-              </span>
+            <div className="space-y-1">
+              {folders.length > 0 && (
+                <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
+                  Recent Consultations
+                </span>
+              )}
               <SidebarSessionList
-                sessions={unpinnedRootSessions}
-                folders={folders}
+                sessions={filteredSessions}
                 activeSessionId={activeSessionId}
+                folders={folders}
+                onRename={(session: AppSession) => {
+                  setRenameTarget(session);
+                  setRenameValue(session.title || "");
+                }}
+                onDelete={(session: AppSession) => setDeleteTarget(session)}
                 onTogglePin={togglePin}
-                onRename={(s) => { setSessionToRename(s); setRenameValue(s.title || ""); }}
-                onDelete={setSessionToDelete}
-                onMoveToFolder={moveToFolder}
+                onMoveToFolder={moveSessionToFolder}
+                onCreateFolder={() => setIsCreateFolderOpen(true)}
               />
             </div>
           </div>
-
-          {/* Navigation Links */}
-          <div className="shrink-0 pt-2 border-t border-sidebar-border/60">
-            <Button
-              asChild
-              variant={pathname === "/analytics" ? "secondary" : "ghost"}
-              className="w-full justify-start gap-2 h-8 text-xs font-normal"
-            >
-              <Link href="/analytics">
-                <BarChart3 className="size-4 opacity-70" />
-                <span>Analytics</span>
-              </Link>
-            </Button>
-          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col items-center py-3 gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/chat/new")}
+            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+            title="New Patient Session"
+          >
+            <Plus className="size-4" />
+          </Button>
         </div>
       )}
 
       {/* User Footer */}
-      <div className="p-2 border-t border-sidebar-border/60 mt-auto">
-        <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
-      </div>
+      <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
 
       {/* Dialogs */}
-      <Dialog open={!!sessionToRename} onOpenChange={(open) => !open && setSessionToRename(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename Session</DialogTitle>
-          </DialogHeader>
-          <Input
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
-            placeholder="Session title"
-            onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm()}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSessionToRename(null)}>Cancel</Button>
-            <Button onClick={handleRenameConfirm}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isCreateFolderOpen} onOpenChange={setIsCreateFolderOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Folder</DialogTitle>
-          </DialogHeader>
-          <Input
-            value={createFolderValue}
-            onChange={(e) => setCreateFolderValue(e.target.value)}
-            placeholder="Folder name"
-            onKeyDown={(e) => e.key === "Enter" && handleCreateFolderConfirm()}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateFolderOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateFolderConfirm}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={!!sessionToDelete} onOpenChange={(open) => !open && setSessionToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Session</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this session and all its data? This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (sessionToDelete) deleteSession(sessionToDelete.id);
-                setSessionToDelete(null);
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <SidebarDialogs
+        renameTarget={renameTarget}
+        renameValue={renameValue}
+        setRenameValue={setRenameValue}
+        onCloseRename={() => setRenameTarget(null)}
+        onConfirmRename={handleRenameConfirm}
+        deleteTarget={deleteTarget}
+        onCloseDelete={() => setDeleteTarget(null)}
+        onConfirmDelete={handleDeleteConfirm}
+        isCreateFolderOpen={isCreateFolderOpen}
+        createFolderValue={createFolderValue}
+        setCreateFolderValue={setCreateFolderValue}
+        onCloseCreateFolder={() => {
+          setIsCreateFolderOpen(false);
+          setCreateFolderValue("");
+        }}
+        onConfirmCreateFolder={handleCreateFolderConfirm}
+      />
     </aside>
   );
 }

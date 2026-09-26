@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Key, User as UserIcon, LogOut, ChevronUp } from "lucide-react";
+import { Key, User as UserIcon, Settings, BarChart3, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Avatar from "@/components/shared/Avatar";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,7 @@ export default function SidebarUserMenu({
 }: SidebarUserMenuProps) {
   const router = useRouter();
   const supabase = createClient();
-  const displayName = user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "User";
+  const displayName = user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Profile";
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -37,41 +38,53 @@ export default function SidebarUserMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-between gap-2.5 p-2 h-auto hover:bg-muted/80 rounded-xl"
+          className={cn(
+            "w-full gap-2.5 p-1.5 h-9 hover:bg-muted/80 rounded-xl transition-colors cursor-pointer",
+            isCollapsed ? "justify-center p-0 size-9 mx-auto" : "justify-start"
+          )}
+          title={displayName}
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Avatar name={displayName} src={user?.user_metadata?.avatar_url} size="sm" />
-            {!isCollapsed && (
-              <div className="flex flex-col text-left min-w-0">
-                <span className="text-xs font-semibold text-foreground truncate">
-                  {displayName}
-                </span>
-                <span className="text-[11px] text-muted-foreground truncate">
-                  {user?.email}
-                </span>
-              </div>
-            )}
-          </div>
-          {!isCollapsed && <ChevronUp className="size-3.5 text-muted-foreground shrink-0" />}
+          <Avatar name={displayName} src={user?.user_metadata?.avatar_url} size="sm" />
+          {!isCollapsed && (
+            <span className="text-xs font-semibold text-foreground truncate min-w-0">
+              {displayName}
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" side="top" className="w-56 p-1">
+      <DropdownMenuContent
+        align={isCollapsed ? "start" : "end"}
+        side={isCollapsed ? "right" : "top"}
+        className="w-56 p-1.5 shadow-lg border-border"
+      >
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="flex items-center gap-2 text-xs cursor-pointer">
-            <UserIcon className="size-4" />
-            <span>Profile settings</span>
+          <Link href="/profile" className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg cursor-pointer">
+            <UserIcon className="size-4 text-muted-foreground" />
+            <span>Profile</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/api-keys" className="flex items-center gap-2 text-xs cursor-pointer">
-            <Key className="size-4" />
+          <Link href="/profile" className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg cursor-pointer">
+            <Settings className="size-4 text-muted-foreground" />
+            <span>Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/analytics" className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg cursor-pointer">
+            <BarChart3 className="size-4 text-muted-foreground" />
+            <span>Analytics</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/api-keys" className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg cursor-pointer">
+            <Key className="size-4 text-muted-foreground" />
             <span>API Keys</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="my-1" />
         <DropdownMenuItem
           onClick={handleSignOut}
-          className="flex items-center gap-2 text-xs text-destructive focus:text-destructive cursor-pointer"
+          className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
         >
           <LogOut className="size-4" />
           <span>Sign out</span>

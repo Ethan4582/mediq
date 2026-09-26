@@ -141,7 +141,7 @@ export default function LandingHeroAstryx() {
           <VStack gap={6} vAlign="center" style={pageStyle}>
             <VStack gap={2} hAlign="center">
               <HStack gap={2} vAlign="center">
-                <Icon icon={SparklesIcon} size="md" color="accent" />
+                <Icon icon={SparklesIcon} size="md" color="accent" className="w-5 h-5 shrink-0" style={{ width: 20, height: 20 }} />
                 <Text type="large" as="h2" color="secondary">
                   AI-Powered Healthcare Intelligence
                 </Text>
@@ -214,7 +214,7 @@ export default function LandingHeroAstryx() {
                     label: "Auto (Clinical Engine)",
                     variant: "ghost",
                     size: "md",
-                    icon: <Icon icon={SparklesIcon} size="sm" />,
+                    icon: <Icon icon={SparklesIcon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />,
                   }}
                   items={[
                     { label: "Auto (Clinical Engine)", onClick: () => {} },
@@ -238,7 +238,7 @@ export default function LandingHeroAstryx() {
                     key={cat.key}
                     value={cat.key}
                     label={cat.label}
-                    icon={<Icon icon={cat.icon} size="sm" />}
+                    icon={<Icon icon={cat.icon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />}
                   />
                 ))}
               </ToggleButtonGroup>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@astryxdesign/core/astryx.css";
 @source "../../src";
 @source "../**";
 @import "tw-animate-css";
@@ -61,7 +62,6 @@
   --tracking-normal: 0em;
   --tracking-wide: 0.04em;
 
-  /* MediQ brand tokens */
   --color-brand: var(--brand-primary);
   --color-brand-hover: var(--brand-hover);
   --color-brand-light: var(--brand-light);
@@ -76,7 +76,6 @@
 }
 
 :root {
-  /* MediQ Design System */
   --bg-primary: #ffffff;
   --bg-secondary: #f4f6f8;
   --bg-sidebar: #f9fafb;
@@ -119,7 +118,6 @@
   --sidebar-bg: #f9fafb;
   --sidebar-border: #e5e7eb;
 
-  /* Shadcn base tokens */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -173,54 +171,21 @@
   }
 }
 
-/* Typography */
 .text-heading {
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
-.text-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: #6b7280;
+.astryx-chat-layout {
+  width: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-/* Hero Typography */
-.hero-headline-blue {
-  font-size: clamp(2.8rem, 6vw, 4.5rem);
-  font-weight: 800;
-  color: #2563eb;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+.astryx-chat-layout .xvueqy4 {
+  margin-inline: auto !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
-
-.hero-headline-dark {
-  font-size: clamp(2.8rem, 6vw, 4.5rem);
-  font-weight: 800;
-  color: #0f172a;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-}
-
-.hero-sub {
-  font-size: 1.05rem;
-  font-weight: 400;
-  color: #475569;
-  line-height: 1.7;
-  max-width: 480px;
-  text-align: center;
-}
-
-@media (max-width: 768px) {
-  .hero-headline-blue,
-  .hero-headline-dark {
-    font-size: clamp(2.2rem, 6vw, 2.8rem);
-  }
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #9ca3af; }

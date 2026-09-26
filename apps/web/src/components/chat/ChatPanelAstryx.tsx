@@ -2,78 +2,49 @@
 
 import { useRef, useState, useCallback, useEffect, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { Layout, LayoutContent, VStack, HStack } from "@astryxdesign/core/Layout";
-import {
-  ChatLayout,
-  ChatMessageList,
-  ChatMessage,
-  ChatSystemMessage,
-  ChatToolCalls,
-} from "@astryxdesign/core/Chat";
-import { Card } from "@astryxdesign/core/Card";
-import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
-import { toast } from "sonner";
+import { ChatLayout, ChatMessageList, ChatMessage, ChatSystemMessage, ChatToolCalls } from "@astryxdesign/core/Chat";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Menu, FileText, Share2, Sparkles } from "lucide-react";
 import ChatComposerAstryx from "./ChatComposerAstryx";
 import ChatMessageItemAstryx from "./ChatMessageItemAstryx";
-import ArtifactPanelAstryx from "./ArtifactPanelAstryx";
-import ChatLandingAstryx from "./ChatLandingAstryx";
+import ChatEmptyState from "./ChatEmptyState";
+import ChatArtifactDrawer from "./ChatArtifactDrawer";
+import ShareSessionDialog from "./ShareSessionDialog";
 import { useSession } from "@/hooks/useSession";
 import { useMessages } from "@/hooks/useMessages";
 import { useChat } from "@/hooks/useChat";
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
+import { useClinicalAgent } from "@/hooks/useClinicalAgent";
 import { useSessionStore } from "@/stores/sessionStore";
-import { createClient } from "@/lib/supabase/client";
 import { createSessionAction } from "@/actions/sessions";
 import type { Message, ClinicalDraft } from "@/types/app";
 
-const rootStyle: CSSProperties = {
-  flex: 1,
-  width: "100%",
-  height: "100%",
-  position: "relative",
-  overflow: "hidden",
-};
-
-const chatColumnStyle: CSSProperties = {
-  flex: 1,
-  minWidth: 0,
-  height: "100%",
-};
-
-const chatLayoutStyle: CSSProperties = {
-  height: "100%",
-};
-
+const rootStyle: CSSProperties = { flex: 1, width: "100%", height: "100%", position: "relative", overflow: "hidden" };
+const chatColStyle: CSSProperties = { flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column" };
 const MOBILE_MAX_WIDTH = 768;
-
-function artifactPanelWidthVar(size: number): CSSProperties {
-  return {
-    width: `${size}px`,
-    minWidth: 340,
-    maxWidth: 800,
-    height: "100%",
-    flexShrink: 0,
-    borderLeft: "1px solid var(--border-subtle, rgba(0,0,0,0.08))",
-    backgroundColor: "var(--bg-surface, #ffffff)",
-  };
-}
-
 const AI_CHAT_CSS = `
+.astryx-chat-layout {
+  width: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.astryx-chat-layout .xvueqy4 {
+  margin-inline: auto !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
 @media (max-width: 768px) {
-  .ai-chat-resize-handle {
-    display: none;
-  }
-  .ai-chat-artifact-panel {
-    display: none;
-    width: 100%;
-    flex-shrink: 1;
-  }
+  .ai-chat-resize-handle { display: none; }
+  .ai-chat-artifact-panel { display: none; width: 100%; flex-shrink: 1; }
 }
 `;
 
 export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
   const isNew = sessionId === "new";
-  useSession(isNew ? "" : sessionId);
+  const { session, loading: sessionLoading } = useSession(isNew ? "" : sessionId);
   const { messages, loading: messagesLoading, refetch: refetchMessages } = useMessages(isNew ? "" : sessionId);
   const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const router = useRouter();
@@ -82,19 +53,40 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
     setOptimisticMessages(updater);
   }, []);
 
-  const [activeDocumentId, setActiveDocumentId] = useState<string | undefined>(undefined);
-  const [isAgentRunning, setIsAgentRunning] = useState(false);
-  const [latestDraft, setLatestDraft] = useState<ClinicalDraft | null>(null);
-
+  const isSidebarOpen = useSessionStore((state) => state.isSidebarOpen);
+  const toggleSidebar = useSessionStore((state) => state.toggleSidebar);
   const selectedProvider = useSessionStore((state) => state.selectedProvider);
   const setSelectedProvider = useSessionStore((state) => state.setSelectedProvider);
   const isRightPanelOpen = useSessionStore((state) => state.isRightPanelOpen);
   const setRightPanelOpen = useSessionStore((state) => state.setRightPanelOpen);
 
   const [isArtifactDialogOpen, setIsArtifactDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [panelSize, setPanelSize] = useState(520);
   const isDraggingRef = useRef(false);
-  const rootRef = useRef<HTMLElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const handleArtifactOpen = useCallback(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= MOBILE_MAX_WIDTH) {
+      setIsArtifactDialogOpen(true);
+    } else {
+      setRightPanelOpen(true);
+    }
+  }, [setRightPanelOpen]);
+
+  const {
+    activeDocumentId,
+    setActiveDocumentId,
+    isAgentRunning,
+    latestDraft,
+    setLatestDraft,
+    executeAgentRun,
+  } = useClinicalAgent({
+    sessionId,
+    selectedProvider,
+    refetchMessages,
+    onDraftReady: handleArtifactOpen,
+  });
 
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -106,9 +98,7 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
       if (!isDraggingRef.current || !rootRef.current) return;
       const rootRect = rootRef.current.getBoundingClientRect();
       const newWidth = rootRect.right - moveEvent.clientX;
-      if (newWidth >= 340 && newWidth <= 800) {
-        setPanelSize(newWidth);
-      }
+      if (newWidth >= 340 && newWidth <= 800) setPanelSize(newWidth);
     };
 
     const handleMouseUp = () => {
@@ -123,88 +113,19 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
     window.addEventListener("mouseup", handleMouseUp);
   }, []);
 
-  const executeAgentRun = useCallback(
-    async (sessId: string, docId?: string) => {
-      if (!sessId || sessId === "new") return;
-      setIsAgentRunning(true);
-      try {
-        const supabase = createClient();
-        const {
-          data: { session: authSession },
-        } = await supabase.auth.getSession();
-        const token = authSession?.access_token;
-        const headers: HeadersInit = {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || ""}/api/agent/run`,
-          {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              session_id: sessId,
-              document_id: docId,
-              provider: selectedProvider,
-            }),
-          }
-        );
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail?.error || "Agent run failed");
-        }
-
-        const data = await res.json();
-        if (data.draft) {
-          setLatestDraft(data.draft);
-          if (typeof window !== "undefined" && window.innerWidth <= MOBILE_MAX_WIDTH) {
-            setIsArtifactDialogOpen(true);
-          } else {
-            setRightPanelOpen(true);
-          }
-          toast.success("Discharge Summary generated", {
-            description: "Clinical summary created.",
-          });
-        }
-        await refetchMessages();
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : "Clinical agent workflow encountered an error";
-        toast.error("Agent error", { description: message });
-      } finally {
-        setIsAgentRunning(false);
-      }
-    },
-    [selectedProvider, refetchMessages, setRightPanelOpen]
-  );
-
-  const {
-    upload,
-    pendingUpload,
-    ocrResult,
-  } = useDocumentUpload(isNew ? "" : sessionId, (sessId, docId) => {
+  const { upload, pendingUpload, ocrResult } = useDocumentUpload(isNew ? "" : sessionId, (sessId, docId) => {
     setActiveDocumentId(docId);
-    if (typeof window !== "undefined" && window.innerWidth <= MOBILE_MAX_WIDTH) {
-      setIsArtifactDialogOpen(true);
-    } else {
-      setRightPanelOpen(true);
-    }
+    handleArtifactOpen();
     if (sessId && sessId !== "new") {
       executeAgentRun(sessId, docId);
+      if (isNew) router.push(`/chat/${sessId}`);
     }
   });
 
-  const { sendMessage, isSending } = useChat(
-    messages,
-    setAllOptimistic,
-    refetchMessages
-  );
+  const { sendMessage, isSending } = useChat(messages, setAllOptimistic, refetchMessages);
 
   useEffect(() => {
     if (!sessionId || sessionId === "new") return;
-
     const pendingPrompt = sessionStorage.getItem(`pending_prompt_${sessionId}`);
     if (pendingPrompt) {
       sessionStorage.removeItem(`pending_prompt_${sessionId}`);
@@ -212,59 +133,14 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
     }
   }, [sessionId, sendMessage]);
 
-  useEffect(() => {
-    if (!sessionId || sessionId === "new") return;
-
-    let mounted = true;
-    const fetchLatestDraft = async () => {
-      try {
-        const supabase = createClient();
-        const {
-          data: { session: authSession },
-        } = await supabase.auth.getSession();
-        const token = authSession?.access_token;
-        const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || ""}/api/patient/${sessionId}/drafts`,
-          { headers }
-        );
-        if (res.ok && mounted) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            const d = data[0];
-            const parsed: ClinicalDraft =
-              typeof d.content === "string" ? JSON.parse(d.content) : d.content;
-            setLatestDraft(parsed);
-          }
-        }
-      } catch (err: unknown) {
-        console.error("Failed to fetch draft:", err);
-      }
-    };
-    fetchLatestDraft();
-    return () => {
-      mounted = false;
-    };
-  }, [sessionId]);
-
   const allMessages = [...messages, ...optimisticMessages];
+  const isUploadingOrProcessing =
+    pendingUpload?.status === "uploading" || pendingUpload?.status === "processing" || isAgentRunning;
 
   const openArtifact = (draftOrId?: ClinicalDraft | string) => {
-    if (typeof draftOrId === "object" && draftOrId !== null) {
-      setLatestDraft(draftOrId);
-    }
-    if (typeof window !== "undefined" && window.innerWidth <= MOBILE_MAX_WIDTH) {
-      setIsArtifactDialogOpen(true);
-    } else {
-      setRightPanelOpen(true);
-    }
+    if (typeof draftOrId === "object" && draftOrId !== null) setLatestDraft(draftOrId);
+    handleArtifactOpen();
   };
-
-  const isUploadingOrProcessing =
-    pendingUpload?.status === "uploading" ||
-    pendingUpload?.status === "processing" ||
-    isAgentRunning;
 
   const handleSend = async (text: string) => {
     if (isUploadingOrProcessing || isSending) return;
@@ -283,12 +159,11 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
           title: text.slice(0, 40),
           patientName: "Patient " + new Date().toLocaleDateString(),
         });
-
         if (newSess?.id) {
           sessionStorage.setItem(`pending_prompt_${newSess.id}`, text);
           router.push(`/chat/${newSess.id}`);
         }
-      } catch (e: unknown) {
+      } catch (e) {
         console.error("Failed to initialize session:", e);
       }
     } else {
@@ -296,159 +171,140 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
     }
   };
 
-  const handleUpload = async (file: File) => {
-    await upload(file);
-  };
-
   const attachedNames = [
     ...(ocrResult?.fileName ? [ocrResult.fileName] : []),
     ...(pendingUpload?.fileName ? [pendingUpload.fileName] : []),
   ];
 
-  if (
-    (isNew || (allMessages.length === 0 && !messagesLoading)) &&
-    !isUploadingOrProcessing &&
-    !ocrResult
-  ) {
-    return (
-      <VStack ref={rootRef} style={rootStyle}>
-        <div className="flex-1 overflow-y-auto flex flex-col justify-center items-center p-4">
-          <ChatLandingAstryx
-            onSend={handleInitialSend}
-            onUpload={handleUpload}
-            disabled={isSending || isUploadingOrProcessing}
-            selectedProvider={selectedProvider}
-            onProviderChange={setSelectedProvider}
-          />
-        </div>
-      </VStack>
-    );
-  }
+  const sessionTitle =
+    session?.title ||
+    session?.patient_name ||
+    (isNew ? "New Consultation" : sessionLoading ? "Loading session..." : "Clinical Session");
 
   return (
-    <VStack ref={rootRef} style={rootStyle}>
+    <div ref={rootRef} style={rootStyle} className="flex flex-row w-full h-full">
       <style>{AI_CHAT_CSS}</style>
-      <Layout
-        height="fill"
-        content={
-          <LayoutContent padding={0}>
-            <HStack height="100%">
-              <VStack style={chatColumnStyle}>
-                <ChatLayout
-                  density="spacious"
-                  style={chatLayoutStyle}
-                  composer={
-                    <ChatComposerAstryx
-                      onSend={handleSend}
-                      onUpload={handleUpload}
-                      disabled={isUploadingOrProcessing || isSending}
-                      isSending={isSending}
-                      selectedProvider={selectedProvider}
-                      onProviderChange={setSelectedProvider}
-                      attachedFiles={attachedNames}
-                    />
-                  }
-                >
-                  <ChatMessageList>
-                    <ChatSystemMessage variant="divider">
-                      Patient Session
-                    </ChatSystemMessage>
+      <div style={chatColStyle} className="flex-1 min-w-0 h-full flex flex-col w-full">
+        <header className="w-full flex items-center justify-between px-4 py-2 border-b border-border/80 bg-background/95 backdrop-blur-xs shrink-0 z-10">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {!isSidebarOpen && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="size-8 text-muted-foreground hover:text-foreground shrink-0"
+              >
+                <Menu className="size-4" />
+              </Button>
+            )}
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md">
+                {sessionTitle}
+              </h2>
+              {latestDraft ? (
+                <Badge variant="secondary" className="hidden sm:inline-flex bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] px-1.5 py-0">
+                  <Sparkles className="size-2.5 mr-1" />
+                  Draft Ready
+                </Badge>
+              ) : isUploadingOrProcessing ? (
+                <Badge variant="secondary" className="hidden sm:inline-flex bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-[10px] px-1.5 py-0 animate-pulse">
+                  Processing
+                </Badge>
+              ) : null}
+            </div>
+          </div>
 
-                    {allMessages.map((m, i) => (
-                      <ChatMessageItemAstryx
-                        key={m.id ?? i}
-                        message={m}
-                        onOpenArtifact={openArtifact}
-                      />
-                    ))}
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsShareDialogOpen(true)}
+              className="gap-1.5 text-xs h-8 px-2.5 rounded-lg border-border hover:bg-muted/80"
+            >
+              <Share2 className="size-3.5" />
+              <span className="hidden sm:inline">Share</span>
+            </Button>
 
-                    {isUploadingOrProcessing && (
-                      <ChatMessage sender="assistant">
-                        <ChatToolCalls
-                          defaultIsExpanded
-                          calls={[
-                            {
-                              name:
-                                pendingUpload?.status === "uploading"
-                                  ? "upload"
-                                  : pendingUpload?.stage === "embedding"
-                                  ? "vector-embeddings"
-                                  : isAgentRunning
-                                  ? "clinical-agent"
-                                  : "mistral-ocr",
-                              target: pendingUpload?.fileName || ocrResult?.fileName || "Clinical Document",
-                              status: "running",
-                              duration: "in progress",
-                            },
-                          ]}
-                        />
-                      </ChatMessage>
-                    )}
-                  </ChatMessageList>
-                </ChatLayout>
-              </VStack>
+            <Button
+              variant={isRightPanelOpen ? "default" : "outline"}
+              size="sm"
+              onClick={() => setRightPanelOpen(!isRightPanelOpen)}
+              className="gap-1.5 text-xs h-8 px-2.5 rounded-lg font-medium shadow-xs"
+            >
+              <FileText className={`size-3.5 ${isRightPanelOpen ? "text-primary-foreground" : "text-blue-500"}`} />
+              <span className="hidden sm:inline">Project content</span>
+              <Badge
+                variant={isRightPanelOpen ? "outline" : "secondary"}
+                className="text-[9px] px-1 py-0 h-4 min-w-4 flex items-center justify-center font-normal ml-0.5"
+              >
+                {ocrResult ? 1 : latestDraft ? 1 : 0}
+              </Badge>
+            </Button>
+          </div>
+        </header>
 
-              {isRightPanelOpen && (
-                <div
-                  role="separator"
-                  tabIndex={0}
-                  aria-orientation="vertical"
-                  onMouseDown={handleResizeStart}
-                  className="ai-chat-resize-handle w-1.5 hover:w-2 hover:bg-primary/40 active:bg-primary transition-all cursor-col-resize shrink-0 bg-border/60 relative flex items-center justify-center group select-none"
-                  title="Drag to resize panel"
-                >
-                  <div className="w-0.5 h-6 rounded bg-muted-foreground/30 group-hover:bg-primary" />
-                </div>
-              )}
-
-              {isRightPanelOpen && (
-                <Card
-                  variant="transparent"
-                  height="100%"
-                  className="ai-chat-artifact-panel"
-                  style={artifactPanelWidthVar(panelSize)}
-                >
-                  <ArtifactPanelAstryx
-                    sessionId={sessionId}
-                    draft={latestDraft}
-                    ocrResult={ocrResult}
-                    onClose={() => setRightPanelOpen(false)}
-                    onSelectDraft={(draft) => setLatestDraft(draft)}
-                  />
-                </Card>
-              )}
-            </HStack>
-          </LayoutContent>
-        }
-      />
-
-      <Dialog
-        isOpen={isArtifactDialogOpen}
-        onOpenChange={setIsArtifactDialogOpen}
-        purpose="info"
-        variant="fullscreen"
-      >
-        <Layout
-          header={
-            <DialogHeader
-              title={latestDraft?.diagnoses?.principal_diagnosis || ocrResult?.fileName || "Discharge Summary"}
-              hasDivider
-              onOpenChange={setIsArtifactDialogOpen}
+        <ChatLayout
+          density="spacious"
+          style={{ height: "calc(100% - 45px)", width: "100%" }}
+          composer={
+            <ChatComposerAstryx
+              onSend={isNew ? handleInitialSend : handleSend}
+              onUpload={upload}
+              disabled={isUploadingOrProcessing || isSending}
+              isSending={isSending}
+              selectedProvider={selectedProvider}
+              onProviderChange={setSelectedProvider}
+              attachedFiles={attachedNames}
             />
           }
-          content={
-            <LayoutContent padding={0}>
-              <ArtifactPanelAstryx
-                sessionId={sessionId}
-                draft={latestDraft}
-                ocrResult={ocrResult}
-                onClose={() => setIsArtifactDialogOpen(false)}
-                onSelectDraft={(draft) => setLatestDraft(draft)}
-              />
-            </LayoutContent>
-          }
-        />
-      </Dialog>
-    </VStack>
+        >
+          <ChatMessageList className="w-full max-w-[800px] mx-auto py-4">
+            {allMessages.length > 0 && <ChatSystemMessage variant="divider">Patient Session</ChatSystemMessage>}
+            {allMessages.length === 0 && !messagesLoading && !isUploadingOrProcessing && <ChatEmptyState />}
+            {allMessages.map((m, i) => (
+              <ChatMessageItemAstryx key={m.id ?? i} message={m} onOpenArtifact={openArtifact} />
+            ))}
+            {isUploadingOrProcessing && (
+              <ChatMessage sender="assistant">
+                <ChatToolCalls
+                  defaultIsExpanded
+                  calls={[{
+                    name: pendingUpload?.status === "uploading" ? "upload"
+                      : pendingUpload?.stage === "embedding" ? "vector-embeddings"
+                      : isAgentRunning ? "clinical-agent" : "mistral-ocr",
+                    target: pendingUpload?.fileName || ocrResult?.fileName || "Clinical Document",
+                    status: "running",
+                    duration: "in progress",
+                  }]}
+                />
+              </ChatMessage>
+            )}
+          </ChatMessageList>
+        </ChatLayout>
+      </div>
+
+      <ChatArtifactDrawer
+        isOpen={isRightPanelOpen}
+        onClose={() => setRightPanelOpen(false)}
+        panelSize={panelSize}
+        onResizeStart={handleResizeStart}
+        sessionId={sessionId}
+        draft={latestDraft}
+        ocrResult={ocrResult}
+        onSelectDraft={setLatestDraft}
+        isDialogOpen={isArtifactDialogOpen}
+        onDialogChange={setIsArtifactDialogOpen}
+        onUpload={upload}
+        isUploading={isUploadingOrProcessing}
+      />
+
+      <ShareSessionDialog
+        isOpen={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        session={session}
+        draft={latestDraft}
+        documentCount={ocrResult ? 1 : 0}
+      />
+    </div>
   );
 }

@@ -9,19 +9,19 @@ import { Button } from "@/components/ui/button";
 
 interface SidebarFolderItemProps {
   folder: Folder;
-  sessions: AppSession[];
+  sessions?: AppSession[];
   activeSessionId?: string;
-  onRenameSession: (session: AppSession) => void;
-  onDeleteSession: (session: AppSession) => void;
+  onRenameSession?: (session: AppSession) => void;
+  onDeleteSession?: (session: AppSession) => void;
 }
 
 export default function SidebarFolderItem({
   folder,
-  sessions,
+  sessions = [],
   activeSessionId,
 }: SidebarFolderItemProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const folderSessions = sessions.filter((s) => s.folder_id === folder.id);
+  const folderSessions = (sessions || []).filter((s) => s.folder_id === folder.id);
 
   return (
     <div className="flex flex-col gap-0.5">
