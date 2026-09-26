@@ -10,8 +10,11 @@ out/
 dist/
 build/
 
-# Skills & Notes
+# Skills, Tools & Notes
 skills/
+.agents/
+.gemini/
+tools/
 Agent.md
 notes/
 **/notes/
