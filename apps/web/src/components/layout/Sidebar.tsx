@@ -4,29 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { Plus, Search, BarChart3, FolderPlus, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Plus, Search, FolderPlus, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useSessions } from "@/hooks/useSessions";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { AppSession } from "@/types/app";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import SidebarSessionList from "./SidebarSessionList";
 import SidebarFolderItem from "./SidebarFolderItem";
 import SidebarUserMenu from "./SidebarUserMenu";
@@ -179,20 +164,6 @@ export default function Sidebar({
                 onMoveToFolder={moveToFolder}
               />
             </div>
-          </div>
-
-          {/* Navigation Links */}
-          <div className="shrink-0 pt-2 border-t border-sidebar-border/60">
-            <Button
-              asChild
-              variant={pathname === "/analytics" ? "secondary" : "ghost"}
-              className="w-full justify-start gap-2 h-8 text-xs font-normal"
-            >
-              <Link href="/analytics">
-                <BarChart3 className="size-4 opacity-70" />
-                <span>Analytics</span>
-              </Link>
-            </Button>
           </div>
         </div>
       )}

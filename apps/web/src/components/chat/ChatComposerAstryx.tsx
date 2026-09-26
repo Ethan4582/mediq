@@ -90,7 +90,7 @@ export default function ChatComposerAstryx({
   };
 
   return (
-    <div className="w-full max-w-[860px] mx-auto px-4 pb-3">
+    <div className="w-full max-w-[760px] mx-auto px-4 pb-3">
       <input
         ref={fileInputRef}
         type="file"

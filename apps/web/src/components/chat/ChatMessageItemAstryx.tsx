@@ -55,7 +55,7 @@ export default function ChatMessageItemAstryx({
       sender="assistant"
       avatar={
         <div className="w-7 h-7 rounded-lg border border-gray-200/80 bg-white flex items-center justify-center overflow-hidden shadow-xs shrink-0">
-          <img src="/logo.png" alt="MediQ" className="w-4 h-4 object-contain" />
+          <img src="/logo.png" alt="MediQ" style={{ width: "auto", height: "auto" }} className="w-4 h-4 object-contain" />
         </div>
       }
     >

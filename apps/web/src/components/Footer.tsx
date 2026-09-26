@@ -13,7 +13,7 @@ export function Footer() {
         <div className="flex flex-col lg:flex-row justify-between w-full mb-12 gap-12 lg:gap-0">
           <div className="flex flex-col w-full lg:w-[35%] lg:pr-8">
             <div className="flex items-center gap-2.5 mb-5">
-              <Image src="/logo.png" alt="MediQ logo" width={28} height={28} className="object-contain" />
+              <Image src="/logo.png" alt="MediQ logo" width={28} height={28} style={{ width: "auto", height: "auto" }} className="object-contain" />
               <span className="text-white text-[20px] font-bold tracking-wide">MediQ</span>
             </div>
             <p className="text-[#8492a6] text-[14px] leading-relaxed mb-6 max-w-[90%]">
@@ -31,7 +31,7 @@ export function Footer() {
                 </svg>
               </a>
               <a href="#" className="w-[38px] h-[38px] flex items-center justify-center rounded-[8px] border border-[#1e293b] bg-[#0b1221] hover:bg-[#1e293b] hover:border-[#334155] transition-all group">
-                <Image src="/linkedin.svg" alt="linkedin" width={18} height={18} className="opacity-70 group-hover:opacity-100 transition-opacity" />
+                <Image src="/linkedin.svg" alt="linkedin" width={18} height={18} style={{ width: "auto", height: "auto" }} className="opacity-70 group-hover:opacity-100 transition-opacity" />
               </a>
             </div>
           </div>

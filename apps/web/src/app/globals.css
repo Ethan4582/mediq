@@ -280,3 +280,12 @@ span.x47corl {
   position: absolute !important;
   pointer-events: none !important;
 }
+
+/* Ensure Astryx Chat Layout is centered in the workspace */
+[data-theme-part="chat-layout"] {
+  width: 100% !important;
+}
+[data-theme-part="chat-layout"] > div {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
