@@ -2,7 +2,6 @@
 
 import { useRef, useState, useCallback, useEffect, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { Layout, LayoutContent, VStack, HStack } from "@astryxdesign/core/Layout";
 import { ChatLayout, ChatMessageList, ChatMessage, ChatSystemMessage, ChatToolCalls } from "@astryxdesign/core/Chat";
 import ChatComposerAstryx from "./ChatComposerAstryx";
 import ChatMessageItemAstryx from "./ChatMessageItemAstryx";
@@ -18,9 +17,14 @@ import { createSessionAction } from "@/actions/sessions";
 import type { Message, ClinicalDraft } from "@/types/app";
 
 const rootStyle: CSSProperties = { flex: 1, width: "100%", height: "100%", position: "relative", overflow: "hidden" };
-const chatColStyle: CSSProperties = { flex: 1, minWidth: 0, height: "100%" };
+const chatColStyle: CSSProperties = { flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column" };
 const MOBILE_MAX_WIDTH = 768;
-const AI_CHAT_CSS = `@media (max-width: 768px) { .ai-chat-resize-handle { display: none; } .ai-chat-artifact-panel { display: none; width: 100%; flex-shrink: 1; } }`;
+const AI_CHAT_CSS = `
+@media (max-width: 768px) {
+  .ai-chat-resize-handle { display: none; }
+  .ai-chat-artifact-panel { display: none; width: 100%; flex-shrink: 1; }
+}
+`;
 
 export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
   const isNew = sessionId === "new";
@@ -41,7 +45,7 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
   const [isArtifactDialogOpen, setIsArtifactDialogOpen] = useState(false);
   const [panelSize, setPanelSize] = useState(520);
   const isDraggingRef = useRef(false);
-  const rootRef = useRef<HTMLElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const handleArtifactOpen = useCallback(() => {
     if (typeof window !== "undefined" && window.innerWidth <= MOBILE_MAX_WIDTH) {
@@ -154,70 +158,61 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
   ];
 
   return (
-    <VStack ref={rootRef} style={rootStyle}>
+    <div ref={rootRef} style={rootStyle} className="flex flex-row">
       <style>{AI_CHAT_CSS}</style>
-      <Layout
-        height="fill"
-        content={
-          <LayoutContent padding={0}>
-            <HStack height="100%">
-              <VStack style={chatColStyle}>
-                <ChatLayout
-                  density="spacious"
-                  style={{ height: "100%" }}
-                  composer={
-                    <ChatComposerAstryx
-                      onSend={isNew ? handleInitialSend : handleSend}
-                      onUpload={upload}
-                      disabled={isUploadingOrProcessing || isSending}
-                      isSending={isSending}
-                      selectedProvider={selectedProvider}
-                      onProviderChange={setSelectedProvider}
-                      attachedFiles={attachedNames}
-                    />
-                  }
-                >
-                  <ChatMessageList>
-                    {allMessages.length > 0 && <ChatSystemMessage variant="divider">Patient Session</ChatSystemMessage>}
-                    {allMessages.length === 0 && !messagesLoading && !isUploadingOrProcessing && <ChatEmptyState />}
-                    {allMessages.map((m, i) => (
-                      <ChatMessageItemAstryx key={m.id ?? i} message={m} onOpenArtifact={openArtifact} />
-                    ))}
-                    {isUploadingOrProcessing && (
-                      <ChatMessage sender="assistant">
-                        <ChatToolCalls
-                          defaultIsExpanded
-                          calls={[{
-                            name: pendingUpload?.status === "uploading" ? "upload"
-                              : pendingUpload?.stage === "embedding" ? "vector-embeddings"
-                              : isAgentRunning ? "clinical-agent" : "mistral-ocr",
-                            target: pendingUpload?.fileName || ocrResult?.fileName || "Clinical Document",
-                            status: "running",
-                            duration: "in progress",
-                          }]}
-                        />
-                      </ChatMessage>
-                    )}
-                  </ChatMessageList>
-                </ChatLayout>
-              </VStack>
+      <div style={chatColStyle} className="flex-1 min-w-0 h-full flex flex-col items-center">
+        <ChatLayout
+          density="spacious"
+          style={{ height: "100%", width: "100%" }}
+          composer={
+            <ChatComposerAstryx
+              onSend={isNew ? handleInitialSend : handleSend}
+              onUpload={upload}
+              disabled={isUploadingOrProcessing || isSending}
+              isSending={isSending}
+              selectedProvider={selectedProvider}
+              onProviderChange={setSelectedProvider}
+              attachedFiles={attachedNames}
+            />
+          }
+        >
+          <ChatMessageList>
+            {allMessages.length > 0 && <ChatSystemMessage variant="divider">Patient Session</ChatSystemMessage>}
+            {allMessages.length === 0 && !messagesLoading && !isUploadingOrProcessing && <ChatEmptyState />}
+            {allMessages.map((m, i) => (
+              <ChatMessageItemAstryx key={m.id ?? i} message={m} onOpenArtifact={openArtifact} />
+            ))}
+            {isUploadingOrProcessing && (
+              <ChatMessage sender="assistant">
+                <ChatToolCalls
+                  defaultIsExpanded
+                  calls={[{
+                    name: pendingUpload?.status === "uploading" ? "upload"
+                      : pendingUpload?.stage === "embedding" ? "vector-embeddings"
+                      : isAgentRunning ? "clinical-agent" : "mistral-ocr",
+                    target: pendingUpload?.fileName || ocrResult?.fileName || "Clinical Document",
+                    status: "running",
+                    duration: "in progress",
+                  }]}
+                />
+              </ChatMessage>
+            )}
+          </ChatMessageList>
+        </ChatLayout>
+      </div>
 
-              <ChatArtifactDrawer
-                isOpen={isRightPanelOpen}
-                panelSize={panelSize}
-                onResizeStart={handleResizeStart}
-                sessionId={sessionId}
-                draft={latestDraft}
-                ocrResult={ocrResult}
-                onClose={() => setRightPanelOpen(false)}
-                onSelectDraft={(draft) => setLatestDraft(draft)}
-                isDialogOpen={isArtifactDialogOpen}
-                onDialogChange={setIsArtifactDialogOpen}
-              />
-            </HStack>
-          </LayoutContent>
-        }
+      <ChatArtifactDrawer
+        isOpen={isRightPanelOpen}
+        panelSize={panelSize}
+        onResizeStart={handleResizeStart}
+        sessionId={sessionId}
+        draft={latestDraft}
+        ocrResult={ocrResult}
+        onClose={() => setRightPanelOpen(false)}
+        onSelectDraft={(draft) => setLatestDraft(draft)}
+        isDialogOpen={isArtifactDialogOpen}
+        onDialogChange={setIsArtifactDialogOpen}
       />
-    </VStack>
+    </div>
   );
 }

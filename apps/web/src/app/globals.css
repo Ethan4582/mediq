@@ -284,8 +284,27 @@ span.x47corl {
 /* Ensure Astryx Chat Layout is centered in the workspace */
 [data-theme-part="chat-layout"] {
   width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
-[data-theme-part="chat-layout"] > div {
+
+[data-theme-part="chat-layout"] > div:first-child {
+  width: 100% !important;
+  max-width: 840px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+[data-theme-part="chat-layout"] > div:last-child {
+  width: 100% !important;
+}
+
+[data-theme-part="chat-layout"] > div:last-child > div > div {
+  width: 100% !important;
+  max-width: 840px !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }

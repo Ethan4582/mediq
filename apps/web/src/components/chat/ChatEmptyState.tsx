@@ -2,7 +2,7 @@
 
 export default function ChatEmptyState() {
   return (
-    <div className="w-full max-w-[760px] mx-auto flex-1 flex flex-col items-center justify-center gap-5 py-24 px-6 text-center select-none">
+    <div className="w-full max-w-[840px] mx-auto flex-1 flex flex-col items-center justify-center gap-5 py-24 px-6 text-center select-none">
       <div className="w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden border border-gray-200/90 bg-white shadow-xs">
         <img src="/logo.png" alt="MediQ" style={{ width: "auto", height: "auto" }} className="w-10 h-10 object-contain" />
       </div>
