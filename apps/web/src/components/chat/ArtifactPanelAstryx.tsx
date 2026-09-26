@@ -24,7 +24,7 @@ import {
   Squares2X2Icon,
   ShareIcon,
 } from "@heroicons/react/24/outline";
-import { Sparkles, FileUp, FileText, Layers, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { FileUp, Layers, ShieldCheck, CheckCircle2, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import type { ClinicalDraft, OcrResultData } from "@/types/app";
@@ -36,6 +36,8 @@ const artifactScroll: CSSProperties = {
   flex: 1,
   overflowY: "auto",
   padding: "var(--spacing-4, 16px)",
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
 };
 
 const articleBody: CSSProperties = {
@@ -77,6 +79,8 @@ interface ArtifactPanelAstryxProps {
   onSelectDraft?: (draft: ClinicalDraft) => void;
   onUpload?: (file: File) => void;
   isUploading?: boolean;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 export default function ArtifactPanelAstryx({
@@ -87,8 +91,16 @@ export default function ArtifactPanelAstryx({
   onSelectDraft,
   onUpload,
   isUploading = false,
+  activeTab: activeTabProp,
+  onTabChange,
 }: ArtifactPanelAstryxProps) {
-  const [activeTab, setActiveTab] = useState<string>("content");
+  const [internalTab, setInternalTab] = useState<string>("content");
+  const activeTab = activeTabProp ?? internalTab;
+  const setActiveTab = (tab: string) => {
+    setInternalTab(tab);
+    onTabChange?.(tab);
+  };
+
   const [historyDrafts, setHistoryDrafts] = useState<ArtifactDraftSummary[]>([]);
   const [documents, setDocuments] = useState<ArtifactDocument[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -416,10 +428,10 @@ export default function ArtifactPanelAstryx({
         </div>
       </div>
 
-      <Section variant="transparent" style={artifactScroll}>
+      <Section variant="transparent" style={artifactScroll} className="no-scrollbar">
         {activeTab === "content" && (
-          <VStack gap={5} style={articleBody}>
-            <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+          <VStack gap={4} style={articleBody}>
+            <div className="rounded-xl border border-border/70 bg-card p-3.5 shadow-xs">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="size-6 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
@@ -427,7 +439,7 @@ export default function ArtifactPanelAstryx({
                   </div>
                   <div>
                     <h3 className="text-xs font-semibold text-foreground">Clinical Session</h3>
-                    <p className="text-[11px] text-muted-foreground">Created by you • Active Session</p>
+                    <p className="text-[11px] text-muted-foreground">Active Workspace</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
@@ -438,28 +450,17 @@ export default function ArtifactPanelAstryx({
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="group relative border-2 border-dashed border-border/90 hover:border-primary/60 hover:bg-primary/5 rounded-xl p-6 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center text-center"
+                className="group relative border border-dashed border-border/80 hover:border-primary/50 hover:bg-muted/20 rounded-lg p-4 transition-all duration-150 cursor-pointer flex flex-col items-center justify-center text-center"
               >
-                <div className="relative mb-3 flex items-center justify-center">
-                  <div className="size-10 rounded-lg bg-muted/80 border border-border flex items-center justify-center -rotate-6 shadow-xs group-hover:-rotate-12 transition-transform">
-                    <FileText className="size-5 text-muted-foreground" />
-                  </div>
-                  <div className="size-10 rounded-lg bg-card border border-border flex items-center justify-center z-10 shadow-xs group-hover:scale-105 transition-transform">
-                    <FileUp className="size-5 text-primary" />
-                  </div>
-                  <div className="size-10 rounded-lg bg-muted/80 border border-border flex items-center justify-center rotate-6 shadow-xs group-hover:rotate-12 transition-transform">
-                    <Sparkles className="size-5 text-amber-500" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md">
-                    <Icon icon={PlusIcon} size="sm" />
-                  </div>
+                <div className="size-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                  <FileUp className="size-4" />
                 </div>
 
-                <h4 className="text-xs font-semibold text-foreground mb-1">
-                  Add PDFs, documents, or other text to reference in this project.
+                <h4 className="text-xs font-medium text-foreground mb-0.5">
+                  Reference patient charts & documents
                 </h4>
-                <p className="text-[11px] text-muted-foreground max-w-sm mb-3">
-                  Upload patient charts, doctor handwriting, lab panels, or paste EHR text notes directly.
+                <p className="text-[11px] text-muted-foreground max-w-xs mb-3">
+                  Upload PDF records, lab panels, or paste clinical notes to ground analysis.
                 </p>
 
                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -467,7 +468,7 @@ export default function ArtifactPanelAstryx({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-xs"
                   >
                     <FileUp className="size-3.5" />
                     <span>{isUploading ? "Uploading..." : "Upload Files"}</span>
@@ -475,7 +476,7 @@ export default function ArtifactPanelAstryx({
                   <button
                     type="button"
                     onClick={() => setIsNoteDialogOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-medium border border-border transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-muted hover:bg-muted/80 text-foreground text-xs font-medium border border-border/70 transition-colors shadow-xs"
                   >
                     <Icon icon={PlusIcon} size="sm" />
                     <span>Paste Raw Note</span>
@@ -529,7 +530,7 @@ export default function ArtifactPanelAstryx({
               )}
             </div>
 
-            <div className="space-y-3 pt-2">
+            <div className="space-y-2.5 pt-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -544,28 +545,28 @@ export default function ArtifactPanelAstryx({
               {draft && (
                 <div
                   onClick={() => setActiveTab("summary")}
-                  className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer space-y-2 shadow-xs"
+                  className="p-2.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer space-y-1.5 shadow-xs"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="size-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-                        <Sparkles className="size-3.5" />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="size-6 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+                        <ClipboardCheck className="size-3.5" />
                       </div>
-                      <div>
-                        <h4 className="text-xs font-semibold text-foreground">
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-semibold text-foreground truncate max-w-[210px]">
                           {draft.diagnoses?.principal_diagnosis || "Current Discharge Draft"}
                         </h4>
                         <p className="text-[10px] text-muted-foreground">Active Clinical Summary</p>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-medium border border-emerald-500/20">
+                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9.5px] font-medium border border-emerald-500/20 shrink-0">
                       Latest Draft
                     </span>
                   </div>
 
                   {conflicts && conflicts.length > 0 && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md">
-                      <ExclamationTriangleIcon className="size-3.5 shrink-0" />
+                    <div className="flex items-center gap-1.5 text-[10.5px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+                      <ExclamationTriangleIcon className="size-3 shrink-0" />
                       <span>{conflicts.length} clinical conflict{conflicts.length > 1 ? "s" : ""} flagged</span>
                     </div>
                   )}
@@ -583,7 +584,7 @@ export default function ArtifactPanelAstryx({
                   <div
                     key={item.id}
                     onClick={() => handleSelectHistoricalDraft(item)}
-                    className="p-3 rounded-xl border border-border/80 bg-card hover:bg-muted/40 transition-colors cursor-pointer space-y-1.5 shadow-xs"
+                    className="p-2.5 rounded-lg border border-border/80 bg-card hover:bg-muted/40 transition-colors cursor-pointer space-y-1 shadow-xs"
                   >
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-semibold text-foreground truncate max-w-[220px]">
