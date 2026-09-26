@@ -62,7 +62,6 @@ export default function ChatMessageItemAstryx({
             width={16}
             height={16}
             className="w-4 h-4 object-contain"
-            unoptimized
           />
         </div>
       }
@@ -74,7 +73,7 @@ export default function ChatMessageItemAstryx({
       )}
 
       {isSummaryCard && (
-        <div className="mt-3 w-full max-w-[560px]">
+        <div className="mt-3 w-full">
           <div
             onClick={() => onOpenArtifact?.(metadata?.draft_id)}
             className="group rounded-xl border border-blue-200/80 dark:border-blue-900/60 bg-gradient-to-b from-card to-blue-50/20 dark:to-blue-950/20 p-4 shadow-xs hover:shadow-md hover:border-blue-400/80 transition-all cursor-pointer select-none"

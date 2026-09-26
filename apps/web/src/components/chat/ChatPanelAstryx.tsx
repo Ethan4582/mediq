@@ -246,7 +246,7 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
             />
           }
         >
-          <ChatMessageList className="w-full max-w-[840px] mx-auto px-4 py-4">
+          <ChatMessageList className="w-full max-w-[800px] mx-auto py-4">
             {allMessages.length > 0 && <ChatSystemMessage variant="divider">Patient Session</ChatSystemMessage>}
             {allMessages.length === 0 && !messagesLoading && !isUploadingOrProcessing && <ChatEmptyState />}
             {allMessages.map((m, i) => (

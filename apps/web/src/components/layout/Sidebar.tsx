@@ -88,7 +88,7 @@ export default function Sidebar({
         {isSidebarOpen ? (
           <>
             <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
-              <Image src="/logo.png" alt="MediQ" width={20} height={20} className="w-[20px] h-[20px] object-contain shrink-0" unoptimized />
+              <Image src="/logo.png" alt="MediQ" width={20} height={20} className="w-5 h-5 object-contain shrink-0" priority />
               <span className="font-semibold text-sm tracking-tight text-foreground">MediQ</span>
             </Link>
             <Button

@@ -16,7 +16,7 @@ export default function LandingPage() {
         {/* Left - Logo */}
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-[28px] h-[28px]">
-            <Image src="/logo.png" alt="MediQ logo" width={28} height={28} style={{ width: "auto", height: "auto" }} className="object-contain" />
+            <Image src="/logo.png" alt="MediQ logo" width={28} height={28} priority className="w-7 h-7 object-contain" />
           </div>
         </div>
 

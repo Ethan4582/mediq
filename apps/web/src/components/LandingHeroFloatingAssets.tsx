@@ -16,8 +16,8 @@ export default function LandingHeroFloatingAssets() {
           alt=""
           width={64}
           height={64}
+          priority
           className="w-full h-full object-contain drop-shadow-md"
-          unoptimized
         />
       </motion.div>
       <motion.div
@@ -30,8 +30,8 @@ export default function LandingHeroFloatingAssets() {
           alt=""
           width={80}
           height={80}
+          priority
           className="w-full h-full object-contain drop-shadow-md"
-          unoptimized
         />
       </motion.div>
       <motion.div
@@ -44,8 +44,8 @@ export default function LandingHeroFloatingAssets() {
           alt=""
           width={64}
           height={64}
+          priority
           className="w-full h-full object-contain drop-shadow-md"
-          unoptimized
         />
       </motion.div>
       <motion.div
@@ -58,8 +58,8 @@ export default function LandingHeroFloatingAssets() {
           alt=""
           width={88}
           height={88}
+          priority
           className="w-full h-full object-contain drop-shadow-md"
-          unoptimized
         />
       </motion.div>
     </>
