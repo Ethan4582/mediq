@@ -2,10 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import { ChatLayout, ChatMessageList, ChatMessage, ChatToolCalls, ChatSystemMessage } from "@astryxdesign/core/Chat";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Menu, FileText, Share2, Sparkles } from "lucide-react";
+import { FileText, Share2, Sparkles, PanelLeft } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useSession } from "@/hooks/useSession";
 import { useMessages } from "@/hooks/useMessages";
@@ -76,7 +78,6 @@ export default function ChatPanelAstryx({
   const refetchMessages = refetchMessagesProp || fetchedRefetch;
 
   const [optimisticMessages, setAllOptimistic] = useState<Message[]>([]);
-  const isSidebarOpen = useSessionStore((state) => state.isSidebarOpen);
   const toggleSidebar = useSessionStore((state) => state.toggleSidebar);
   const selectedProvider = useSessionStore((state) => state.selectedProvider);
   const setSelectedProvider = useSessionStore((state) => state.setSelectedProvider);
@@ -226,16 +227,29 @@ export default function ChatPanelAstryx({
       <div style={chatColStyle} className="flex-1 min-w-0 h-full flex flex-col w-full">
         <header className="w-full flex items-center justify-between px-4 py-2 border-b border-border/80 bg-background/95 backdrop-blur-xs shrink-0 z-10">
           <div className="flex items-center gap-2.5 min-w-0">
-            {!isSidebarOpen && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleSidebar}
-                className="size-8 text-muted-foreground hover:text-foreground shrink-0"
-              >
-                <Menu className="size-4" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="size-8 text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-lg md:hidden"
+              title="Toggle sidebar (Ctrl+B)"
+            >
+              <PanelLeft className="size-4" />
+            </Button>
+            <Link
+              href="/"
+              className="flex items-center gap-2 hover:opacity-85 transition-opacity shrink-0"
+              title="MediQ"
+            >
+              <Image
+                src="/logo.png"
+                alt="MediQ"
+                width={20}
+                height={20}
+                className="size-5 object-contain shrink-0"
+                priority
+              />
+            </Link>
             <div className="flex items-center gap-2 min-w-0">
               <h2 className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md">
                 {sessionTitle}
@@ -262,7 +276,7 @@ export default function ChatPanelAstryx({
               variant="outline"
               size="sm"
               onClick={() => setIsShareDialogOpen(true)}
-              className="gap-1.5 text-xs h-8 px-2.5 rounded-lg border-border hover:bg-muted/80"
+              className="gap-1.5 text-xs h-8 px-2.5 rounded-lg border-border hover:bg-muted/80 cursor-pointer"
             >
               <Share2 className="size-3.5" />
               <span className="hidden sm:inline">Share</span>
@@ -279,7 +293,7 @@ export default function ChatPanelAstryx({
                   setRightPanelOpen(true);
                 }
               }}
-              className="gap-1.5 text-xs h-8 px-2.5 rounded-lg font-medium shadow-xs"
+              className="gap-1.5 text-xs h-8 px-2.5 rounded-lg font-medium shadow-xs cursor-pointer"
             >
               <FileText className={`size-3.5 ${isRightPanelOpen && artifactTab === "content" ? "text-primary-foreground" : "text-blue-500"}`} />
               <span className="hidden sm:inline">Project content</span>

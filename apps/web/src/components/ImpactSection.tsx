@@ -19,7 +19,7 @@ export function ImpactSection() {
   };
 
   return (
-    <section className="relative py-24 px-4 overflow-hidden">
+    <section className="relative py-16 sm:py-24 px-4 sm:px-6 overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10">
         
         <motion.div 
@@ -27,19 +27,18 @@ export function ImpactSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="flex flex-col items-center text-center mb-16"
+          className="flex flex-col items-center text-center mb-10 sm:mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#eff6ff] text-[#2563eb] text-sm font-semibold mb-6">
+          <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-[#eff6ff] text-[#2563eb] text-xs sm:text-sm font-semibold mb-4 sm:mb-6">
             <Sparkles className="w-4 h-4" />
             IMPACT THAT MATTERS
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-[#0f172a] mb-6 tracking-tight">
-            Better insights. Safer decisions.<br />
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#0f172a] mb-4 sm:mb-6 tracking-tight leading-tight">
+            Better insights. Safer decisions.<br className="hidden sm:inline" />{" "}
             <span className="text-[#2563eb]">Measurable impact.</span>
           </h2>
-          <p className="text-lg text-[#475569] max-w-2xl">
-            MediQ helps healthcare teams save time, reduce errors,
-            and deliver better patient outcomes.
+          <p className="text-sm sm:text-lg text-[#475569] max-w-2xl px-2">
+            MediQ helps healthcare teams save time, reduce errors, and deliver better patient outcomes.
           </p>
         </motion.div>
 
@@ -49,24 +48,26 @@ export function ImpactSection() {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {/* Top Row: 3 Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 mb-5 sm:mb-6">
             
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
-              <div className="relative h-40 w-full flex items-center justify-center mb-4">
+            {/* Card 1: Accurate & Reliable */}
+            <motion.div variants={itemVariants} className="bg-white rounded-[20px] sm:rounded-[24px] p-6 sm:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
+              <div className="relative h-36 sm:h-40 w-full flex items-center justify-center mb-4">
                 <motion.div 
                   animate={{ rotate: 360 }}
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                  className="absolute w-40 h-24 rounded-full border border-blue-200/50"
+                  className="absolute w-36 sm:w-40 h-20 sm:h-24 rounded-full border border-blue-200/50"
                   style={{ transform: 'rotate(-15deg)' }}
                 />
                 <motion.div 
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 1, delay: 0.5 }}
-                  className="absolute w-48 h-28 rounded-full border-2 border-[#2563eb]/20"
+                  className="absolute w-44 sm:w-48 h-24 sm:h-28 rounded-full border-2 border-[#2563eb]/20"
                 />
                 
-                <div className="text-5xl font-bold text-[#2563eb] z-10 relative">
+                <div className="text-4xl sm:text-5xl font-bold text-[#2563eb] z-10 relative">
                   100%
                   <motion.div 
                     animate={{ y: [0, -5, 0], opacity: [0.5, 1, 0.5] }}
@@ -77,8 +78,8 @@ export function ImpactSection() {
                   </motion.div>
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-[#0f172a] mb-3">Accurate & Reliable</h3>
-              <p className="text-[#475569] text-sm mb-6 leading-relaxed">
+              <h3 className="text-lg sm:text-xl font-bold text-[#0f172a] mb-2 sm:mb-3">Accurate & Reliable</h3>
+              <p className="text-[#475569] text-xs sm:text-sm mb-5 sm:mb-6 leading-relaxed">
                 Built for clinical accuracy with source grounding and hallucination guardrails.
               </p>
               <div className="mt-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#eff6ff] text-[#2563eb] rounded-lg text-xs font-medium">
@@ -87,25 +88,26 @@ export function ImpactSection() {
               </div>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
-              <div className="relative h-40 w-full flex items-center justify-center mb-4">
+            {/* Card 2: Secure by default */}
+            <motion.div variants={itemVariants} className="bg-white rounded-[20px] sm:rounded-[24px] p-6 sm:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
+              <div className="relative h-36 sm:h-40 w-full flex items-center justify-center mb-4">
                 <motion.div 
                   animate={{ scale: [1, 1.25, 1], opacity: [0.2, 0.6, 0.2] }}
                   transition={{ duration: 3, repeat: Infinity }}
-                  className="absolute w-32 h-32 rounded-full bg-blue-100 border border-blue-200"
+                  className="absolute w-28 sm:w-32 h-28 sm:h-32 rounded-full bg-blue-100 border border-blue-200"
                 />
                 <motion.div 
                   animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.8, 0.4] }}
                   transition={{ duration: 3, delay: 0.5, repeat: Infinity }}
-                  className="absolute w-24 h-24 rounded-full bg-blue-200 border border-blue-300"
+                  className="absolute w-20 sm:w-24 h-20 sm:h-24 rounded-full bg-blue-200 border border-blue-300"
                 />
-                <div className="w-12 h-16 rounded-xl border-[2.5px] border-[#2563eb] flex items-center justify-center relative z-10 bg-white">
-                  <div className="w-6 h-6 border-[2px] border-[#2563eb] rounded-full absolute -top-3" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 50%, 0 50%)' }}></div>
-                  <Lock className="w-5 h-5 text-[#2563eb]" />
+                <div className="w-11 sm:w-12 h-14 sm:h-16 rounded-xl border-[2.5px] border-[#2563eb] flex items-center justify-center relative z-10 bg-white">
+                  <div className="w-5 sm:w-6 h-5 sm:h-6 border-[2px] border-[#2563eb] rounded-full absolute -top-3" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 50%, 0 50%)' }}></div>
+                  <Lock className="w-4 sm:w-5 h-4 sm:h-5 text-[#2563eb]" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-[#0f172a] mb-3">Secure by default</h3>
-              <p className="text-[#475569] text-sm mb-6 leading-relaxed">
+              <h3 className="text-lg sm:text-xl font-bold text-[#0f172a] mb-2 sm:mb-3">Secure by default</h3>
+              <p className="text-[#475569] text-xs sm:text-sm mb-5 sm:mb-6 leading-relaxed">
                 Enterprise-grade security with HIPAA compliance and encryption at every layer.
               </p>
               <div className="mt-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#eff6ff] text-[#2563eb] rounded-lg text-xs font-medium">
@@ -114,17 +116,18 @@ export function ImpactSection() {
               </div>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col relative overflow-hidden group">
-              <div className="flex justify-between items-center w-full mb-6 relative z-10">
+            {/* Card 3: Save hours every day */}
+            <motion.div variants={itemVariants} className="bg-white rounded-[20px] sm:rounded-[24px] p-6 sm:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col relative overflow-hidden group">
+              <div className="flex justify-between items-center w-full mb-4 sm:mb-6 relative z-10">
                 <div className="w-8 h-8 rounded-full bg-[#eff6ff] flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-[#2563eb]" />
                 </div>
-                <span className="text-[#475569] text-sm font-medium mr-auto ml-3">Time saved</span>
-                <span className="text-[#2563eb] font-bold text-xl">78%</span>
+                <span className="text-[#475569] text-xs sm:text-sm font-medium mr-auto ml-3">Time saved</span>
+                <span className="text-[#2563eb] font-bold text-lg sm:text-xl">78%</span>
               </div>
               
-              <div className="h-28 w-full relative -mx-4 mb-2">
-                <svg viewBox="0 0 400 100" className="w-[120%] h-full stroke-[#2563eb] fill-none overflow-visible">
+              <div className="h-24 sm:h-28 w-full relative mb-2 overflow-hidden">
+                <svg viewBox="0 0 400 100" className="w-full h-full stroke-[#2563eb] fill-none" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="gradientArea" x1="0%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" stopColor="#2563eb" stopOpacity="0.2" />
@@ -160,8 +163,8 @@ export function ImpactSection() {
               </div>
 
               <div className="text-center relative z-10 mt-auto">
-                <h3 className="text-lg font-bold text-[#0f172a] mb-2">Save hours every day</h3>
-                <p className="text-[#475569] text-[13px] mb-4 leading-relaxed">
+                <h3 className="text-base sm:text-lg font-bold text-[#0f172a] mb-1 sm:mb-2">Save hours every day</h3>
+                <p className="text-[#475569] text-xs sm:text-[13px] mb-4 leading-relaxed">
                   Automate documentation and summaries in minutes — not hours.
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#eff6ff] text-[#2563eb] rounded-lg text-xs font-medium">
@@ -173,18 +176,20 @@ export function ImpactSection() {
 
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Bottom Row: 2 Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 mb-6">
             
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
-              <div className="flex flex-col md:flex-row justify-between w-full h-full gap-8">
+            {/* Card 4: Reduce clinical risk */}
+            <motion.div variants={itemVariants} className="bg-white rounded-[20px] sm:rounded-[24px] p-6 sm:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
+              <div className="flex flex-col md:flex-row justify-between w-full h-full gap-6 sm:gap-8">
                 
-                <div className="flex flex-col justify-between max-w-[240px] z-10">
+                <div className="flex flex-col justify-between max-w-full md:max-w-[240px] z-10">
                   <div>
-                    <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center mb-6">
-                      <ShieldCheck className="w-5 h-5 text-[#2563eb]" />
+                    <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-[#eff6ff] flex items-center justify-center mb-4 sm:mb-6">
+                      <ShieldCheck className="w-4 sm:w-5 h-4 sm:h-5 text-[#2563eb]" />
                     </div>
-                    <h3 className="text-xl font-bold text-[#0f172a] mb-3">Reduce clinical risk</h3>
-                    <p className="text-[#475569] text-sm leading-relaxed mb-6">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#0f172a] mb-2 sm:mb-3">Reduce clinical risk</h3>
+                    <p className="text-[#475569] text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
                       Detect conflicts, missing information, and medication changes before they become problems.
                     </p>
                   </div>
@@ -194,13 +199,13 @@ export function ImpactSection() {
                   </div>
                 </div>
 
-                <div className="flex-1 min-w-[200px] flex flex-col">
-                  <div className="flex justify-between items-center mb-6">
+                <div className="flex-1 min-w-0 sm:min-w-[200px] flex flex-col mt-4 md:mt-0">
+                  <div className="flex justify-between items-center mb-4 sm:mb-6">
                     <span className="text-xs text-[#64748b] font-medium">Documentation errors</span>
                     <span className="text-xs font-bold text-[#16a34a] bg-[#dcfce7] px-2 py-0.5 rounded-full">-62%</span>
                   </div>
                   
-                  <div className="relative flex-1 min-h-[140px] w-full mt-2">
+                  <div className="relative flex-1 min-h-[130px] sm:min-h-[140px] w-full mt-2">
                     <div className="absolute left-0 h-full flex flex-col justify-between text-[10px] text-[#94a3b8] font-medium pb-5 z-10">
                       <span>100%</span>
                       <span>75%</span>
@@ -268,16 +273,17 @@ export function ImpactSection() {
               </div>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-              <div className="flex flex-col md:flex-row justify-between w-full h-full gap-8">
+            {/* Card 5: Trusted by clinicians */}
+            <motion.div variants={itemVariants} className="bg-white rounded-[20px] sm:rounded-[24px] p-6 sm:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.06)] border border-[#e2e8f0] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+              <div className="flex flex-col md:flex-row justify-between w-full h-full gap-6 sm:gap-8">
                 
-                <div className="flex flex-col justify-between max-w-[240px] z-10">
+                <div className="flex flex-col justify-between max-w-full md:max-w-[240px] z-10">
                   <div>
-                    <div className="w-10 h-10 rounded-full bg-[#eff6ff] flex items-center justify-center mb-6">
-                      <Users className="w-5 h-5 text-[#2563eb]" />
+                    <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-[#eff6ff] flex items-center justify-center mb-4 sm:mb-6">
+                      <Users className="w-4 sm:w-5 h-4 sm:h-5 text-[#2563eb]" />
                     </div>
-                    <h3 className="text-xl font-bold text-[#0f172a] mb-3">Trusted by clinicians</h3>
-                    <p className="text-[#475569] text-sm leading-relaxed mb-6">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#0f172a] mb-2 sm:mb-3">Trusted by clinicians</h3>
+                    <p className="text-[#475569] text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
                       Built with clinicians, for clinicians. Designed to fit into real-world workflows.
                     </p>
                   </div>
@@ -287,24 +293,24 @@ export function ImpactSection() {
                   </div>
                 </div>
 
-                <div className="flex-1 relative flex items-center justify-center py-4 min-w-[220px]">
-                  <div className="absolute left-12 top-6 bottom-6 w-px border-l border-dashed border-gray-300"></div>
+                <div className="flex-1 relative flex items-center justify-center py-4 min-w-0 sm:min-w-[220px]">
+                  <div className="absolute left-6 sm:left-12 top-6 bottom-6 w-px border-l border-dashed border-gray-300"></div>
                   
-                  <div className="flex flex-col gap-6 w-full ml-4">
+                  <div className="flex flex-col gap-5 sm:gap-6 w-full ml-6 sm:ml-4 pl-4 sm:pl-0">
                     
                     <motion.div 
                       initial={{ opacity: 0, x: 20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2 }}
-                      className="flex items-center gap-4 relative"
+                      className="flex items-center gap-3.5 sm:gap-4 relative"
                     >
-                      <div className="w-2 h-2 rounded-full bg-gray-300 absolute -left-[37px]"></div>
-                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-gray-300 absolute -left-[27px] sm:-left-[37px]"></div>
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-xs shrink-0">
                         <Image unoptimized src="https://i.pravatar.cc/150?img=47" alt="Dr. Sarah W." width={40} height={40} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-[#0f172a]">Dr. Sarah W.</span>
-                        <span className="text-[11px] text-[#64748b]">Internal Medicine</span>
+                        <span className="text-xs sm:text-sm font-semibold text-[#0f172a]">Dr. Sarah W.</span>
+                        <span className="text-[10px] sm:text-[11px] text-[#64748b]">Internal Medicine</span>
                       </div>
                     </motion.div>
 
@@ -312,17 +318,17 @@ export function ImpactSection() {
                       initial={{ opacity: 0, x: 20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.4 }}
-                      className="flex items-center gap-4 relative"
+                      className="flex items-center gap-3.5 sm:gap-4 relative"
                     >
-                      <div className="w-5 h-5 rounded-full bg-[#2563eb] absolute -left-[44px] flex items-center justify-center border-2 border-white shadow-sm z-10">
-                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      <div className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-[#2563eb] absolute -left-[32px] sm:-left-[44px] flex items-center justify-center border-2 border-white shadow-xs z-10">
+                        <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-xs shrink-0">
                         <Image unoptimized src="https://i.pravatar.cc/150?img=11" alt="Dr. Michael T." width={40} height={40} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-[#0f172a]">Dr. Michael T.</span>
-                        <span className="text-[11px] text-[#64748b]">Cardiology</span>
+                        <span className="text-xs sm:text-sm font-semibold text-[#0f172a]">Dr. Michael T.</span>
+                        <span className="text-[10px] sm:text-[11px] text-[#64748b]">Cardiology</span>
                       </div>
                     </motion.div>
 
@@ -330,15 +336,15 @@ export function ImpactSection() {
                       initial={{ opacity: 0, x: 20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.6 }}
-                      className="flex items-center gap-4 relative"
+                      className="flex items-center gap-3.5 sm:gap-4 relative"
                     >
-                      <div className="w-2 h-2 rounded-full bg-gray-300 absolute -left-[37px]"></div>
-                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-gray-300 absolute -left-[27px] sm:-left-[37px]"></div>
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-xs shrink-0">
                         <Image unoptimized src="https://i.pravatar.cc/150?img=44" alt="Dr. Priya K." width={40} height={40} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-[#0f172a]">Dr. Priya K.</span>
-                        <span className="text-[11px] text-[#64748b]">Pulmonology</span>
+                        <span className="text-xs sm:text-sm font-semibold text-[#0f172a]">Dr. Priya K.</span>
+                        <span className="text-[10px] sm:text-[11px] text-[#64748b]">Pulmonology</span>
                       </div>
                     </motion.div>
 

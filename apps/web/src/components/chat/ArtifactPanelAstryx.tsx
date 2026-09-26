@@ -5,26 +5,33 @@ import { VStack, HStack, StackItem } from "@astryxdesign/core/Layout";
 import { Text, Heading } from "@astryxdesign/core/Text";
 import { Section } from "@astryxdesign/core/Section";
 import { Markdown } from "@astryxdesign/core/Markdown";
-import { Button } from "@astryxdesign/core/Button";
 import { Icon } from "@astryxdesign/core/Icon";
-import { Toolbar } from "@astryxdesign/core/Toolbar";
-import { ToggleButton, ToggleButtonGroup } from "@astryxdesign/core/ToggleButton";
 import { ClickableCard } from "@astryxdesign/core/ClickableCard";
 import {
-  ClipboardDocumentIcon,
-  XMarkIcon,
-  ArrowDownTrayIcon,
   DocumentTextIcon,
   ClockIcon,
   FolderIcon,
-  PrinterIcon,
   ExclamationTriangleIcon,
-  PlusIcon,
   MagnifyingGlassIcon,
   Squares2X2Icon,
-  ShareIcon,
 } from "@heroicons/react/24/outline";
-import { FileUp, Layers, ShieldCheck, CheckCircle2, ClipboardCheck } from "lucide-react";
+import {
+  FileText,
+  FileUp,
+  Sparkles,
+  Layers,
+  ShieldCheck,
+  CheckCircle2,
+  ClipboardCheck,
+  Share2,
+  Copy,
+  Download,
+  Printer,
+  X,
+  Plus,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import type { ClinicalDraft, OcrResultData } from "@/types/app";
@@ -315,115 +322,164 @@ export default function ArtifactPanelAstryx({
         onChange={handleFileChange}
       />
 
-      <Toolbar
-        label="Artifact navigation"
-        dividers={["bottom"]}
-        startContent={
-          <HStack gap={2} vAlign="center">
-            <div className="size-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <Icon icon={DocumentTextIcon} size="sm" />
-            </div>
-            <VStack gap={0}>
-              <Text type="label" weight="semibold">
+      <div className="px-4 py-3 border-b border-border/80 bg-background/95 backdrop-blur-xs flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="size-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shadow-xs shrink-0">
+            <DocumentTextIcon className="size-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs sm:text-sm font-semibold text-foreground tracking-tight truncate">
                 Project content
-              </Text>
-              <Text type="supporting" color="secondary">
-                {allDocumentsList.length} asset{allDocumentsList.length === 1 ? "" : "s"} • {historyDrafts.length} summar{historyDrafts.length === 1 ? "y" : "ies"}
-              </Text>
-            </VStack>
-          </HStack>
-        }
-        endContent={
-          <HStack gap={1} vAlign="center">
-            <Button
-              label="Share"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon={ShareIcon} size="sm" />}
-              isIconOnly
-              onClick={() => setIsShareDialogOpen(true)}
-            />
-            <Button
-              label="Copy"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon={ClipboardDocumentIcon} size="sm" />}
-              isIconOnly
-              onClick={handleCopy}
-            />
-            <Button
-              label="Download"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-              isIconOnly
-              onClick={handleDownload}
-            />
-            <Button
-              label="Print"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon={PrinterIcon} size="sm" />}
-              isIconOnly
-              onClick={handlePrint}
-            />
-            {onClose && (
-              <Button
-                label="Close document"
-                variant="ghost"
-                size="sm"
-                icon={<Icon icon={XMarkIcon} size="sm" />}
-                isIconOnly
-                onClick={onClose}
-              />
-            )}
-          </HStack>
-        }
-      />
+              </h3>
+              <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" title="Active session" />
+            </div>
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 truncate">
+              <span>{allDocumentsList.length} asset{allDocumentsList.length === 1 ? "" : "s"}</span>
+              <span className="text-muted-foreground/40">•</span>
+              <span>{historyDrafts.length} summar{historyDrafts.length === 1 ? "y" : "ies"}</span>
+            </p>
+          </div>
+        </div>
 
-      <div className="px-3 py-2 border-b border-border/80 flex flex-col gap-2 bg-background/50">
-        <HStack justify="between" vAlign="center">
-          <ToggleButtonGroup
-            label="Artifact Views"
-            value={activeTab}
-            onChange={(val) => {
-              if (val) setActiveTab(val);
-            }}
-            size="sm"
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsShareDialogOpen(true)}
+            className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            title="Share session"
           >
-            <ToggleButton
-              value="content"
-              label="Content"
-              icon={<Icon icon={Squares2X2Icon} size="sm" />}
-            />
-            <ToggleButton
-              value="summary"
-              label="Summary"
-              icon={<Icon icon={DocumentTextIcon} size="sm" />}
-            />
-            <ToggleButton
-              value="files"
-              label={`OCR (${allDocumentsList.length})`}
-              icon={<Icon icon={FolderIcon} size="sm" />}
-            />
-            <ToggleButton
-              value="history"
-              label={`Past Runs (${historyDrafts.length})`}
-              icon={<Icon icon={ClockIcon} size="sm" />}
-            />
-          </ToggleButtonGroup>
-        </HStack>
+            <Share2 className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCopy}
+            className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            title="Copy document content"
+          >
+            <Copy className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDownload}
+            className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            title="Download markdown"
+          >
+            <Download className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handlePrint}
+            className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            title="Print summary"
+          >
+            <Printer className="size-3.5" />
+          </Button>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer ml-0.5"
+              title="Close drawer"
+            >
+              <X className="size-3.5" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="px-3 py-2.5 border-b border-border/80 flex flex-col gap-2.5 bg-background/50">
+        <div className="grid grid-cols-4 p-1 bg-muted/60 dark:bg-muted/30 rounded-xl border border-border/60 gap-1 select-none">
+          <button
+            type="button"
+            onClick={() => setActiveTab("content")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              activeTab === "content"
+                ? "bg-background text-foreground shadow-xs border border-border/70 font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            )}
+          >
+            <Squares2X2Icon className="size-3.5 shrink-0" />
+            <span className="truncate">Content</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("summary")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              activeTab === "summary"
+                ? "bg-background text-foreground shadow-xs border border-border/70 font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            )}
+          >
+            <DocumentTextIcon className="size-3.5 shrink-0" />
+            <span className="truncate">Summary</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("files")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              activeTab === "files"
+                ? "bg-background text-foreground shadow-xs border border-border/70 font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            )}
+          >
+            <FolderIcon className="size-3.5 shrink-0" />
+            <span className="truncate">OCR</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[10px] font-mono leading-tight",
+                activeTab === "files"
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {allDocumentsList.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              activeTab === "history"
+                ? "bg-background text-foreground shadow-xs border border-border/70 font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            )}
+          >
+            <ClockIcon className="size-3.5 shrink-0" />
+            <span className="truncate">Past</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[10px] font-mono leading-tight",
+                activeTab === "history"
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {historyDrafts.length}
+            </span>
+          </button>
+        </div>
 
         <div className="relative w-full">
-          <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-            <Icon icon={MagnifyingGlassIcon} size="sm" />
-          </div>
+          <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search assets, documents & summaries..."
-            className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-background border border-border rounded-lg pl-8 pr-3 py-1 text-xs text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-primary/40"
+            className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-background border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
         </div>
       </div>
@@ -450,17 +506,28 @@ export default function ArtifactPanelAstryx({
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="group relative border border-dashed border-border/80 hover:border-primary/50 hover:bg-muted/20 rounded-lg p-4 transition-all duration-150 cursor-pointer flex flex-col items-center justify-center text-center"
+                className="group relative border border-dashed border-border/80 hover:border-primary/50 hover:bg-muted/20 rounded-xl p-5 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center text-center"
               >
-                <div className="size-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
-                  <FileUp className="size-4" />
+                <div className="relative mb-3 flex items-center justify-center">
+                  <div className="size-10 rounded-lg bg-muted/80 border border-border flex items-center justify-center -rotate-6 shadow-xs group-hover:-rotate-12 transition-transform">
+                    <FileText className="size-5 text-muted-foreground" />
+                  </div>
+                  <div className="size-10 rounded-lg bg-card border border-border flex items-center justify-center z-10 shadow-xs group-hover:scale-105 transition-transform">
+                    <FileUp className="size-5 text-primary" />
+                  </div>
+                  <div className="size-10 rounded-lg bg-muted/80 border border-border flex items-center justify-center rotate-6 shadow-xs group-hover:rotate-12 transition-transform">
+                    <Sparkles className="size-5 text-amber-500" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md">
+                    <Plus className="size-3" />
+                  </div>
                 </div>
 
-                <h4 className="text-xs font-medium text-foreground mb-0.5">
-                  Reference patient charts & documents
+                <h4 className="text-xs font-semibold text-foreground mb-1">
+                  Add PDFs, documents, or other text to reference in this project
                 </h4>
-                <p className="text-[11px] text-muted-foreground max-w-xs mb-3">
-                  Upload PDF records, lab panels, or paste clinical notes to ground analysis.
+                <p className="text-[11px] text-muted-foreground max-w-sm mb-3">
+                  Upload patient charts, doctor handwriting, lab panels, or paste EHR text notes directly.
                 </p>
 
                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -468,7 +535,7 @@ export default function ArtifactPanelAstryx({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
                   >
                     <FileUp className="size-3.5" />
                     <span>{isUploading ? "Uploading..." : "Upload Files"}</span>
@@ -476,9 +543,9 @@ export default function ArtifactPanelAstryx({
                   <button
                     type="button"
                     onClick={() => setIsNoteDialogOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-muted hover:bg-muted/80 text-foreground text-xs font-medium border border-border/70 transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-medium border border-border/80 transition-colors shadow-xs cursor-pointer"
                   >
-                    <Icon icon={PlusIcon} size="sm" />
+                    <Plus className="size-3.5" />
                     <span>Paste Raw Note</span>
                   </button>
                 </div>
@@ -662,9 +729,9 @@ export default function ArtifactPanelAstryx({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors cursor-pointer"
               >
-                <PlusIcon className="size-3.5" />
+                <Plus className="size-3.5" />
                 <span>Upload</span>
               </button>
             </div>
@@ -703,14 +770,15 @@ export default function ArtifactPanelAstryx({
                 <HStack justify="between" vAlign="center">
                   <Heading level={4}>{selectedDocName ? `OCR: ${selectedDocName}` : "Extracted OCR Content"}</Heading>
                   <Button
-                    label="Close preview"
                     variant="ghost"
                     size="sm"
                     onClick={() => {
                       setSelectedDocText(null);
                       setSelectedDocName(null);
                     }}
-                  />
+                  >
+                    Close preview
+                  </Button>
                 </HStack>
                 <Markdown>{selectedDocText}</Markdown>
               </VStack>
