@@ -24,6 +24,18 @@ const rootStyle: CSSProperties = { flex: 1, width: "100%", height: "100%", posit
 const chatColStyle: CSSProperties = { flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column" };
 const MOBILE_MAX_WIDTH = 768;
 const AI_CHAT_CSS = `
+.astryx-chat-layout {
+  width: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.astryx-chat-layout .xvueqy4 {
+  margin-inline: auto !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
 @media (max-width: 768px) {
   .ai-chat-resize-handle { display: none; }
   .ai-chat-artifact-panel { display: none; width: 100%; flex-shrink: 1; }
@@ -170,9 +182,9 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
     (isNew ? "New Consultation" : sessionLoading ? "Loading session..." : "Clinical Session");
 
   return (
-    <div ref={rootRef} style={rootStyle} className="flex flex-row">
+    <div ref={rootRef} style={rootStyle} className="flex flex-row w-full h-full">
       <style>{AI_CHAT_CSS}</style>
-      <div style={chatColStyle} className="flex-1 min-w-0 h-full flex flex-col items-center">
+      <div style={chatColStyle} className="flex-1 min-w-0 h-full flex flex-col w-full">
         <header className="w-full flex items-center justify-between px-4 py-2 border-b border-border/80 bg-background/95 backdrop-blur-xs shrink-0 z-10">
           <div className="flex items-center gap-2.5 min-w-0">
             {!isSidebarOpen && (
@@ -273,13 +285,13 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
 
       <ChatArtifactDrawer
         isOpen={isRightPanelOpen}
+        onClose={() => setRightPanelOpen(false)}
         panelSize={panelSize}
         onResizeStart={handleResizeStart}
         sessionId={sessionId}
         draft={latestDraft}
         ocrResult={ocrResult}
-        onClose={() => setRightPanelOpen(false)}
-        onSelectDraft={(draft) => setLatestDraft(draft)}
+        onSelectDraft={setLatestDraft}
         isDialogOpen={isArtifactDialogOpen}
         onDialogChange={setIsArtifactDialogOpen}
         onUpload={upload}

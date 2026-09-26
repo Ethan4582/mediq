@@ -60,11 +60,18 @@ export function LandingHero() {
   };
 
   return (
-    <section className="relative w-full min-h-[90vh] flex flex-col items-center justify-center pt-24 pb-16 px-4 overflow-hidden bg-[#0d1017]">
+    <section
+      className="relative w-full min-h-[90vh] flex flex-col items-center justify-center pt-24 pb-16 px-4 overflow-hidden bg-[#0d1017]"
+      style={{
+        backgroundImage: "url('/hero_bg1.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <LandingHeroFloatingAssets />
 
       <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center text-center">
-        {/* Top Pill */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -75,7 +82,6 @@ export function LandingHero() {
           <span>Next-Gen Clinical AI Intelligence</span>
         </motion.div>
 
-        {/* Main Title */}
         <motion.h1
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -88,7 +94,6 @@ export function LandingHero() {
           </span>
         </motion.h1>
 
-        {/* Subtitle */}
         <motion.p
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -98,7 +103,6 @@ export function LandingHero() {
           Transform messy medical records, handwritten notes, and complex lab charts into structured clinical discharge drafts with full source traceability.
         </motion.p>
 
-        {/* Central Chat Input Box */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -132,7 +136,6 @@ export function LandingHero() {
                 onChange={handleFileUpload}
               />
 
-              {/* Model Dropdown */}
               <div className="relative">
                 <button
                   type="button"
@@ -190,7 +193,6 @@ export function LandingHero() {
           </div>
         </motion.div>
 
-        {/* Feature Highlights / Trust Badges */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
