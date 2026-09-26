@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
 import { Plus, Search, FolderPlus, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useSessions } from "@/hooks/useSessions";
 import { useSessionStore } from "@/stores/sessionStore";
@@ -68,7 +67,7 @@ export default function Sidebar({
       {/* Top Header */}
       <div className="flex items-center justify-between p-3 border-b border-sidebar-border/60">
         <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
-          <Image src="/logo.png" alt="MediQ" width={22} height={22} style={{ width: "auto", height: "auto" }} className="object-contain" />
+          <img src="/logo.png" alt="MediQ" className="w-[22px] h-[22px] object-contain shrink-0" />
           {isSidebarOpen && <span>MediQ</span>}
         </Link>
         <Button
