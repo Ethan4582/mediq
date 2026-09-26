@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react";
-import { VStack, HStack, StackItem } from "@astryxdesign/core/Layout";
+import { VStack } from "@astryxdesign/core/Layout";
 import { Text, Heading } from "@astryxdesign/core/Text";
 import { Section } from "@astryxdesign/core/Section";
-import { Markdown } from "@astryxdesign/core/Markdown";
 import { Icon } from "@astryxdesign/core/Icon";
 import { ClickableCard } from "@astryxdesign/core/ClickableCard";
 import {
   DocumentTextIcon,
   ClockIcon,
-  FolderIcon,
   MagnifyingGlassIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/outline";
@@ -18,7 +16,6 @@ import {
   FileText,
   FileUp,
   Sparkles,
-  CheckCircle2,
   ClipboardCheck,
   Share2,
   Copy,
@@ -199,7 +196,8 @@ export default function ArtifactPanelAstryx({
     const q = searchQuery.toLowerCase();
     return allDocumentsList.filter((d) => {
       const docName = d.name || d.file_name || "";
-      return docName.toLowerCase().includes(q);
+      const raw = d.raw_text || "";
+      return docName.toLowerCase().includes(q) || raw.toLowerCase().includes(q);
     });
   }, [allDocumentsList, searchQuery]);
 
@@ -259,18 +257,20 @@ export default function ArtifactPanelAstryx({
   })();
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(rawTextContent || "No clinical content available");
+    const textToCopy = selectedDocText || rawTextContent || "No clinical content available";
+    navigator.clipboard.writeText(textToCopy);
     toast.success("Copied to clipboard", {
       description: "Document contents copied.",
     });
   };
 
   const handleDownload = () => {
-    const blob = new Blob([rawTextContent || "No content"], { type: "text/markdown" });
+    const textToDownload = selectedDocText || rawTextContent || "No content";
+    const blob = new Blob([textToDownload], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${(title || "discharge_summary").replace(/[^a-zA-Z0-9]/g, "_")}.md`;
+    a.download = `${(selectedDocName || title || "discharge_summary").replace(/[^a-zA-Z0-9]/g, "_")}.md`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Document downloaded", {
@@ -287,6 +287,8 @@ export default function ArtifactPanelAstryx({
       const parsed: ClinicalDraft =
         typeof item.content === "string" ? JSON.parse(item.content) : item.content;
       onSelectDraft?.(parsed);
+      setSelectedDocText(null);
+      setSelectedDocName(null);
       setActiveTab("summary");
       toast.success("Loaded summary version", {
         description: `Loaded version from ${new Date(item.created_at).toLocaleTimeString()}`,
@@ -330,6 +332,7 @@ export default function ArtifactPanelAstryx({
               <h3 className="text-xs sm:text-sm font-semibold text-foreground tracking-tight truncate">
                 Project content
               </h3>
+              <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" title="Active session" />
             </div>
             <p className="text-[11px] text-muted-foreground truncate">
               Clinical records & session intelligence
@@ -389,7 +392,7 @@ export default function ArtifactPanelAstryx({
       </div>
 
       <div className="px-3 py-2.5 border-b border-border/80 flex flex-col gap-2.5 bg-background/50">
-        <div className="grid grid-cols-4 p-1 bg-muted/60 dark:bg-muted/30 rounded-xl border border-border/60 gap-1 select-none">
+        <div className="grid grid-cols-3 p-1 bg-muted/60 dark:bg-muted/30 rounded-xl border border-border/60 gap-1 select-none">
           <button
             type="button"
             onClick={() => setActiveTab("content")}
@@ -416,30 +419,6 @@ export default function ArtifactPanelAstryx({
           >
             <DocumentTextIcon className="size-3.5 shrink-0" />
             <span className="truncate">Summary</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("files")}
-            className={cn(
-              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer",
-              activeTab === "files"
-                ? "bg-background text-foreground shadow-xs border border-border/70 font-semibold"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-            )}
-          >
-            <FolderIcon className="size-3.5 shrink-0" />
-            <span className="truncate">OCR</span>
-            <span
-              className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px] font-mono leading-tight",
-                activeTab === "files"
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              {allDocumentsList.length}
-            </span>
           </button>
 
           <button
@@ -473,9 +452,18 @@ export default function ArtifactPanelAstryx({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search assets, documents & summaries..."
-            className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-background border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-primary/40"
+            placeholder="Search documents, drafts & clinical terms..."
+            className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-background border border-border rounded-lg pl-8 pr-7 py-1.5 text-xs text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="size-3" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -499,16 +487,16 @@ export default function ArtifactPanelAstryx({
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="group relative border border-border/70 bg-muted/40 hover:bg-muted/60 dark:bg-zinc-950/50 dark:hover:bg-zinc-900/60 rounded-xl p-4 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center text-center"
+                className="group relative border border-dashed border-border/80 hover:border-primary/50 bg-slate-50/60 hover:bg-slate-100/60 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/70 rounded-xl p-5 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center text-center shadow-2xs"
               >
-                <div className="relative mb-2.5 flex items-center justify-center">
-                  <div className="size-8 rounded-lg bg-background/90 border border-border flex items-center justify-center -rotate-6 shadow-xs group-hover:-rotate-12 transition-transform">
+                <div className="relative mb-3 flex items-center justify-center">
+                  <div className="size-8 rounded-lg bg-white dark:bg-zinc-800 border border-border flex items-center justify-center -rotate-6 shadow-xs group-hover:-rotate-12 transition-transform">
                     <FileText className="size-4 text-muted-foreground" />
                   </div>
-                  <div className="size-8 rounded-lg bg-background border border-border flex items-center justify-center z-10 shadow-xs group-hover:scale-105 transition-transform">
+                  <div className="size-8 rounded-lg bg-white dark:bg-zinc-800 border border-border flex items-center justify-center z-10 shadow-xs group-hover:scale-105 transition-transform">
                     <FileUp className="size-4 text-primary" />
                   </div>
-                  <div className="size-8 rounded-lg bg-background/90 border border-border flex items-center justify-center rotate-6 shadow-xs group-hover:rotate-12 transition-transform">
+                  <div className="size-8 rounded-lg bg-white dark:bg-zinc-800 border border-border flex items-center justify-center rotate-6 shadow-xs group-hover:rotate-12 transition-transform">
                     <Sparkles className="size-4 text-amber-500" />
                   </div>
                   <div className="absolute -top-1 -right-1 size-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
@@ -516,7 +504,7 @@ export default function ArtifactPanelAstryx({
                   </div>
                 </div>
 
-                <p className="text-xs font-medium text-foreground max-w-xs mb-2.5 group-hover:text-primary transition-colors">
+                <p className="text-xs font-normal text-muted-foreground max-w-xs mb-3 group-hover:text-foreground transition-colors">
                   Add PDFs, documents, or other text to reference in this project.
                 </p>
 
@@ -533,7 +521,7 @@ export default function ArtifactPanelAstryx({
                   <button
                     type="button"
                     onClick={() => setIsNoteDialogOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background hover:bg-muted text-foreground text-xs font-medium border border-border/80 transition-colors shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-card hover:bg-muted text-foreground text-xs font-medium border border-border/80 transition-colors shadow-xs cursor-pointer"
                   >
                     <Plus className="size-3" />
                     <span>Paste Raw Note</span>
@@ -552,7 +540,9 @@ export default function ArtifactPanelAstryx({
 
               {filteredDocuments.length === 0 ? (
                 <div className="p-6 text-center rounded-xl border border-dashed border-border/80 bg-muted/20">
-                  <p className="text-xs text-muted-foreground">No documents uploaded to this session yet.</p>
+                  <p className="text-xs text-muted-foreground">
+                    {searchQuery ? `No documents matching "${searchQuery}"` : "No documents uploaded to this session yet."}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
@@ -570,9 +560,9 @@ export default function ArtifactPanelAstryx({
                         previewUrl={filePreviews[docName] || doc.preview_url}
                         index={idx}
                         onSelect={() => {
-                          setSelectedDocText(doc.raw_text || ocrResult?.rawText || "No raw text extracted");
+                          setSelectedDocText(doc.raw_text || ocrResult?.rawText || "No text available");
                           setSelectedDocName(docName);
-                          setActiveTab("files");
+                          setActiveTab("summary");
                         }}
                       />
                     );
@@ -593,7 +583,11 @@ export default function ArtifactPanelAstryx({
 
               {draft && (
                 <div
-                  onClick={() => setActiveTab("summary")}
+                  onClick={() => {
+                    setSelectedDocText(null);
+                    setSelectedDocName(null);
+                    setActiveTab("summary");
+                  }}
                   className="p-2.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer space-y-1.5 shadow-xs"
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -620,7 +614,7 @@ export default function ArtifactPanelAstryx({
                   typeof item.content === "string" ? JSON.parse(item.content) : item.content;
                 const heading =
                   draftData?.diagnoses?.principal_diagnosis || "Discharge Summary Draft";
-                const isCurrent = draftData?.diagnoses?.principal_diagnosis === draft?.diagnoses?.principal_diagnosis;
+                const isCurrent = !selectedDocText && draftData?.diagnoses?.principal_diagnosis === draft?.diagnoses?.principal_diagnosis;
 
                 return (
                   <div
@@ -654,80 +648,12 @@ export default function ArtifactPanelAstryx({
         {activeTab === "summary" && (
           <div style={articleBody} className="w-full">
             <ClinicalSummaryView
-              draft={draft}
-              rawText={rawTextContent}
-              sourceName={ocrResult?.fileName || title || "Clinical Summary"}
+              draft={selectedDocText ? null : draft}
+              rawText={selectedDocText || rawTextContent}
+              sourceName={selectedDocName || ocrResult?.fileName || title || "Clinical Summary"}
+              searchQuery={searchQuery}
             />
           </div>
-        )}
-
-        {activeTab === "files" && (
-          <VStack gap={3} style={articleBody}>
-            <div className="flex items-center justify-between">
-              <div>
-                <Heading level={3}>Source Patient Documents</Heading>
-                <Text type="supporting" color="secondary">
-                  Extracted via Mistral OCR with vector embeddings.
-                </Text>
-              </div>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors cursor-pointer"
-              >
-                <Plus className="size-3.5" />
-                <span>Upload</span>
-              </button>
-            </div>
-
-            {filteredDocuments.map((doc) => {
-              const docName = doc.name || doc.file_name || "Document";
-              return (
-                <ClickableCard
-                  key={doc.id}
-                  label={docName}
-                  variant="muted"
-                  padding={3}
-                  onClick={() => {
-                    setSelectedDocText(doc.raw_text || "No text available");
-                    setSelectedDocName(docName);
-                  }}
-                >
-                  <HStack gap={3} vAlign="center">
-                    <Icon icon={DocumentTextIcon} size="md" color="secondary" />
-                    <StackItem size="fill">
-                      <VStack gap={0}>
-                        <Text type="label" weight="semibold">{docName}</Text>
-                        <Text type="supporting" color="secondary">
-                          {doc.page_count ? `${doc.page_count} pages` : "Document"} • {doc.status || doc.ocr_status || "ready"}
-                        </Text>
-                      </VStack>
-                    </StackItem>
-                    <CheckCircle2 className="size-4 text-emerald-500" />
-                  </HStack>
-                </ClickableCard>
-              );
-            })}
-
-            {selectedDocText && (
-              <VStack gap={2} style={{ marginTop: 16 }}>
-                <HStack justify="between" vAlign="center">
-                  <Heading level={4}>{selectedDocName ? `OCR: ${selectedDocName}` : "Extracted OCR Content"}</Heading>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedDocText(null);
-                      setSelectedDocName(null);
-                    }}
-                  >
-                    Close preview
-                  </Button>
-                </HStack>
-                <Markdown>{selectedDocText}</Markdown>
-              </VStack>
-            )}
-          </VStack>
         )}
 
         {activeTab === "history" && (
@@ -741,7 +667,7 @@ export default function ArtifactPanelAstryx({
 
             {!loadingHistory && filteredDrafts.length === 0 && (
               <Text type="body" color="secondary">
-                No past summaries recorded yet for this session.
+                {searchQuery ? `No past summaries matching "${searchQuery}"` : "No past summaries recorded yet for this session."}
               </Text>
             )}
 
@@ -758,17 +684,15 @@ export default function ArtifactPanelAstryx({
                   padding={3}
                   onClick={() => handleSelectHistoricalDraft(item)}
                 >
-                  <HStack gap={3} vAlign="center">
+                  <div className="flex items-center gap-3">
                     <Icon icon={DocumentTextIcon} size="md" color="secondary" />
-                    <StackItem size="fill">
-                      <VStack gap={0}>
-                        <Text type="label" weight="semibold">{heading}</Text>
-                        <Text type="supporting" color="secondary">
-                          Generated on {new Date(item.created_at).toLocaleDateString()} at {new Date(item.created_at).toLocaleTimeString()}
-                        </Text>
-                      </VStack>
-                    </StackItem>
-                  </HStack>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate">{heading}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Generated on {new Date(item.created_at).toLocaleDateString()} at {new Date(item.created_at).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
                 </ClickableCard>
               );
             })}

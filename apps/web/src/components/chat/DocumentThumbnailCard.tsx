@@ -29,14 +29,16 @@ export default function DocumentThumbnailCard({
   const safeName = typeof name === "string" && name.trim() ? name : "Document";
   const isDone = status === "ready" || status === "completed" || Boolean(rawText);
 
-  const formattedDate = createdAt ? (() => {
-    try {
-      const d = new Date(createdAt);
-      return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
-    } catch {
-      return "";
-    }
-  })() : "";
+  const formattedDate = createdAt
+    ? (() => {
+        try {
+          const d = new Date(createdAt);
+          return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
+        } catch {
+          return "";
+        }
+      })()
+    : "";
 
   const fileExtension = safeName.includes(".")
     ? safeName.split(".").pop()?.toUpperCase() || "DOC"
@@ -73,7 +75,7 @@ export default function DocumentThumbnailCard({
                 Clinical Report
               </span>
             </div>
-            <span className="text-[6.5px] text-zinc-400 font-mono">OCR</span>
+            <div className="h-1 w-4 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
           </div>
 
           <div className="space-y-0.5 flex-1 overflow-hidden font-mono text-[6.5px] leading-tight text-zinc-600 dark:text-zinc-400">
@@ -172,7 +174,7 @@ export default function DocumentThumbnailCard({
           <div className="size-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
             <Eye className="size-3.5" />
           </div>
-          <span className="text-[10px] font-medium text-foreground">View OCR Text</span>
+          <span className="text-[10px] font-medium text-foreground">View Document</span>
         </div>
       </div>
 
