@@ -53,9 +53,11 @@ const conflictBox: CSSProperties = {
 
 interface ArtifactDocument {
   id: string;
-  name: string;
+  name?: string;
+  file_name?: string;
   page_count?: number;
   status?: string;
+  ocr_status?: string;
   created_at?: string;
   raw_text?: string;
 }
@@ -116,8 +118,16 @@ export default function ArtifactPanelAstryx({
           { headers }
         );
         if (res.ok && mounted) {
-          const data = (await res.json()) as ArtifactDraftSummary[];
-          setHistoryDrafts(data);
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setHistoryDrafts(data);
+          } else if (data && typeof data === "object" && Array.isArray((data as { drafts?: ArtifactDraftSummary[] }).drafts)) {
+            setHistoryDrafts((data as { drafts: ArtifactDraftSummary[] }).drafts);
+          } else if (data && typeof data === "object" && Array.isArray((data as { data?: ArtifactDraftSummary[] }).data)) {
+            setHistoryDrafts((data as { data: ArtifactDraftSummary[] }).data);
+          } else {
+            setHistoryDrafts([]);
+          }
         }
 
         const docRes = await fetch(
@@ -125,8 +135,16 @@ export default function ArtifactPanelAstryx({
           { headers }
         );
         if (docRes.ok && mounted) {
-          const docData = (await docRes.json()) as ArtifactDocument[];
-          setDocuments(docData);
+          const docData = await docRes.json();
+          if (Array.isArray(docData)) {
+            setDocuments(docData);
+          } else if (docData && typeof docData === "object" && Array.isArray((docData as { documents?: ArtifactDocument[] }).documents)) {
+            setDocuments((docData as { documents: ArtifactDocument[] }).documents);
+          } else if (docData && typeof docData === "object" && Array.isArray((docData as { data?: ArtifactDocument[] }).data)) {
+            setDocuments((docData as { data: ArtifactDocument[] }).data);
+          } else {
+            setDocuments([]);
+          }
         }
       } catch (err: unknown) {
         console.error("Failed to load records history:", err);
@@ -142,11 +160,17 @@ export default function ArtifactPanelAstryx({
   }, [sessionId, draft]);
 
   const allDocumentsList = useMemo(() => {
-    const list: ArtifactDocument[] = [...documents];
-    if (ocrResult && !list.some((d) => d.name === ocrResult.fileName)) {
+    const list: ArtifactDocument[] = Array.isArray(documents)
+      ? documents.map((d) => ({
+          ...d,
+          name: d.name || d.file_name || "Document",
+        }))
+      : [];
+    if (ocrResult && !list.some((d) => (d.name || d.file_name) === ocrResult.fileName)) {
       list.unshift({
         id: "current-ocr",
-        name: ocrResult.fileName,
+        name: ocrResult.fileName || "Document",
+        file_name: ocrResult.fileName || "Document",
         page_count: ocrResult.pageCount,
         status: "ready",
         created_at: new Date().toISOString(),
@@ -157,12 +181,17 @@ export default function ArtifactPanelAstryx({
   }, [documents, ocrResult]);
 
   const filteredDocuments = useMemo(() => {
+    if (!Array.isArray(allDocumentsList)) return [];
     if (!searchQuery.trim()) return allDocumentsList;
     const q = searchQuery.toLowerCase();
-    return allDocumentsList.filter((d) => d.name.toLowerCase().includes(q));
+    return allDocumentsList.filter((d) => {
+      const docName = d.name || d.file_name || "";
+      return docName.toLowerCase().includes(q);
+    });
   }, [allDocumentsList, searchQuery]);
 
   const filteredDrafts = useMemo(() => {
+    if (!Array.isArray(historyDrafts)) return [];
     if (!searchQuery.trim()) return historyDrafts;
     const q = searchQuery.toLowerCase();
     return historyDrafts.filter((item) => {
@@ -476,23 +505,26 @@ export default function ArtifactPanelAstryx({
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
-                  {filteredDocuments.map((doc, idx) => (
-                    <DocumentThumbnailCard
-                      key={doc.id || idx}
-                      id={doc.id}
-                      name={doc.name}
-                      pageCount={doc.page_count}
-                      status={doc.status}
-                      createdAt={doc.created_at}
-                      rawText={doc.raw_text}
-                      index={idx}
-                      onSelect={() => {
-                        setSelectedDocText(doc.raw_text || ocrResult?.rawText || "No raw text extracted");
-                        setSelectedDocName(doc.name);
-                        setActiveTab("files");
-                      }}
-                    />
-                  ))}
+                  {filteredDocuments.map((doc, idx) => {
+                    const docName = doc.name || doc.file_name || "Document";
+                    return (
+                      <DocumentThumbnailCard
+                        key={doc.id || idx}
+                        id={doc.id}
+                        name={docName}
+                        pageCount={doc.page_count}
+                        status={doc.status || doc.ocr_status}
+                        createdAt={doc.created_at}
+                        rawText={doc.raw_text}
+                        index={idx}
+                        onSelect={() => {
+                          setSelectedDocText(doc.raw_text || ocrResult?.rawText || "No raw text extracted");
+                          setSelectedDocName(docName);
+                          setActiveTab("files");
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -636,31 +668,34 @@ export default function ArtifactPanelAstryx({
               </button>
             </div>
 
-            {filteredDocuments.map((doc) => (
-              <ClickableCard
-                key={doc.id}
-                label={doc.name}
-                variant="muted"
-                padding={3}
-                onClick={() => {
-                  setSelectedDocText(doc.raw_text || "No text available");
-                  setSelectedDocName(doc.name);
-                }}
-              >
-                <HStack gap={3} vAlign="center">
-                  <Icon icon={DocumentTextIcon} size="md" color="secondary" />
-                  <StackItem size="fill">
-                    <VStack gap={0}>
-                      <Text type="label" weight="semibold">{doc.name}</Text>
-                      <Text type="supporting" color="secondary">
-                        {doc.page_count ? `${doc.page_count} pages` : "Document"} • {doc.status || "ready"}
-                      </Text>
-                    </VStack>
-                  </StackItem>
-                  <CheckCircle2 className="size-4 text-emerald-500" />
-                </HStack>
-              </ClickableCard>
-            ))}
+            {filteredDocuments.map((doc) => {
+              const docName = doc.name || doc.file_name || "Document";
+              return (
+                <ClickableCard
+                  key={doc.id}
+                  label={docName}
+                  variant="muted"
+                  padding={3}
+                  onClick={() => {
+                    setSelectedDocText(doc.raw_text || "No text available");
+                    setSelectedDocName(docName);
+                  }}
+                >
+                  <HStack gap={3} vAlign="center">
+                    <Icon icon={DocumentTextIcon} size="md" color="secondary" />
+                    <StackItem size="fill">
+                      <VStack gap={0}>
+                        <Text type="label" weight="semibold">{docName}</Text>
+                        <Text type="supporting" color="secondary">
+                          {doc.page_count ? `${doc.page_count} pages` : "Document"} • {doc.status || doc.ocr_status || "ready"}
+                        </Text>
+                      </VStack>
+                    </StackItem>
+                    <CheckCircle2 className="size-4 text-emerald-500" />
+                  </HStack>
+                </ClickableCard>
+              );
+            })}
 
             {selectedDocText && (
               <VStack gap={2} style={{ marginTop: 16 }}>

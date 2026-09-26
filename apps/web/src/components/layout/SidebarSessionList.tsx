@@ -24,6 +24,7 @@ interface SidebarSessionListProps {
   onRename: (session: AppSession) => void;
   onDelete: (session: AppSession) => void;
   onMoveToFolder: (sessionId: string, folderId: string | null) => void;
+  onCreateFolder?: () => void;
 }
 
 export default function SidebarSessionList({
@@ -34,6 +35,7 @@ export default function SidebarSessionList({
   onRename,
   onDelete,
   onMoveToFolder,
+  onCreateFolder,
 }: SidebarSessionListProps) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -86,13 +88,14 @@ export default function SidebarSessionList({
                   <Edit3 className="size-3.5 mr-2" />
                   <span>Rename</span>
                 </DropdownMenuItem>
-                {folders.length > 0 && (
+
+                {folders.length > 0 ? (
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="text-xs">
+                    <DropdownMenuSubTrigger className="text-xs cursor-pointer">
                       <FolderPlus className="size-3.5 mr-2" />
                       <span>Move to folder</span>
                     </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="w-40 p-1">
+                    <DropdownMenuSubContent className="w-44 p-1">
                       {folders.map((f) => (
                         <DropdownMenuItem
                           key={f.id}
@@ -103,19 +106,39 @@ export default function SidebarSessionList({
                         </DropdownMenuItem>
                       ))}
                       {session.folder_id && (
+                        <DropdownMenuItem
+                          onClick={() => onMoveToFolder(session.id, null)}
+                          className="text-xs text-muted-foreground cursor-pointer"
+                        >
+                          <span>Remove from folder</span>
+                        </DropdownMenuItem>
+                      )}
+                      {onCreateFolder && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => onMoveToFolder(session.id, null)}
-                            className="text-xs text-muted-foreground cursor-pointer"
+                            onClick={onCreateFolder}
+                            className="text-xs text-primary font-medium cursor-pointer"
                           >
-                            <span>Remove from folder</span>
+                            <FolderPlus className="size-3.5 mr-2" />
+                            <span>New folder...</span>
                           </DropdownMenuItem>
                         </>
                       )}
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
+                ) : (
+                  onCreateFolder && (
+                    <DropdownMenuItem
+                      onClick={onCreateFolder}
+                      className="text-xs cursor-pointer"
+                    >
+                      <FolderPlus className="size-3.5 mr-2" />
+                      <span>Create folder...</span>
+                    </DropdownMenuItem>
+                  )
                 )}
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => onDelete(session)}

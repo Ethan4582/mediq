@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Key, User as UserIcon, Settings, BarChart3, LogOut, ChevronUp } from "lucide-react";
+import { Key, User as UserIcon, Settings, BarChart3, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Avatar from "@/components/shared/Avatar";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,20 +38,25 @@ export default function SidebarUserMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-between gap-2.5 p-2 h-10 hover:bg-muted/80 rounded-xl transition-colors cursor-pointer"
+          className={cn(
+            "w-full gap-2.5 p-1.5 h-9 hover:bg-muted/80 rounded-xl transition-colors cursor-pointer",
+            isCollapsed ? "justify-center p-0 size-9 mx-auto" : "justify-start"
+          )}
+          title={displayName}
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Avatar name={displayName} src={user?.user_metadata?.avatar_url} size="sm" />
-            {!isCollapsed && (
-              <span className="text-xs font-semibold text-foreground truncate">
-                {displayName}
-              </span>
-            )}
-          </div>
-          {!isCollapsed && <ChevronUp className="size-3.5 text-muted-foreground shrink-0" />}
+          <Avatar name={displayName} src={user?.user_metadata?.avatar_url} size="sm" />
+          {!isCollapsed && (
+            <span className="text-xs font-semibold text-foreground truncate min-w-0">
+              {displayName}
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" side="top" className="w-56 p-1.5 shadow-lg border-border">
+      <DropdownMenuContent
+        align={isCollapsed ? "start" : "end"}
+        side={isCollapsed ? "right" : "top"}
+        className="w-56 p-1.5 shadow-lg border-border"
+      >
         <DropdownMenuItem asChild>
           <Link href="/profile" className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg cursor-pointer">
             <UserIcon className="size-4 text-muted-foreground" />

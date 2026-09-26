@@ -4,30 +4,42 @@ import { FileText, Eye, CheckCircle2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface DocumentThumbnailCardProps {
-  id: string;
-  name: string;
+  id?: string;
+  name?: string;
   pageCount?: number;
   status?: string;
   createdAt?: string;
   rawText?: string;
-  index: number;
-  onSelect: () => void;
+  index?: number;
+  onSelect?: () => void;
 }
 
 export default function DocumentThumbnailCard({
-  name,
+  name = "Document",
   pageCount,
   status = "ready",
   createdAt,
   rawText,
-  index,
+  index = 0,
   onSelect,
 }: DocumentThumbnailCardProps) {
+  const safeName = typeof name === "string" && name.trim() ? name : "Document";
   const isDone = status === "ready" || status === "completed" || Boolean(rawText);
-  const formattedDate = createdAt ? new Date(createdAt).toLocaleDateString() : "";
+  const formattedDate = createdAt ? (() => {
+    try {
+      const d = new Date(createdAt);
+      return isNaN(d.getTime()) ? "" : d.toLocaleDateString();
+    } catch {
+      return "";
+    }
+  })() : "";
+
+  const fileExtension = safeName.includes(".")
+    ? safeName.split(".").pop()?.toUpperCase() || "DOC"
+    : "DOC";
 
   const renderThumbnailVisual = () => {
-    const variant = index % 4;
+    const variant = Math.abs(index) % 4;
 
     if (variant === 0) {
       return (
@@ -140,8 +152,8 @@ export default function DocumentThumbnailCard({
 
       <div className="flex items-start justify-between gap-1.5 min-w-0">
         <div className="min-w-0 flex-1">
-          <h4 className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={name}>
-            {name}
+          <h4 className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={safeName}>
+            {safeName}
           </h4>
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
             <FileText className="size-2.5" />
@@ -171,7 +183,7 @@ export default function DocumentThumbnailCard({
           )}
         </div>
         <Badge variant="outline" className="text-[9px] px-1 py-0 font-normal">
-          {name.split(".").pop()?.toUpperCase() || "DOC"}
+          {fileExtension}
         </Badge>
       </div>
     </div>

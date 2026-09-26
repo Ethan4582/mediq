@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, Search, FolderPlus, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Plus, Search, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useSessions } from "@/hooks/useSessions";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { AppSession } from "@/types/app";
@@ -37,14 +36,22 @@ export default function Sidebar({
 
   const { isSidebarOpen, toggleSidebar } = useSessionStore();
   const [search, setSearch] = useState("");
-
   const [renameTarget, setRenameTarget] = useState<AppSession | null>(null);
   const [renameValue, setRenameValue] = useState("");
-
   const [deleteTarget, setDeleteTarget] = useState<AppSession | null>(null);
-
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [createFolderValue, setCreateFolderValue] = useState("");
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toggleSidebar]);
 
   const handleRenameConfirm = async () => {
     if (renameTarget && renameValue.trim()) {
@@ -71,75 +78,68 @@ export default function Sidebar({
   const filteredSessions = sessions.filter((s) => {
     if (!search.trim()) return true;
     const query = search.toLowerCase();
-    return (
-      s.title?.toLowerCase().includes(query) ||
-      s.patient_name?.toLowerCase().includes(query)
-    );
+    return s.title?.toLowerCase().includes(query) || s.patient_name?.toLowerCase().includes(query);
   });
 
   return (
-    <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none">
+    <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none overflow-hidden">
       {/* Top Header */}
-      <div className="flex items-center justify-between p-3 border-b border-sidebar-border/60">
-        <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
-          <Image
-            src="/logo.png"
-            alt="MediQ"
-            width={22}
-            height={22}
-            className="w-[22px] h-[22px] object-contain shrink-0"
-            unoptimized
-          />
-          {isSidebarOpen && <span>MediQ</span>}
-        </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="size-7 text-muted-foreground hover:text-foreground"
-        >
-          {isSidebarOpen ? <ChevronsLeft className="size-4" /> : <ChevronsRight className="size-4" />}
-        </Button>
+      <div className="flex items-center justify-between p-2.5 border-b border-sidebar-border/60 shrink-0">
+        {isSidebarOpen ? (
+          <>
+            <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
+              <img src="/logo.png" alt="MediQ" className="w-[20px] h-[20px] object-contain shrink-0" />
+              <span className="font-semibold text-sm tracking-tight text-foreground">MediQ</span>
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="size-7 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+              title="Collapse sidebar (Ctrl+B)"
+            >
+              <PanelLeftClose className="size-4" />
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="size-8 mx-auto text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+            title="Expand sidebar (Ctrl+B)"
+          >
+            <PanelLeft className="size-4" />
+          </Button>
+        )}
       </div>
 
-      {isSidebarOpen && (
-        <div className="flex flex-col flex-1 min-h-0 px-2 py-3 gap-3 overflow-hidden">
-          {/* Actions */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => router.push("/chat/new")}
-              className="flex-1 justify-start gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 h-8 text-xs font-medium"
-            >
-              <Plus className="size-3.5" />
-              New Patient Session
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsCreateFolderOpen(true)}
-              className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
-              title="New Folder"
-            >
-              <FolderPlus className="size-3.5" />
-            </Button>
-          </div>
+      {isSidebarOpen ? (
+        <div className="flex flex-col flex-1 min-h-0 px-2.5 py-3 gap-2.5 overflow-hidden">
+          {/* Compact New Session Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/chat/new")}
+            className="w-full justify-start gap-2 h-8 text-xs font-medium bg-sidebar-accent/40 hover:bg-sidebar-accent border-sidebar-border text-sidebar-foreground shadow-xs rounded-lg transition-all cursor-pointer"
+          >
+            <Plus className="size-3.5 text-primary shrink-0" />
+            <span>New Patient Session</span>
+          </Button>
 
-          {/* Search */}
+          {/* Full-width Search Input */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 size-3.5 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2 size-3.5 text-muted-foreground pointer-events-none" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search patients..."
-              className="h-8 pl-8 text-xs bg-sidebar-accent/50 border-sidebar-border"
+              className="h-8 pl-8 text-xs bg-sidebar-accent/30 border-sidebar-border rounded-lg placeholder:text-muted-foreground/70"
             />
           </div>
 
           {/* Scrollable list */}
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-            {/* Folders */}
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1 pt-1">
             {folders.length > 0 && (
               <div className="space-y-1">
                 <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
@@ -161,7 +161,6 @@ export default function Sidebar({
               </div>
             )}
 
-            {/* Sessions (unfiled or filtered) */}
             <div className="space-y-1">
               <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
                 Recent Consultations
@@ -177,14 +176,37 @@ export default function Sidebar({
                 onDelete={setDeleteTarget}
                 onTogglePin={togglePin}
                 onMoveToFolder={moveSessionToFolder}
+                onCreateFolder={() => setIsCreateFolderOpen(true)}
               />
             </div>
           </div>
         </div>
+      ) : (
+        /* Collapsed Sidebar State */
+        <div className="flex flex-col items-center flex-1 py-3 gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/chat/new")}
+            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg hover:bg-sidebar-accent"
+            title="New Patient Session"
+          >
+            <Plus className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg hover:bg-sidebar-accent"
+            title="Search patients"
+          >
+            <Search className="size-4" />
+          </Button>
+        </div>
       )}
 
       {/* User Footer */}
-      <div className="p-2 border-t border-sidebar-border/60">
+      <div className="p-2 border-t border-sidebar-border/60 shrink-0">
         <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
       </div>
 
@@ -204,9 +226,7 @@ export default function Sidebar({
             />
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setRenameTarget(null)}>
-              Cancel
-            </Button>
+            <Button variant="ghost" onClick={() => setRenameTarget(null)}>Cancel</Button>
             <Button onClick={handleRenameConfirm}>Save</Button>
           </DialogFooter>
         </DialogContent>
@@ -218,7 +238,7 @@ export default function Sidebar({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Session</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deleteTarget?.title || "this session"}&quot;? This action cannot be undone and will delete all associated medical documents and drafts.
+              Are you sure you want to delete &quot;{deleteTarget?.title || "this session"}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -246,9 +266,7 @@ export default function Sidebar({
             />
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setIsCreateFolderOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="ghost" onClick={() => setIsCreateFolderOpen(false)}>Cancel</Button>
             <Button onClick={handleCreateFolderConfirm}>Create</Button>
           </DialogFooter>
         </DialogContent>
