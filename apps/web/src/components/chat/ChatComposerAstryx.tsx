@@ -161,7 +161,7 @@ export default function ChatComposerAstryx({
                 <Token
                   key={name}
                   label={name}
-                  icon={<Icon icon={DocumentTextIcon} size="sm" />}
+                  icon={<Icon icon={DocumentTextIcon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />}
                   onRemove={onRemoveAttachment ? () => onRemoveAttachment(name) : undefined}
                 />
               ))}
@@ -174,7 +174,7 @@ export default function ChatComposerAstryx({
               label="Attach document"
               variant="ghost"
               size="sm"
-              icon={<Icon icon={PaperClipIcon} size="sm" />}
+              icon={<Icon icon={PaperClipIcon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />}
               isIconOnly
               onClick={() => fileInputRef.current?.click()}
             />
@@ -182,7 +182,7 @@ export default function ChatComposerAstryx({
               label="Mention"
               variant="ghost"
               size="sm"
-              icon={<Icon icon={AtSymbolIcon} size="sm" />}
+              icon={<Icon icon={AtSymbolIcon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />}
               isIconOnly
             />
           </>
@@ -193,7 +193,7 @@ export default function ChatComposerAstryx({
               label: activeProviderName,
               variant: "ghost",
               size: "sm",
-              icon: <Icon icon={SparklesIcon} size="sm" />,
+              icon: <Icon icon={SparklesIcon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />,
             }}
             items={Object.entries(PROVIDERS).map(([key, info]) => ({
               label: info.name,

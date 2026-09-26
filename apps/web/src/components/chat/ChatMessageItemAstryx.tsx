@@ -75,7 +75,7 @@ export default function ChatMessageItemAstryx({
             onClick={() => onOpenArtifact?.(metadata?.draft_id)}
           >
             <HStack gap={3} vAlign="center">
-              <Icon icon={DocumentTextIcon} size="md" color="accent" />
+              <Icon icon={DocumentTextIcon} size="md" color="accent" className="w-5 h-5 shrink-0" style={{ width: 20, height: 20 }} />
               <VStack gap={0}>
                 <Text type="label" weight="semibold">
                   {metadata?.title || "Clinical Discharge Summary"}

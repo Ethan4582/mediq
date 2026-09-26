@@ -195,7 +195,7 @@ export default function ChatLandingAstryx({
           <VStack gap={6} vAlign="center" style={pageStyle}>
             <VStack gap={2} hAlign="center">
               <HStack gap={2} vAlign="center">
-                <Icon icon={SparklesIcon} size="md" color="accent" />
+                <Icon icon={SparklesIcon} size="md" color="accent" className="w-5 h-5 shrink-0" style={{ width: 20, height: 20 }} />
                 <Text type="large" as="h2" color="secondary">
                   AI-Powered Healthcare Intelligence
                 </Text>
@@ -240,7 +240,7 @@ export default function ChatLandingAstryx({
                       label: "Specialist",
                       variant: "ghost",
                       size: "sm",
-                      icon: <Icon icon={AtSymbolIcon} size="sm" />,
+                      icon: <Icon icon={AtSymbolIcon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />,
                       isIconOnly: true,
                     }}
                     hasChevron={false}
@@ -268,7 +268,7 @@ export default function ChatLandingAstryx({
                       label: "Command",
                       variant: "ghost",
                       size: "sm",
-                      icon: <Icon icon={CommandLineIcon} size="sm" />,
+                      icon: <Icon icon={CommandLineIcon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />,
                       isIconOnly: true,
                     }}
                     hasChevron={false}
@@ -294,7 +294,7 @@ export default function ChatLandingAstryx({
                     label: selectedProvider ? selectedProvider.toUpperCase() : "AI Provider",
                     variant: "ghost",
                     size: "md",
-                    icon: <Icon icon={SparklesIcon} size="sm" />,
+                    icon: <Icon icon={SparklesIcon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />,
                   }}
                   items={[
                     { label: "OpenAI (GPT-4o)", onClick: () => onProviderChange?.("openai") },
@@ -319,7 +319,7 @@ export default function ChatLandingAstryx({
                     key={cat.key}
                     value={cat.key}
                     label={cat.label}
-                    icon={<Icon icon={cat.icon} size="sm" />}
+                    icon={<Icon icon={cat.icon} size="sm" className="w-4 h-4 shrink-0" style={{ width: 16, height: 16 }} />}
                   />
                 ))}
               </ToggleButtonGroup>

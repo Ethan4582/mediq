@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@astryxdesign/core/astryx.css";
 import "./globals.css";
 import SupabaseProvider from "@/components/providers/SupabaseProvider";
 import DevtoolsMeme from "@/components/DevtoolsMeme";
