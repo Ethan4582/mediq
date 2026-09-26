@@ -4,16 +4,10 @@ import {
   ChatMessage,
   ChatMessageBubble,
   ChatMessageMetadata,
-  ChatTokenizedText,
 } from "@astryxdesign/core/Chat";
-import { ClickableCard } from "@astryxdesign/core/ClickableCard";
-import { HStack, VStack } from "@astryxdesign/core/Layout";
-import { Text } from "@astryxdesign/core/Text";
-import { Icon } from "@astryxdesign/core/Icon";
-import { Avatar } from "@astryxdesign/core/Avatar";
 import { Markdown } from "@astryxdesign/core/Markdown";
 import { Timestamp } from "@astryxdesign/core/Timestamp";
-import { DocumentTextIcon } from "@heroicons/react/24/outline";
+import { FileText, ArrowRight, Sparkles } from "lucide-react";
 import type { Message } from "@/types/app";
 
 interface ChatMessageItemProps {
@@ -27,7 +21,12 @@ export default function ChatMessageItemAstryx({
 }: ChatMessageItemProps) {
   const isUser = message.role === "user";
   const metadata = message.metadata as
-    | { type?: string; draft_id?: string; title?: string }
+    | {
+        type?: string;
+        draft_id?: string;
+        title?: string;
+        diagnoses?: { principal_diagnosis?: string; secondary_diagnoses?: string[] };
+      }
     | null;
   const isSummaryCard = metadata?.type === "summary" || !!metadata?.draft_id;
 
@@ -38,18 +37,14 @@ export default function ChatMessageItemAstryx({
           metadata={
             message.created_at ? (
               <ChatMessageMetadata
-                timestamp={
-                  <Timestamp value={message.created_at} format="time" />
-                }
+                timestamp={<Timestamp value={message.created_at} format="time" />}
               />
             ) : undefined
           }
         >
-          <ChatTokenizedText
-            tokens={[{ value: "@agent", label: "MediQ", variant: "blue" }]}
-          >
+          <div className="text-[14.5px] leading-relaxed text-gray-900 font-normal">
             {message.content ?? ""}
-          </ChatTokenizedText>
+          </div>
         </ChatMessageBubble>
       </ChatMessage>
     );
@@ -58,7 +53,11 @@ export default function ChatMessageItemAstryx({
   return (
     <ChatMessage
       sender="assistant"
-      avatar={<Avatar name="MediQ" size="md" />}
+      avatar={
+        <div className="w-7 h-7 rounded-lg border border-gray-200/80 bg-white flex items-center justify-center overflow-hidden shadow-xs shrink-0">
+          <img src="/logo.png" alt="MediQ" className="w-4 h-4 object-contain" />
+        </div>
+      }
     >
       {message.content && (
         <ChatMessageBubble variant="ghost">
@@ -66,26 +65,45 @@ export default function ChatMessageItemAstryx({
         </ChatMessageBubble>
       )}
 
+      {/* Adapted Medical Summary Conversation Card */}
       {isSummaryCard && (
-        <div style={{ maxWidth: 460, marginTop: 8 }}>
-          <ClickableCard
-            label="Open Discharge Summary"
-            variant="muted"
-            padding={3}
+        <div className="mt-3 w-full max-w-[460px]">
+          <div
             onClick={() => onOpenArtifact?.(metadata?.draft_id)}
+            className="group rounded-xl border border-blue-200/80 bg-gradient-to-b from-white to-blue-50/20 p-4 shadow-xs hover:shadow-md hover:border-blue-400/80 transition-all cursor-pointer select-none"
           >
-            <HStack gap={3} vAlign="center">
-              <Icon icon={DocumentTextIcon} size="md" color="accent" className="w-5 h-5 shrink-0" style={{ width: 20, height: 20 }} />
-              <VStack gap={0}>
-                <Text type="label" weight="semibold">
-                  {metadata?.title || "Clinical Discharge Summary"}
-                </Text>
-                <Text type="supporting" color="secondary">
-                  Discharge Summary Ready
-                </Text>
-              </VStack>
-            </HStack>
-          </ClickableCard>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <FileText className="w-4.5 h-4.5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-gray-900 group-hover:text-blue-600 transition-colors leading-snug">
+                    {metadata?.title || "Clinical Discharge Summary"}
+                  </h4>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {metadata?.diagnoses?.principal_diagnosis
+                      ? `Principal: ${metadata.diagnoses.principal_diagnosis}`
+                      : "Discharge Summary Draft Ready"}
+                  </p>
+                </div>
+              </div>
+
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100 shrink-0">
+                <Sparkles className="w-3 h-3 text-blue-500" />
+                Ready
+              </span>
+            </div>
+
+            <div className="mt-3 pt-2.5 border-t border-gray-100/90 flex items-center justify-between">
+              <span className="text-xs text-gray-400 font-normal">
+                Click to inspect & export draft
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 group-hover:translate-x-0.5 transition-transform">
+                Open Summary <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </div>
         </div>
       )}
     </ChatMessage>
