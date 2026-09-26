@@ -20,6 +20,8 @@ interface ChatArtifactDrawerProps {
   onDialogChange: (open: boolean) => void;
   onUpload?: (file: File) => void;
   isUploading?: boolean;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 function panelStyle(size: number): CSSProperties {
@@ -47,6 +49,8 @@ export default function ChatArtifactDrawer({
   onDialogChange,
   onUpload,
   isUploading,
+  activeTab,
+  onTabChange,
 }: ChatArtifactDrawerProps) {
   return (
     <>
@@ -78,6 +82,8 @@ export default function ChatArtifactDrawer({
             onSelectDraft={onSelectDraft}
             onUpload={onUpload}
             isUploading={isUploading}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
           />
         </Card>
       )}
@@ -110,6 +116,8 @@ export default function ChatArtifactDrawer({
                 onSelectDraft={onSelectDraft}
                 onUpload={onUpload}
                 isUploading={isUploading}
+                activeTab={activeTab}
+                onTabChange={onTabChange}
               />
             </LayoutContent>
           }

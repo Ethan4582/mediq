@@ -1,54 +1,52 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react";
-import { VStack, HStack, StackItem } from "@astryxdesign/core/Layout";
+import { VStack } from "@astryxdesign/core/Layout";
 import { Text, Heading } from "@astryxdesign/core/Text";
 import { Section } from "@astryxdesign/core/Section";
-import { Markdown } from "@astryxdesign/core/Markdown";
-import { Button } from "@astryxdesign/core/Button";
 import { Icon } from "@astryxdesign/core/Icon";
-import { Toolbar } from "@astryxdesign/core/Toolbar";
-import { ToggleButton, ToggleButtonGroup } from "@astryxdesign/core/ToggleButton";
 import { ClickableCard } from "@astryxdesign/core/ClickableCard";
 import {
-  ClipboardDocumentIcon,
-  XMarkIcon,
-  ArrowDownTrayIcon,
   DocumentTextIcon,
   ClockIcon,
-  FolderIcon,
-  PrinterIcon,
-  ExclamationTriangleIcon,
-  PlusIcon,
   MagnifyingGlassIcon,
   Squares2X2Icon,
-  ShareIcon,
 } from "@heroicons/react/24/outline";
-import { Sparkles, FileUp, FileText, Layers, ShieldCheck, CheckCircle2 } from "lucide-react";
+import {
+  FileText,
+  FileUp,
+  Sparkles,
+  ClipboardCheck,
+  Share2,
+  Copy,
+  Download,
+  Printer,
+  X,
+  Plus,
+  FolderKanban,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import type { ClinicalDraft, OcrResultData } from "@/types/app";
 import DocumentThumbnailCard from "./DocumentThumbnailCard";
 import AddRawNoteDialog from "./AddRawNoteDialog";
 import ShareSessionDialog from "./ShareSessionDialog";
+import ClinicalSummaryView from "./ClinicalSummaryView";
 
 const artifactScroll: CSSProperties = {
   flex: 1,
   overflowY: "auto",
   padding: "var(--spacing-4, 16px)",
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
 };
 
 const articleBody: CSSProperties = {
   maxWidth: 760,
   marginInline: "auto",
   width: "100%",
-};
-
-const conflictBox: CSSProperties = {
-  padding: "var(--spacing-3, 12px)",
-  borderRadius: 8,
-  backgroundColor: "rgba(245, 158, 11, 0.08)",
-  border: "1px solid rgba(245, 158, 11, 0.25)",
 };
 
 interface ArtifactDocument {
@@ -60,6 +58,7 @@ interface ArtifactDocument {
   ocr_status?: string;
   created_at?: string;
   raw_text?: string;
+  preview_url?: string;
 }
 
 interface ArtifactDraftSummary {
@@ -77,6 +76,8 @@ interface ArtifactPanelAstryxProps {
   onSelectDraft?: (draft: ClinicalDraft) => void;
   onUpload?: (file: File) => void;
   isUploading?: boolean;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 export default function ArtifactPanelAstryx({
@@ -87,8 +88,16 @@ export default function ArtifactPanelAstryx({
   onSelectDraft,
   onUpload,
   isUploading = false,
+  activeTab: activeTabProp,
+  onTabChange,
 }: ArtifactPanelAstryxProps) {
-  const [activeTab, setActiveTab] = useState<string>("content");
+  const [internalTab, setInternalTab] = useState<string>("content");
+  const activeTab = activeTabProp ?? internalTab;
+  const setActiveTab = (tab: string) => {
+    setInternalTab(tab);
+    onTabChange?.(tab);
+  };
+
   const [historyDrafts, setHistoryDrafts] = useState<ArtifactDraftSummary[]>([]);
   const [documents, setDocuments] = useState<ArtifactDocument[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -97,6 +106,7 @@ export default function ArtifactPanelAstryx({
   const [searchQuery, setSearchQuery] = useState("");
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [filePreviews, setFilePreviews] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -186,7 +196,8 @@ export default function ArtifactPanelAstryx({
     const q = searchQuery.toLowerCase();
     return allDocumentsList.filter((d) => {
       const docName = d.name || d.file_name || "";
-      return docName.toLowerCase().includes(q);
+      const raw = d.raw_text || "";
+      return docName.toLowerCase().includes(q) || raw.toLowerCase().includes(q);
     });
   }, [allDocumentsList, searchQuery]);
 
@@ -242,22 +253,24 @@ export default function ArtifactPanelAstryx({
       }
       return md;
     }
-    return ocrResult?.rawText || "No document loaded yet.";
+    return ocrResult?.rawText || "";
   })();
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(rawTextContent);
+    const textToCopy = selectedDocText || rawTextContent || "No clinical content available";
+    navigator.clipboard.writeText(textToCopy);
     toast.success("Copied to clipboard", {
       description: "Document contents copied.",
     });
   };
 
   const handleDownload = () => {
-    const blob = new Blob([rawTextContent], { type: "text/markdown" });
+    const textToDownload = selectedDocText || rawTextContent || "No content";
+    const blob = new Blob([textToDownload], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${(title || "discharge_summary").replace(/[^a-zA-Z0-9]/g, "_")}.md`;
+    a.download = `${(selectedDocName || title || "discharge_summary").replace(/[^a-zA-Z0-9]/g, "_")}.md`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Document downloaded", {
@@ -274,6 +287,8 @@ export default function ArtifactPanelAstryx({
       const parsed: ClinicalDraft =
         typeof item.content === "string" ? JSON.parse(item.content) : item.content;
       onSelectDraft?.(parsed);
+      setSelectedDocText(null);
+      setSelectedDocName(null);
       setActiveTab("summary");
       toast.success("Loaded summary version", {
         description: `Loaded version from ${new Date(item.created_at).toLocaleTimeString()}`,
@@ -285,13 +300,17 @@ export default function ArtifactPanelAstryx({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && onUpload) {
-      onUpload(file);
-      e.target.value = "";
+    if (file) {
+      if (file.type.startsWith("image/")) {
+        const preview = URL.createObjectURL(file);
+        setFilePreviews((prev) => ({ ...prev, [file.name]: preview }));
+      }
+      if (onUpload) {
+        onUpload(file);
+        e.target.value = "";
+      }
     }
   };
-
-  const conflicts = draft?.flags?.conflicting_fields || draft?.flags?.conflicts;
 
   return (
     <VStack height="100%" width="100%">
@@ -303,163 +322,190 @@ export default function ArtifactPanelAstryx({
         onChange={handleFileChange}
       />
 
-      <Toolbar
-        label="Artifact navigation"
-        dividers={["bottom"]}
-        startContent={
-          <HStack gap={2} vAlign="center">
-            <div className="size-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <Icon icon={DocumentTextIcon} size="sm" />
-            </div>
-            <VStack gap={0}>
-              <Text type="label" weight="semibold">
+      <div className="px-4 py-3 border-b border-border/80 bg-background/95 backdrop-blur-xs flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="size-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shadow-xs shrink-0">
+            <DocumentTextIcon className="size-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs sm:text-sm font-semibold text-foreground tracking-tight truncate">
                 Project content
-              </Text>
-              <Text type="supporting" color="secondary">
-                {allDocumentsList.length} asset{allDocumentsList.length === 1 ? "" : "s"} • {historyDrafts.length} summar{historyDrafts.length === 1 ? "y" : "ies"}
-              </Text>
-            </VStack>
-          </HStack>
-        }
-        endContent={
-          <HStack gap={1} vAlign="center">
-            <Button
-              label="Share"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon={ShareIcon} size="sm" />}
-              isIconOnly
-              onClick={() => setIsShareDialogOpen(true)}
-            />
-            <Button
-              label="Copy"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon={ClipboardDocumentIcon} size="sm" />}
-              isIconOnly
-              onClick={handleCopy}
-            />
-            <Button
-              label="Download"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-              isIconOnly
-              onClick={handleDownload}
-            />
-            <Button
-              label="Print"
-              variant="ghost"
-              size="sm"
-              icon={<Icon icon={PrinterIcon} size="sm" />}
-              isIconOnly
-              onClick={handlePrint}
-            />
-            {onClose && (
-              <Button
-                label="Close document"
-                variant="ghost"
-                size="sm"
-                icon={<Icon icon={XMarkIcon} size="sm" />}
-                isIconOnly
-                onClick={onClose}
-              />
-            )}
-          </HStack>
-        }
-      />
+              </h3>
+              <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" title="Active session" />
+            </div>
+            <p className="text-[11px] text-muted-foreground truncate">
+              Clinical records & session intelligence
+            </p>
+          </div>
+        </div>
 
-      <div className="px-3 py-2 border-b border-border/80 flex flex-col gap-2 bg-background/50">
-        <HStack justify="between" vAlign="center">
-          <ToggleButtonGroup
-            label="Artifact Views"
-            value={activeTab}
-            onChange={(val) => {
-              if (val) setActiveTab(val);
-            }}
-            size="sm"
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsShareDialogOpen(true)}
+            className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            title="Share session"
           >
-            <ToggleButton
-              value="content"
-              label="Content"
-              icon={<Icon icon={Squares2X2Icon} size="sm" />}
-            />
-            <ToggleButton
-              value="summary"
-              label="Summary"
-              icon={<Icon icon={DocumentTextIcon} size="sm" />}
-            />
-            <ToggleButton
-              value="files"
-              label={`OCR (${allDocumentsList.length})`}
-              icon={<Icon icon={FolderIcon} size="sm" />}
-            />
-            <ToggleButton
-              value="history"
-              label={`Past Runs (${historyDrafts.length})`}
-              icon={<Icon icon={ClockIcon} size="sm" />}
-            />
-          </ToggleButtonGroup>
-        </HStack>
+            <Share2 className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCopy}
+            className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            title="Copy document content"
+          >
+            <Copy className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDownload}
+            className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            title="Download markdown"
+          >
+            <Download className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handlePrint}
+            className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            title="Print summary"
+          >
+            <Printer className="size-3.5" />
+          </Button>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer ml-0.5"
+              title="Close drawer"
+            >
+              <X className="size-3.5" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="px-3 py-2.5 border-b border-border/80 flex flex-col gap-2.5 bg-background/50">
+        <div className="grid grid-cols-3 p-1 bg-muted/60 dark:bg-muted/30 rounded-xl border border-border/60 gap-1 select-none">
+          <button
+            type="button"
+            onClick={() => setActiveTab("content")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              activeTab === "content"
+                ? "bg-background text-foreground shadow-xs border border-border/70 font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            )}
+          >
+            <Squares2X2Icon className="size-3.5 shrink-0" />
+            <span className="truncate">Content</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("summary")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              activeTab === "summary"
+                ? "bg-background text-foreground shadow-xs border border-border/70 font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            )}
+          >
+            <DocumentTextIcon className="size-3.5 shrink-0" />
+            <span className="truncate">Summary</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer",
+              activeTab === "history"
+                ? "bg-background text-foreground shadow-xs border border-border/70 font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            )}
+          >
+            <ClockIcon className="size-3.5 shrink-0" />
+            <span className="truncate">Past</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[10px] font-mono leading-tight",
+                activeTab === "history"
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {historyDrafts.length}
+            </span>
+          </button>
+        </div>
 
         <div className="relative w-full">
-          <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-            <Icon icon={MagnifyingGlassIcon} size="sm" />
-          </div>
+          <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search assets, documents & summaries..."
-            className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-background border border-border rounded-lg pl-8 pr-3 py-1 text-xs text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-primary/40"
+            placeholder="Search documents, drafts & clinical terms..."
+            className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-background border border-border rounded-lg pl-8 pr-7 py-1.5 text-xs text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="size-3" />
+            </button>
+          )}
         </div>
       </div>
 
-      <Section variant="transparent" style={artifactScroll}>
+      <Section variant="transparent" style={artifactScroll} className="no-scrollbar">
         {activeTab === "content" && (
-          <VStack gap={5} style={articleBody}>
-            <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+          <VStack gap={4} style={articleBody}>
+            <div className="rounded-xl border border-border/80 bg-card p-3.5 shadow-xs">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="size-6 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                    <Layers className="size-3.5" />
+                <div className="flex items-center gap-2.5">
+                  <div className="size-7 rounded-lg bg-muted border border-border/60 flex items-center justify-center text-foreground shrink-0">
+                    <FolderKanban className="size-3.5 text-foreground/80" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-semibold text-foreground">Clinical Session</h3>
-                    <p className="text-[11px] text-muted-foreground">Created by you • Active Session</p>
+                    <h3 className="text-xs font-semibold text-foreground tracking-tight">
+                      project
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground">Created by you</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                  <ShieldCheck className="size-3.5" />
-                  <span>HIPAA Grounded</span>
                 </div>
               </div>
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="group relative border-2 border-dashed border-border/90 hover:border-primary/60 hover:bg-primary/5 rounded-xl p-6 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center text-center"
+                className="group relative border border-dashed border-border/80 hover:border-primary/50 bg-slate-50/60 hover:bg-slate-100/60 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/70 rounded-xl p-5 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center text-center shadow-2xs"
               >
                 <div className="relative mb-3 flex items-center justify-center">
-                  <div className="size-10 rounded-lg bg-muted/80 border border-border flex items-center justify-center -rotate-6 shadow-xs group-hover:-rotate-12 transition-transform">
-                    <FileText className="size-5 text-muted-foreground" />
+                  <div className="size-8 rounded-lg bg-white dark:bg-zinc-800 border border-border flex items-center justify-center -rotate-6 shadow-xs group-hover:-rotate-12 transition-transform">
+                    <FileText className="size-4 text-muted-foreground" />
                   </div>
-                  <div className="size-10 rounded-lg bg-card border border-border flex items-center justify-center z-10 shadow-xs group-hover:scale-105 transition-transform">
-                    <FileUp className="size-5 text-primary" />
+                  <div className="size-8 rounded-lg bg-white dark:bg-zinc-800 border border-border flex items-center justify-center z-10 shadow-xs group-hover:scale-105 transition-transform">
+                    <FileUp className="size-4 text-primary" />
                   </div>
-                  <div className="size-10 rounded-lg bg-muted/80 border border-border flex items-center justify-center rotate-6 shadow-xs group-hover:rotate-12 transition-transform">
-                    <Sparkles className="size-5 text-amber-500" />
+                  <div className="size-8 rounded-lg bg-white dark:bg-zinc-800 border border-border flex items-center justify-center rotate-6 shadow-xs group-hover:rotate-12 transition-transform">
+                    <Sparkles className="size-4 text-amber-500" />
                   </div>
-                  <div className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md">
-                    <Icon icon={PlusIcon} size="sm" />
+                  <div className="absolute -top-1 -right-1 size-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
+                    <Plus className="size-2.5" />
                   </div>
                 </div>
 
-                <h4 className="text-xs font-semibold text-foreground mb-1">
+                <p className="text-xs font-normal text-muted-foreground max-w-xs mb-3 group-hover:text-foreground transition-colors">
                   Add PDFs, documents, or other text to reference in this project.
-                </h4>
-                <p className="text-[11px] text-muted-foreground max-w-sm mb-3">
-                  Upload patient charts, doctor handwriting, lab panels, or paste EHR text notes directly.
                 </p>
 
                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -467,44 +513,39 @@ export default function ArtifactPanelAstryx({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
                   >
-                    <FileUp className="size-3.5" />
+                    <FileUp className="size-3" />
                     <span>{isUploading ? "Uploading..." : "Upload Files"}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsNoteDialogOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-medium border border-border transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-card hover:bg-muted text-foreground text-xs font-medium border border-border/80 transition-colors shadow-xs cursor-pointer"
                   >
-                    <Icon icon={PlusIcon} size="sm" />
+                    <Plus className="size-3" />
                     <span>Paste Raw Note</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Content
-                  </h3>
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-muted font-medium text-foreground">
-                    {filteredDocuments.length}
-                  </span>
-                </div>
-                {filteredDocuments.length > 0 && (
-                  <span className="text-[11px] text-muted-foreground">Click to inspect OCR</span>
-                )}
+                <h3 className="text-xs font-semibold text-foreground">Content</h3>
+                <span className="text-[11px] text-muted-foreground">
+                  {filteredDocuments.length} item{filteredDocuments.length === 1 ? "" : "s"}
+                </span>
               </div>
 
               {filteredDocuments.length === 0 ? (
-                <div className="p-8 text-center rounded-xl border border-dashed border-border/80 bg-muted/20">
-                  <p className="text-xs text-muted-foreground">No documents uploaded to this session yet.</p>
+                <div className="p-6 text-center rounded-xl border border-dashed border-border/80 bg-muted/20">
+                  <p className="text-xs text-muted-foreground">
+                    {searchQuery ? `No documents matching "${searchQuery}"` : "No documents uploaded to this session yet."}
+                  </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   {filteredDocuments.map((doc, idx) => {
                     const docName = doc.name || doc.file_name || "Document";
                     return (
@@ -516,11 +557,12 @@ export default function ArtifactPanelAstryx({
                         status={doc.status || doc.ocr_status}
                         createdAt={doc.created_at}
                         rawText={doc.raw_text}
+                        previewUrl={filePreviews[docName] || doc.preview_url}
                         index={idx}
                         onSelect={() => {
-                          setSelectedDocText(doc.raw_text || ocrResult?.rawText || "No raw text extracted");
+                          setSelectedDocText(doc.raw_text || ocrResult?.rawText || "No text available");
                           setSelectedDocName(docName);
-                          setActiveTab("files");
+                          setActiveTab("summary");
                         }}
                       />
                     );
@@ -529,46 +571,41 @@ export default function ArtifactPanelAstryx({
               )}
             </div>
 
-            <div className="space-y-3 pt-2">
+            <div className="space-y-2.5 pt-1">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Generated Summaries
-                  </h3>
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-muted font-medium text-foreground">
-                    {filteredDrafts.length || (draft ? 1 : 0)}
-                  </span>
-                </div>
+                <h3 className="text-xs font-semibold text-foreground">
+                  Generated Summaries
+                </h3>
+                <span className="text-[11px] text-muted-foreground">
+                  {filteredDrafts.length || (draft ? 1 : 0)}
+                </span>
               </div>
 
               {draft && (
                 <div
-                  onClick={() => setActiveTab("summary")}
-                  className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer space-y-2 shadow-xs"
+                  onClick={() => {
+                    setSelectedDocText(null);
+                    setSelectedDocName(null);
+                    setActiveTab("summary");
+                  }}
+                  className="p-2.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer space-y-1.5 shadow-xs"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="size-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-                        <Sparkles className="size-3.5" />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="size-6 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+                        <ClipboardCheck className="size-3.5" />
                       </div>
-                      <div>
-                        <h4 className="text-xs font-semibold text-foreground">
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-semibold text-foreground truncate max-w-[210px]">
                           {draft.diagnoses?.principal_diagnosis || "Current Discharge Draft"}
                         </h4>
                         <p className="text-[10px] text-muted-foreground">Active Clinical Summary</p>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-medium border border-emerald-500/20">
+                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9.5px] font-medium border border-emerald-500/20 shrink-0">
                       Latest Draft
                     </span>
                   </div>
-
-                  {conflicts && conflicts.length > 0 && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md">
-                      <ExclamationTriangleIcon className="size-3.5 shrink-0" />
-                      <span>{conflicts.length} clinical conflict{conflicts.length > 1 ? "s" : ""} flagged</span>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -577,13 +614,13 @@ export default function ArtifactPanelAstryx({
                   typeof item.content === "string" ? JSON.parse(item.content) : item.content;
                 const heading =
                   draftData?.diagnoses?.principal_diagnosis || "Discharge Summary Draft";
-                const isCurrent = draftData?.diagnoses?.principal_diagnosis === draft?.diagnoses?.principal_diagnosis;
+                const isCurrent = !selectedDocText && draftData?.diagnoses?.principal_diagnosis === draft?.diagnoses?.principal_diagnosis;
 
                 return (
                   <div
                     key={item.id}
                     onClick={() => handleSelectHistoricalDraft(item)}
-                    className="p-3 rounded-xl border border-border/80 bg-card hover:bg-muted/40 transition-colors cursor-pointer space-y-1.5 shadow-xs"
+                    className="p-2.5 rounded-lg border border-border/80 bg-card hover:bg-muted/40 transition-colors cursor-pointer space-y-1 shadow-xs"
                   >
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-semibold text-foreground truncate max-w-[220px]">
@@ -609,112 +646,14 @@ export default function ArtifactPanelAstryx({
         )}
 
         {activeTab === "summary" && (
-          <VStack gap={4} style={articleBody}>
-            <Heading level={2}>{title}</Heading>
-
-            {draft?.flags && ((conflicts && conflicts.length > 0) || draft.flags.missing_fields?.length) ? (
-              <VStack gap={2} style={conflictBox}>
-                <HStack gap={2} vAlign="center">
-                  <Icon icon={ExclamationTriangleIcon} size="sm" color="accent" />
-                  <Text type="label" weight="semibold">
-                    Clinical Reconciliation Warnings
-                  </Text>
-                </HStack>
-                {conflicts?.map((f, i) => (
-                  <Text key={i} type="supporting" color="secondary">
-                    - Conflict in {f.field}: {f.description || `"${f.source_a || ""}" vs "${f.source_b || ""}"`}
-                  </Text>
-                ))}
-                {draft.flags.missing_fields?.map((m, i) => (
-                  <Text key={i} type="supporting" color="secondary">
-                    - Missing field: {m}
-                  </Text>
-                ))}
-              </VStack>
-            ) : null}
-
-            {draft?.medications?.discharge?.length ? (
-              <VStack gap={2}>
-                <Heading level={4}>Reconciled Medications</Heading>
-                {draft.medications.discharge.map((med, idx) => (
-                  <HStack key={idx} justify="between" padding={2} style={{ borderRadius: 6, backgroundColor: "rgba(0,0,0,0.03)" }}>
-                    <Text type="body" weight="semibold">{med.name}</Text>
-                    <Text type="supporting" color="secondary">{med.dosage || med.dose || ""} {med.route || ""} {med.frequency || ""}</Text>
-                  </HStack>
-                ))}
-              </VStack>
-            ) : null}
-
-            <Markdown>{rawTextContent}</Markdown>
-          </VStack>
-        )}
-
-        {activeTab === "files" && (
-          <VStack gap={3} style={articleBody}>
-            <div className="flex items-center justify-between">
-              <div>
-                <Heading level={3}>Source Patient Documents</Heading>
-                <Text type="supporting" color="secondary">
-                  Extracted via Mistral OCR with vector embeddings.
-                </Text>
-              </div>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
-              >
-                <PlusIcon className="size-3.5" />
-                <span>Upload</span>
-              </button>
-            </div>
-
-            {filteredDocuments.map((doc) => {
-              const docName = doc.name || doc.file_name || "Document";
-              return (
-                <ClickableCard
-                  key={doc.id}
-                  label={docName}
-                  variant="muted"
-                  padding={3}
-                  onClick={() => {
-                    setSelectedDocText(doc.raw_text || "No text available");
-                    setSelectedDocName(docName);
-                  }}
-                >
-                  <HStack gap={3} vAlign="center">
-                    <Icon icon={DocumentTextIcon} size="md" color="secondary" />
-                    <StackItem size="fill">
-                      <VStack gap={0}>
-                        <Text type="label" weight="semibold">{docName}</Text>
-                        <Text type="supporting" color="secondary">
-                          {doc.page_count ? `${doc.page_count} pages` : "Document"} • {doc.status || doc.ocr_status || "ready"}
-                        </Text>
-                      </VStack>
-                    </StackItem>
-                    <CheckCircle2 className="size-4 text-emerald-500" />
-                  </HStack>
-                </ClickableCard>
-              );
-            })}
-
-            {selectedDocText && (
-              <VStack gap={2} style={{ marginTop: 16 }}>
-                <HStack justify="between" vAlign="center">
-                  <Heading level={4}>{selectedDocName ? `OCR: ${selectedDocName}` : "Extracted OCR Content"}</Heading>
-                  <Button
-                    label="Close preview"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedDocText(null);
-                      setSelectedDocName(null);
-                    }}
-                  />
-                </HStack>
-                <Markdown>{selectedDocText}</Markdown>
-              </VStack>
-            )}
-          </VStack>
+          <div style={articleBody} className="w-full">
+            <ClinicalSummaryView
+              draft={selectedDocText ? null : draft}
+              rawText={selectedDocText || rawTextContent}
+              sourceName={selectedDocName || ocrResult?.fileName || title || "Clinical Summary"}
+              searchQuery={searchQuery}
+            />
+          </div>
         )}
 
         {activeTab === "history" && (
@@ -728,7 +667,7 @@ export default function ArtifactPanelAstryx({
 
             {!loadingHistory && filteredDrafts.length === 0 && (
               <Text type="body" color="secondary">
-                No past summaries recorded yet for this session.
+                {searchQuery ? `No past summaries matching "${searchQuery}"` : "No past summaries recorded yet for this session."}
               </Text>
             )}
 
@@ -745,17 +684,15 @@ export default function ArtifactPanelAstryx({
                   padding={3}
                   onClick={() => handleSelectHistoricalDraft(item)}
                 >
-                  <HStack gap={3} vAlign="center">
+                  <div className="flex items-center gap-3">
                     <Icon icon={DocumentTextIcon} size="md" color="secondary" />
-                    <StackItem size="fill">
-                      <VStack gap={0}>
-                        <Text type="label" weight="semibold">{heading}</Text>
-                        <Text type="supporting" color="secondary">
-                          Generated on {new Date(item.created_at).toLocaleDateString()} at {new Date(item.created_at).toLocaleTimeString()}
-                        </Text>
-                      </VStack>
-                    </StackItem>
-                  </HStack>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate">{heading}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Generated on {new Date(item.created_at).toLocaleDateString()} at {new Date(item.created_at).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
                 </ClickableCard>
               );
             })}

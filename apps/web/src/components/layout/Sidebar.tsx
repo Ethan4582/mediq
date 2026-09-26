@@ -83,7 +83,6 @@ export default function Sidebar({
 
   return (
     <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none overflow-hidden">
-      {/* Top Header */}
       <div className="flex items-center justify-between p-2.5 border-b border-sidebar-border/60 shrink-0">
         {isSidebarOpen ? (
           <>
@@ -102,21 +101,25 @@ export default function Sidebar({
             </Button>
           </>
         ) : (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="size-8 mx-auto text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
-            title="Expand sidebar (Ctrl+B)"
+          <Link
+            href="/"
+            className="size-8 mx-auto flex items-center justify-center hover:opacity-85 transition-opacity rounded-lg"
+            title="MediQ Home"
           >
-            <PanelLeft className="size-4" />
-          </Button>
+            <Image
+              src="/logo.png"
+              alt="MediQ"
+              width={22}
+              height={22}
+              className="size-5.5 object-contain shrink-0"
+              priority
+            />
+          </Link>
         )}
       </div>
 
       {isSidebarOpen ? (
         <div className="flex flex-col flex-1 min-h-0 px-2.5 py-3 gap-2.5 overflow-hidden">
-          {/* Compact New Session Button */}
           <Button
             variant="outline"
             size="sm"
@@ -127,7 +130,6 @@ export default function Sidebar({
             <span>New Patient Session</span>
           </Button>
 
-          {/* Full-width Search Input */}
           <div className="relative">
             <Search className="absolute left-2.5 top-2 size-3.5 text-muted-foreground pointer-events-none" />
             <Input
@@ -138,7 +140,6 @@ export default function Sidebar({
             />
           </div>
 
-          {/* Scrollable list */}
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 pt-1">
             {(folders || []).length > 0 && (
               <div className="space-y-1">
@@ -184,7 +185,16 @@ export default function Sidebar({
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center py-3 gap-2">
+        <div className="flex-1 flex flex-col items-center py-2.5 gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+            title="Expand sidebar (Ctrl+B)"
+          >
+            <PanelLeft className="size-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -197,10 +207,8 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* User Footer */}
       <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
 
-      {/* Dialogs */}
       <SidebarDialogs
         renameTarget={renameTarget}
         renameValue={renameValue}

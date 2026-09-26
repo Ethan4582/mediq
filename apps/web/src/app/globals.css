@@ -155,6 +155,13 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
   body {
     @apply bg-background text-foreground;
@@ -163,11 +170,13 @@
     background: var(--bg-primary);
     font-weight: 400;
     line-height: 1.6;
-    overflow-y: overlay;
+    overflow-y: auto;
     overflow-x: hidden;
   }
   html {
     @apply font-sans;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
   }
 }
 
@@ -188,4 +197,15 @@
   margin-inline: auto !important;
   margin-left: auto !important;
   margin-right: auto !important;
+}
+
+.no-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
