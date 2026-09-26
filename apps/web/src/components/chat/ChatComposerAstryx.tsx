@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { Paperclip, ArrowUp, ChevronDown, Check, X, Loader2 } from "lucide-react";
 
 export const CHAT_MODELS = [
@@ -41,117 +42,111 @@ export default function ChatComposerAstryx({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const activeModel =
-    CHAT_MODELS.find((m) => m.id === selectedProvider) || CHAT_MODELS[0];
+    CHAT_MODELS.find((m) => m.id === selectedProvider) ?? CHAT_MODELS[3];
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
-    };
+    }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 160)}px`;
-    }
-  }, [inputText]);
-
-  const handleSend = () => {
-    if (disabled || isSending) return;
-    const trimmed = inputText.trim();
-    if (trimmed) {
-      onSend(trimmed);
-      setInputText("");
-      if (textareaRef.current) {
-        textareaRef.current.style.height = "auto";
-      }
-    }
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSubmit();
     }
+  };
+
+  const handleSubmit = () => {
+    if (!inputText.trim() || disabled || isSending) return;
+    onSend(inputText.trim());
+    setInputText("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+  };
+
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputText(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && onUpload) {
       onUpload(file);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      e.target.value = "";
     }
   };
 
   return (
-    <div className="w-full max-w-[840px] mx-auto px-4 pb-3">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf,.png,.jpg,.jpeg,.txt"
-        onChange={handleFileChange}
-        className="hidden"
-      />
+    <div className="w-full max-w-[840px] mx-auto px-4 pb-4">
+      {/* Attached files indicator badge list */}
+      {attachedFiles.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2 px-1">
+          {attachedFiles.map((name) => (
+            <div
+              key={name}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50/80 border border-blue-200/60 text-blue-900 rounded-lg text-xs font-medium shadow-xs"
+            >
+              <span className="max-w-[200px] truncate">{name}</span>
+              {onRemoveAttachment && (
+                <button
+                  type="button"
+                  onClick={() => onRemoveAttachment(name)}
+                  className="hover:text-blue-700 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
-      <div className="flex flex-col rounded-2xl border border-gray-200/90 bg-white/95 backdrop-blur-xl p-3 shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500/50">
-        {/* Attached files drawer */}
-        {attachedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pb-2 mb-2 border-b border-gray-100">
-            {attachedFiles.map((name) => (
-              <span
-                key={name}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100"
-              >
-                <span className="truncate max-w-[200px]">{name}</span>
-                {onRemoveAttachment && (
-                  <button
-                    type="button"
-                    onClick={() => onRemoveAttachment(name)}
-                    className="hover:text-blue-900 transition-colors cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Text input area */}
-        <textarea
-          ref={textareaRef}
-          rows={1}
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={disabled}
-          placeholder={
-            disabled
-              ? "Processing clinical document..."
-              : "Ask questions about this patient's medical records or type clinical requests..."
-          }
-          className="w-full resize-none outline-none text-[14.5px] bg-transparent min-h-[44px] max-h-[160px] py-1 px-1 text-gray-900 placeholder-gray-400 font-normal leading-relaxed disabled:opacity-60"
+      {/* Main Composer Box */}
+      <div className="relative rounded-2xl border border-gray-200/90 bg-white shadow-sm focus-within:border-blue-500/80 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
+        {/* Hidden file input for native attachment handling */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.png,.jpg,.jpeg,.webp"
+          className="hidden"
+          onChange={handleFileChange}
         />
 
-        {/* Bottom toolbar */}
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+        {/* Text input area */}
+        <div className="px-4 pt-3.5 pb-2">
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            value={inputText}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            disabled={disabled}
+            placeholder="Ask anything about patient records, diagnoses, or type /summarize..."
+            className="w-full resize-none bg-transparent text-[14.5px] text-gray-900 placeholder:text-gray-400 focus:outline-none max-h-[200px] min-h-[24px] leading-relaxed"
+          />
+        </div>
+
+        {/* Bottom controls bar */}
+        <div className="flex items-center justify-between px-3 pb-3 pt-1 border-t border-gray-100/60 mt-1">
           <div className="flex items-center gap-2">
-            {/* Attach button */}
+            {/* Attachment button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
-              title="Attach clinical document"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50"
+              title="Attach clinical document or scan"
             >
-              <Paperclip className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Attach</span>
+              <Paperclip className="w-3.5 h-3.5 text-gray-500" />
+              <span>Attach</span>
             </button>
 
             {/* Model selector dropdown */}
@@ -162,10 +157,13 @@ export default function ChatComposerAstryx({
                 disabled={disabled}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200/80 transition-all cursor-pointer disabled:opacity-50"
               >
-                <img
+                <Image
                   src={activeModel.icon}
                   alt={activeModel.name}
+                  width={14}
+                  height={14}
                   className="w-3.5 h-3.5 object-contain"
+                  unoptimized
                 />
                 <span className="font-medium text-gray-800">{activeModel.name}</span>
                 <ChevronDown
@@ -193,10 +191,13 @@ export default function ChatComposerAstryx({
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <img
+                          <Image
                             src={m.icon}
                             alt={m.name}
+                            width={16}
+                            height={16}
                             className="w-4 h-4 object-contain shrink-0"
+                            unoptimized
                           />
                           <div className="flex flex-col">
                             <span className="font-medium leading-tight">{m.name}</span>
@@ -212,22 +213,22 @@ export default function ChatComposerAstryx({
             </div>
           </div>
 
-          {/* Send button */}
+          {/* Send / Submit button */}
           <button
             type="button"
-            onClick={handleSend}
-            disabled={disabled || !inputText.trim() || isSending}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+            onClick={handleSubmit}
+            disabled={!inputText.trim() || disabled || isSending}
+            className={`flex items-center justify-center w-8 h-8 rounded-xl transition-all cursor-pointer ${
               inputText.trim() && !disabled && !isSending
-                ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-sm hover:scale-105 active:scale-95"
+                ? "bg-blue-600 text-white shadow-xs hover:bg-blue-700 hover:scale-105 active:scale-95"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
             title="Send message"
           >
             {isSending ? (
-              <Loader2 className="w-4 h-4 animate-spin text-white" />
+              <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
             ) : (
-              <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+              <ArrowUp className="w-4 h-4" />
             )}
           </button>
         </div>

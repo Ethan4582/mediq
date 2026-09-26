@@ -18,6 +18,8 @@ interface ChatArtifactDrawerProps {
   onSelectDraft: (draft: ClinicalDraft) => void;
   isDialogOpen: boolean;
   onDialogChange: (open: boolean) => void;
+  onUpload?: (file: File) => void;
+  isUploading?: boolean;
 }
 
 function panelStyle(size: number): CSSProperties {
@@ -43,6 +45,8 @@ export default function ChatArtifactDrawer({
   onSelectDraft,
   isDialogOpen,
   onDialogChange,
+  onUpload,
+  isUploading,
 }: ChatArtifactDrawerProps) {
   return (
     <>
@@ -72,6 +76,8 @@ export default function ChatArtifactDrawer({
             ocrResult={ocrResult}
             onClose={onClose}
             onSelectDraft={onSelectDraft}
+            onUpload={onUpload}
+            isUploading={isUploading}
           />
         </Card>
       )}
@@ -102,6 +108,8 @@ export default function ChatArtifactDrawer({
                 ocrResult={ocrResult}
                 onClose={() => onDialogChange(false)}
                 onSelectDraft={onSelectDraft}
+                onUpload={onUpload}
+                isUploading={isUploading}
               />
             </LayoutContent>
           }
