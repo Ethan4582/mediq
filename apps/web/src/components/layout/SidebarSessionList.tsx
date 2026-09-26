@@ -17,8 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface SidebarSessionListProps {
-  sessions: AppSession[];
-  folders: Folder[];
+  sessions?: AppSession[];
+  folders?: Folder[];
   activeSessionId?: string;
   onTogglePin: (id: string, isPinned: boolean) => void;
   onRename: (session: AppSession) => void;
@@ -28,8 +28,8 @@ interface SidebarSessionListProps {
 }
 
 export default function SidebarSessionList({
-  sessions,
-  folders,
+  sessions = [],
+  folders = [],
   activeSessionId,
   onTogglePin,
   onRename,
@@ -39,7 +39,7 @@ export default function SidebarSessionList({
 }: SidebarSessionListProps) {
   return (
     <div className="flex flex-col gap-0.5">
-      {sessions.map((session) => {
+      {(sessions || []).map((session) => {
         const isActive = activeSessionId === session.id;
         return (
           <div

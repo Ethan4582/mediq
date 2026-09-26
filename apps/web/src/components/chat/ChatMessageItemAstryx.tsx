@@ -43,7 +43,7 @@ export default function ChatMessageItemAstryx({
             ) : undefined
           }
         >
-          <div className="text-[14.5px] leading-relaxed text-gray-900 font-normal">
+          <div className="text-[14.5px] leading-relaxed text-foreground font-normal">
             {message.content ?? ""}
           </div>
         </ChatMessageBubble>
@@ -55,7 +55,7 @@ export default function ChatMessageItemAstryx({
     <ChatMessage
       sender="assistant"
       avatar={
-        <div className="w-7 h-7 rounded-lg border border-gray-200/80 bg-white flex items-center justify-center overflow-hidden shadow-xs shrink-0">
+        <div className="w-7 h-7 rounded-lg border border-border bg-card flex items-center justify-center overflow-hidden shadow-xs shrink-0">
           <Image
             src="/logo.png"
             alt="MediQ"
@@ -73,12 +73,11 @@ export default function ChatMessageItemAstryx({
         </ChatMessageBubble>
       )}
 
-      {/* Adapted Medical Summary Conversation Card */}
       {isSummaryCard && (
-        <div className="mt-3 w-full max-w-[460px]">
+        <div className="mt-3 w-full max-w-[560px]">
           <div
             onClick={() => onOpenArtifact?.(metadata?.draft_id)}
-            className="group rounded-xl border border-blue-200/80 bg-gradient-to-b from-white to-blue-50/20 p-4 shadow-xs hover:shadow-md hover:border-blue-400/80 transition-all cursor-pointer select-none"
+            className="group rounded-xl border border-blue-200/80 dark:border-blue-900/60 bg-gradient-to-b from-card to-blue-50/20 dark:to-blue-950/20 p-4 shadow-xs hover:shadow-md hover:border-blue-400/80 transition-all cursor-pointer select-none"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
@@ -87,43 +86,43 @@ export default function ChatMessageItemAstryx({
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                       Discharge Summary
                     </span>
                     <Sparkles className="w-3 h-3 text-blue-500" />
                   </div>
-                  <h4 className="text-sm font-semibold text-gray-900 leading-tight">
+                  <h4 className="text-sm font-semibold text-foreground leading-tight">
                     {metadata?.diagnoses?.principal_diagnosis ??
                       metadata?.title ??
                       "Clinical Discharge Summary"}
                   </h4>
                 </div>
               </div>
-              <span className="text-[10px] font-medium bg-blue-100/70 text-blue-800 px-2 py-0.5 rounded-full border border-blue-200/60">
+              <span className="text-[10px] font-medium bg-blue-100/70 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200/60 dark:border-blue-800/60">
                 Ready
               </span>
             </div>
 
             {metadata?.diagnoses?.secondary_diagnoses &&
               metadata.diagnoses.secondary_diagnoses.length > 0 && (
-                <div className="mt-2.5 pt-2.5 border-t border-gray-100 flex flex-wrap gap-1.5">
+                <div className="mt-2.5 pt-2.5 border-t border-border/60 flex flex-wrap gap-1.5">
                   {metadata.diagnoses.secondary_diagnoses.slice(0, 3).map((diag, i) => (
                     <span
                       key={i}
-                      className="text-[11px] text-gray-600 bg-white px-2 py-0.5 rounded-md border border-gray-200/80"
+                      className="text-[11px] text-muted-foreground bg-card px-2 py-0.5 rounded-md border border-border/80"
                     >
                       {diag}
                     </span>
                   ))}
                   {metadata.diagnoses.secondary_diagnoses.length > 3 && (
-                    <span className="text-[11px] text-gray-400 self-center">
+                    <span className="text-[11px] text-muted-foreground self-center">
                       +{metadata.diagnoses.secondary_diagnoses.length - 3} more
                     </span>
                   )}
                 </div>
               )}
 
-            <div className="mt-3 flex items-center justify-between text-xs text-blue-600 font-medium group-hover:text-blue-700">
+            <div className="mt-3 flex items-center justify-between text-xs text-blue-600 dark:text-blue-400 font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300">
               <span>View full clinical artifact</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </div>

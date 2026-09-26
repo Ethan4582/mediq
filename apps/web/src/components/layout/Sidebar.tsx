@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus, Search, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useSessions } from "@/hooks/useSessions";
@@ -74,7 +75,7 @@ export default function Sidebar({
     }
   };
 
-  const filteredSessions = sessions.filter((s) => {
+  const filteredSessions = (sessions || []).filter((s) => {
     if (!search.trim()) return true;
     const query = search.toLowerCase();
     return s.title?.toLowerCase().includes(query) || s.patient_name?.toLowerCase().includes(query);
@@ -87,7 +88,7 @@ export default function Sidebar({
         {isSidebarOpen ? (
           <>
             <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
-              <img src="/logo.png" alt="MediQ" className="w-[20px] h-[20px] object-contain shrink-0" />
+              <Image src="/logo.png" alt="MediQ" width={20} height={20} className="w-[20px] h-[20px] object-contain shrink-0" unoptimized />
               <span className="font-semibold text-sm tracking-tight text-foreground">MediQ</span>
             </Link>
             <Button
@@ -139,40 +140,42 @@ export default function Sidebar({
 
           {/* Scrollable list */}
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 pt-1">
-            {folders.length > 0 && (
+            {(folders || []).length > 0 && (
               <div className="space-y-1">
                 <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
                   Folders
                 </span>
-                {folders.map((folder) => (
+                {(folders || []).map((folder) => (
                   <SidebarFolderItem
                     key={folder.id}
                     folder={folder}
-                    sessions={filteredSessions.filter((s) => s.folder_id === folder.id)}
+                    sessions={filteredSessions}
                     activeSessionId={activeSessionId}
-                    onRenameSession={(session) => {
-                      setRenameTarget(session);
-                      setRenameValue(session.title || "");
+                    onRenameSession={(s) => {
+                      setRenameTarget(s);
+                      setRenameValue(s.title || "");
                     }}
-                    onDeleteSession={setDeleteTarget}
+                    onDeleteSession={(s) => setDeleteTarget(s)}
                   />
                 ))}
               </div>
             )}
 
             <div className="space-y-1">
-              <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
-                Recent Consultations
-              </span>
+              {folders.length > 0 && (
+                <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
+                  Recent Consultations
+                </span>
+              )}
               <SidebarSessionList
                 sessions={filteredSessions}
                 activeSessionId={activeSessionId}
                 folders={folders}
-                onRename={(session) => {
+                onRename={(session: AppSession) => {
                   setRenameTarget(session);
                   setRenameValue(session.title || "");
                 }}
-                onDelete={setDeleteTarget}
+                onDelete={(session: AppSession) => setDeleteTarget(session)}
                 onTogglePin={togglePin}
                 onMoveToFolder={moveSessionToFolder}
                 onCreateFolder={() => setIsCreateFolderOpen(true)}
@@ -181,34 +184,23 @@ export default function Sidebar({
           </div>
         </div>
       ) : (
-        /* Collapsed Sidebar State */
-        <div className="flex flex-col items-center flex-1 py-3 gap-2">
+        <div className="flex-1 flex flex-col items-center py-3 gap-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => router.push("/chat/new")}
-            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg hover:bg-sidebar-accent"
+            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
             title="New Patient Session"
           >
             <Plus className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg hover:bg-sidebar-accent"
-            title="Search patients"
-          >
-            <Search className="size-4" />
           </Button>
         </div>
       )}
 
       {/* User Footer */}
-      <div className="p-2 border-t border-sidebar-border/60 shrink-0">
-        <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
-      </div>
+      <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
 
+      {/* Dialogs */}
       <SidebarDialogs
         renameTarget={renameTarget}
         renameValue={renameValue}
@@ -221,7 +213,10 @@ export default function Sidebar({
         isCreateFolderOpen={isCreateFolderOpen}
         createFolderValue={createFolderValue}
         setCreateFolderValue={setCreateFolderValue}
-        onCloseCreateFolder={() => setIsCreateFolderOpen(false)}
+        onCloseCreateFolder={() => {
+          setIsCreateFolderOpen(false);
+          setCreateFolderValue("");
+        }}
         onConfirmCreateFolder={handleCreateFolderConfirm}
       />
     </aside>

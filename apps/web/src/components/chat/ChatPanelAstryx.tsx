@@ -24,7 +24,11 @@ const rootStyle: CSSProperties = { flex: 1, width: "100%", height: "100%", posit
 const chatColStyle: CSSProperties = { flex: 1, minWidth: 0, height: "100%", display: "flex", flexDirection: "column" };
 const MOBILE_MAX_WIDTH = 768;
 const AI_CHAT_CSS = `
-@media (max-width: 768px) {\n  .ai-chat-resize-handle { display: none; }\n  .ai-chat-artifact-panel { display: none; width: 100%; flex-shrink: 1; }\n}\n`;
+@media (max-width: 768px) {
+  .ai-chat-resize-handle { display: none; }
+  .ai-chat-artifact-panel { display: none; width: 100%; flex-shrink: 1; }
+}
+`;
 
 export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
   const isNew = sessionId === "new";
@@ -242,7 +246,7 @@ export default function ChatPanelAstryx({ sessionId }: { sessionId: string }) {
             />
           }
         >
-          <ChatMessageList>
+          <ChatMessageList className="w-full max-w-[840px] mx-auto px-4 py-4">
             {allMessages.length > 0 && <ChatSystemMessage variant="divider">Patient Session</ChatSystemMessage>}
             {allMessages.length === 0 && !messagesLoading && !isUploadingOrProcessing && <ChatEmptyState />}
             {allMessages.map((m, i) => (
