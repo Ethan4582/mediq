@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react";
+import Image from "next/image";
 import { VStack } from "@astryxdesign/core/Layout";
 import { Text, Heading } from "@astryxdesign/core/Text";
 import { Section } from "@astryxdesign/core/Section";
@@ -8,20 +9,13 @@ import { Icon } from "@astryxdesign/core/Icon";
 import { ClickableCard } from "@astryxdesign/core/ClickableCard";
 import {
   DocumentTextIcon,
-  ClockIcon,
   MagnifyingGlassIcon,
-  Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import {
-  FileText,
   FileUp,
   Sparkles,
   ClipboardCheck,
-  Share2,
   Copy,
-  Download,
-  Printer,
-  X,
   Plus,
   FolderKanban,
 } from "lucide-react";
@@ -349,7 +343,7 @@ export default function ArtifactPanelAstryx({
             className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
             title="Share session"
           >
-            <Share2 className="size-3.5" />
+            <Image src="/share.svg" alt="Share" width={14} height={14} className="size-3.5 opacity-80" />
           </Button>
           <Button
             variant="ghost"
@@ -367,7 +361,7 @@ export default function ArtifactPanelAstryx({
             className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
             title="Download PDF"
           >
-            <Download className="size-3.5" />
+            <Image src="/download.svg" alt="Download" width={14} height={14} className="size-3.5 opacity-80" />
           </Button>
           <Button
             variant="ghost"
@@ -376,7 +370,7 @@ export default function ArtifactPanelAstryx({
             className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
             title="Print summary"
           >
-            <Printer className="size-3.5" />
+            <Image src="/print.svg" alt="Print" width={14} height={14} className="size-3.5" />
           </Button>
           {onClose && (
             <Button
@@ -386,7 +380,7 @@ export default function ArtifactPanelAstryx({
               className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer ml-0.5"
               title="Close drawer"
             >
-              <X className="size-3.5" />
+              <Image src="/close.svg" alt="Close" width={14} height={14} className="size-3.5 opacity-80" />
             </Button>
           )}
         </div>
@@ -404,7 +398,7 @@ export default function ArtifactPanelAstryx({
                 : "text-muted-foreground hover:text-foreground hover:bg-background/40"
             )}
           >
-            <Squares2X2Icon className="size-3.5 shrink-0" />
+            <Image src="/file_1.svg" alt="" width={14} height={14} className="size-3.5 shrink-0 opacity-80" />
             <span className="truncate">Content</span>
           </button>
 
@@ -432,7 +426,7 @@ export default function ArtifactPanelAstryx({
                 : "text-muted-foreground hover:text-foreground hover:bg-background/40"
             )}
           >
-            <ClockIcon className="size-3.5 shrink-0" />
+            <Image src="/clock.svg" alt="" width={14} height={14} className="size-3.5 shrink-0 opacity-80" />
             <span className="truncate">Past</span>
             <span
               className={cn(
@@ -462,7 +456,7 @@ export default function ArtifactPanelAstryx({
               onClick={() => setSearchQuery("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
-              <X className="size-3" />
+              <Image src="/close.svg" alt="" width={12} height={12} className="size-3 opacity-70" />
             </button>
           )}
         </div>
@@ -492,7 +486,7 @@ export default function ArtifactPanelAstryx({
               >
                 <div className="relative mb-3 flex items-center justify-center">
                   <div className="size-8 rounded-lg bg-white dark:bg-zinc-800 border border-border flex items-center justify-center -rotate-6 shadow-xs group-hover:-rotate-12 transition-transform">
-                    <FileText className="size-4 text-muted-foreground" />
+                    <Image src="/file_1.svg" alt="" width={16} height={16} className="size-4 opacity-70" />
                   </div>
                   <div className="size-8 rounded-lg bg-white dark:bg-zinc-800 border border-border flex items-center justify-center z-10 shadow-xs group-hover:scale-105 transition-transform">
                     <FileUp className="size-4 text-primary" />

@@ -8,7 +8,7 @@ import {
 } from "@astryxdesign/core/Chat";
 import { Markdown } from "@astryxdesign/core/Markdown";
 import { Timestamp } from "@astryxdesign/core/Timestamp";
-import { ClipboardCheck, ArrowRight, Sparkles } from "lucide-react";
+import { ClipboardCheck, Sparkles } from "lucide-react";
 import type { Message } from "@/types/app";
 
 interface ChatMessageItemProps {
@@ -123,7 +123,13 @@ export default function ChatMessageItemAstryx({
 
             <div className="mt-2 flex items-center justify-between text-[11px] text-blue-600 dark:text-blue-400 font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300">
               <span>View clinical artifact summary</span>
-              <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+              <Image
+                src="/arrow-alt-lright-alt.svg"
+                alt=""
+                width={12}
+                height={12}
+                className="size-3 group-hover:translate-x-0.5 transition-transform opacity-90"
+              />
             </div>
           </div>
         </div>

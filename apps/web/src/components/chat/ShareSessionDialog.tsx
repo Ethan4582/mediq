@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Check, Printer, FileDown, ShieldCheck, Share2 } from "lucide-react";
+import { Copy, Check, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { AppSession, ClinicalDraft } from "@/types/app";
 import { downloadClinicalSummaryPdf } from "@/lib/pdfGenerator";
@@ -46,30 +47,30 @@ export default function ShareSessionDialog({
       text += `## Principal Diagnosis\n${draft.diagnoses.principal_diagnosis}\n\n`;
     }
     if (draft.diagnoses?.secondary_diagnoses?.length) {
-      text += `## Secondary Diagnoses\n${draft.diagnoses.secondary_diagnoses.map((d) => `- ${d}`).join("\n")}\n\n`;
-    }
-    if (draft.course?.summary) {
-      text += `## Hospital Course\n${draft.course.summary}\n\n`;
+      text += `## Secondary Diagnoses\n`;
+      draft.diagnoses.secondary_diagnoses.forEach((d) => {
+        text += `- ${d}\n`;
+      });
+      text += `\n`;
     }
     if (draft.medications?.discharge?.length) {
-      text += `## Reconciled Discharge Medications\n`;
+      text += `## Discharge Medications\n`;
       draft.medications.discharge.forEach((m) => {
-        text += `- ${m.name} ${m.dosage || m.dose || ""} ${m.route || ""} ${m.frequency || ""}\n`;
+        text += `- **${m.name}** ${m.dosage || m.dose || ""} ${m.frequency || ""} ${m.reason ? `(${m.reason})` : ""}\n`;
       });
       text += `\n`;
     }
     if (draft.follow_up?.instructions) {
-      text += `## Follow-up Directives\n${draft.follow_up.instructions}\n\n`;
+      text += `## Follow-up & Discharge Plan\n${draft.follow_up.instructions}\n\n`;
     }
     return text;
   })();
 
   const handleCopyLink = async () => {
-    if (!shareUrl) return;
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopiedLink(true);
-      toast.success("Session link copied to clipboard");
+      toast.success("Session URL copied to clipboard");
       setTimeout(() => setCopiedLink(false), 2000);
     } catch {
       toast.error("Failed to copy link");
@@ -118,7 +119,7 @@ export default function ShareSessionDialog({
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
-              <Share2 className="size-5" />
+              <Image src="/share.svg" alt="Share" width={20} height={20} className="size-5" />
             </div>
             <div>
               <DialogTitle className="text-lg font-semibold">Share Clinical Session</DialogTitle>
@@ -185,7 +186,7 @@ export default function ShareSessionDialog({
               disabled={!draft}
               className="flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl hover:bg-muted/80 text-xs"
             >
-              <FileDown className="size-4" />
+              <Image src="/download.svg" alt="Download" width={16} height={16} className="size-4 opacity-80" />
               <span>Download PDF</span>
             </Button>
 
@@ -196,7 +197,7 @@ export default function ShareSessionDialog({
               disabled={!draft}
               className="flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl hover:bg-muted/80 text-xs"
             >
-              <Printer className="size-4" />
+              <Image src="/print.svg" alt="Print" width={16} height={16} className="size-4" />
               <span>Print Report</span>
             </Button>
           </div>

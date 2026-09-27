@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { MessageSquare, MoreHorizontal, Pin, Trash2, Edit3, FolderPlus } from "lucide-react";
+import { MessageSquare, MoreHorizontal, Pin, Trash2, Edit3 } from "lucide-react";
 import type { AppSession, Folder } from "@/types/app";
 import { cn } from "@/lib/utils";
 import {
@@ -91,8 +92,8 @@ export default function SidebarSessionList({
 
                 {folders.length > 0 ? (
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="text-xs cursor-pointer">
-                      <FolderPlus className="size-3.5 mr-2" />
+                    <DropdownMenuSubTrigger className="gap-2 text-xs">
+                      <Image src="/folder.svg" alt="" width={14} height={14} className="size-3.5 mr-2 opacity-80" />
                       <span>Move to folder</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="w-44 p-1">
@@ -120,7 +121,7 @@ export default function SidebarSessionList({
                             onClick={onCreateFolder}
                             className="text-xs text-primary font-medium cursor-pointer"
                           >
-                            <FolderPlus className="size-3.5 mr-2" />
+                            <Image src="/folder.svg" alt="" width={14} height={14} className="size-3.5 mr-2 opacity-80" />
                             <span>New folder...</span>
                           </DropdownMenuItem>
                         </>
@@ -133,7 +134,7 @@ export default function SidebarSessionList({
                       onClick={onCreateFolder}
                       className="text-xs cursor-pointer"
                     >
-                      <FolderPlus className="size-3.5 mr-2" />
+                      <Image src="/folder.svg" alt="" width={14} height={14} className="size-3.5 mr-2 opacity-80" />
                       <span>Create folder...</span>
                     </DropdownMenuItem>
                   )
