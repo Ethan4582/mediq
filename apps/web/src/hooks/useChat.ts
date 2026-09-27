@@ -18,57 +18,68 @@ export function useChat(
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
-  const sendMessage = useCallback(async (text: string, sessionId: string) => {
-    if (!text.trim() || isSending) return;
+  const sendMessage = useCallback(
+    async (text: string, sessionId: string, modelId?: string, provider?: string) => {
+      if (!text.trim() || isSending) return;
 
-    const tempId = `opt-${Date.now()}`;
-    const optimisticMsg: Message = {
-      id: tempId,
-      session_id: sessionId,
-      role: "user",
-      content: text,
-      metadata: {},
-      created_at: new Date().toISOString(),
-    };
+      const tempId = `opt-${Date.now()}`;
+      const optimisticMsg: Message = {
+        id: tempId,
+        session_id: sessionId,
+        role: "user",
+        content: text,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      };
 
-    setMessages(prev => [...prev, optimisticMsg]);
-    setIsSending(true);
-    setError(null);
+      setMessages((prev) => [...prev, optimisticMsg]);
+      setIsSending(true);
+      setError(null);
 
-    try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
 
-      const messageHistory = messages
-        .filter(m => m.role === "user" || m.role === "assistant")
-        .slice(-6)
-        .map(m => ({ role: m.role, content: m.content }));
+        const messageHistory = messages
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .slice(-6)
+          .map((m) => ({ role: m.role, content: m.content }));
 
-      const res = await fetch(`${API_URL}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ session_id: sessionId, message: text, message_history: messageHistory }),
-      });
+        const res = await fetch(`${API_URL}/api/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            message: text,
+            message_history: messageHistory,
+            model: modelId || undefined,
+            provider: provider || undefined,
+          }),
+        });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.detail?.message || errData?.detail || "Failed to send message");
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData?.detail?.message || errData?.detail || "Failed to send message");
+        }
+
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        onCompleteRef.current?.();
+      } catch (err: unknown) {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        const message = err instanceof Error ? err.message : "Failed to send message";
+        setError(message);
+      } finally {
+        setIsSending(false);
       }
-
-      setMessages(prev => prev.filter(m => m.id !== tempId));
-      onCompleteRef.current?.();
-    } catch (err: unknown) {
-      setMessages(prev => prev.filter(m => m.id !== tempId));
-      const message = err instanceof Error ? err.message : "Failed to send message";
-      setError(message);
-    } finally {
-      setIsSending(false);
-    }
-  }, [isSending, messages, setMessages]);
+    },
+    [isSending, messages, setMessages]
+  );
 
   return { sendMessage, isSending, error };
 }

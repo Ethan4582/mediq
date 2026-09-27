@@ -2,15 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FolderClosed, FolderOpen, MessageSquare, ChevronRight } from "lucide-react";
+import { FolderClosed, FolderOpen, MessageSquare, MoreHorizontal, Edit3, Trash2 } from "lucide-react";
 import type { AppSession, Folder } from "@/types/app";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface SidebarFolderItemProps {
   folder: Folder;
   sessions?: AppSession[];
   activeSessionId?: string;
+  onRenameFolder?: (folder: Folder) => void;
+  onDeleteFolder?: (folder: Folder) => void;
   onRenameSession?: (session: AppSession) => void;
   onDeleteSession?: (session: AppSession) => void;
 }
@@ -19,28 +28,65 @@ export default function SidebarFolderItem({
   folder,
   sessions = [],
   activeSessionId,
+  onRenameFolder,
+  onDeleteFolder,
 }: SidebarFolderItemProps) {
   const [isOpen, setIsOpen] = useState(true);
   const folderSessions = (sessions || []).filter((s) => s.folder_id === folder.id);
 
   return (
-    <div className="flex flex-col gap-0.5">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full justify-start gap-2 h-7 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ChevronRight
-          className={cn("size-3 transition-transform duration-200", isOpen && "rotate-90")}
-        />
-        {isOpen ? <FolderOpen className="size-3.5 text-primary" /> : <FolderClosed className="size-3.5" />}
-        <span className="truncate flex-1 text-left">{folder.name}</span>
-        <span className="text-[10px] text-muted-foreground/70">{folderSessions.length}</span>
-      </Button>
+    <div className="group/folder flex flex-col gap-0.5">
+      <div className="flex items-center justify-between gap-1 w-full rounded-lg hover:bg-muted/60 px-1 py-0.5 transition-colors">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 flex-1 min-w-0 h-7 px-1 text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer text-left"
+        >
+          {isOpen ? <FolderOpen className="size-3.5 text-primary shrink-0" /> : <FolderClosed className="size-3.5 shrink-0 text-muted-foreground" />}
+          <span className="truncate flex-1">{folder.name}</span>
+          <span className="text-[10px] text-muted-foreground/70 shrink-0">{folderSessions.length}</span>
+        </button>
+
+        {(onRenameFolder || onDeleteFolder) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6 opacity-0 group-hover/folder:opacity-100 p-0 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <MoreHorizontal className="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40 p-1">
+              {onRenameFolder && (
+                <DropdownMenuItem
+                  onClick={() => onRenameFolder(folder)}
+                  className="text-xs cursor-pointer"
+                >
+                  <Edit3 className="size-3.5 mr-2" />
+                  <span>Rename folder</span>
+                </DropdownMenuItem>
+              )}
+              {onDeleteFolder && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onDeleteFolder(folder)}
+                    className="text-xs text-destructive focus:text-destructive cursor-pointer"
+                  >
+                    <Trash2 className="size-3.5 mr-2" />
+                    <span>Delete folder</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
 
       {isOpen && (
-        <div className="flex flex-col gap-0.5 pl-4 ml-2 border-l border-border/50">
+        <div className="flex flex-col gap-0.5 pl-3 ml-2 border-l border-border/50">
           {folderSessions.map((session) => (
             <Link
               key={session.id}

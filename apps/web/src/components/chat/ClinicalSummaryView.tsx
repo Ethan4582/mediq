@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { ClinicalDraft } from "@/types/app";
+import { downloadClinicalSummaryPdf } from "@/lib/pdfGenerator";
 
 interface ClinicalSummaryViewProps {
   draft?: ClinicalDraft | null;
@@ -254,16 +255,11 @@ export default function ClinicalSummaryView({
     const q = searchQuery.toLowerCase();
     return documentSections.filter((sec) => {
       if (sec.title.toLowerCase().includes(q)) return true;
-      return sec.blocks.some((b) => {
-        if (b.type === "text") return b.text.toLowerCase().includes(q);
-        if (b.type === "list") return b.items.some((item) => item.toLowerCase().includes(q));
-        if (b.type === "kv") return b.pairs.some((p) => p.label.toLowerCase().includes(q) || p.value.toLowerCase().includes(q));
-        if (b.type === "table") {
-          return (
-            b.table.headers.some((h) => h.toLowerCase().includes(q)) ||
-            b.table.rows.some((row) => row.some((cell) => cell.toLowerCase().includes(q)))
-          );
-        }
+      return sec.blocks.some((block) => {
+        if (block.type === "text") return block.text.toLowerCase().includes(q);
+        if (block.type === "list") return block.items.some((item) => item.toLowerCase().includes(q));
+        if (block.type === "kv") return block.pairs.some((pair) => pair.label.toLowerCase().includes(q) || pair.value.toLowerCase().includes(q));
+        if (block.type === "table") return block.table.headers.some((h) => h.toLowerCase().includes(q)) || block.table.rows.some((row) => row.some((cell) => cell.toLowerCase().includes(q)));
         return false;
       });
     });
@@ -276,15 +272,15 @@ export default function ClinicalSummaryView({
   };
 
   const downloadReport = () => {
-    const content = cleanedRaw || (draft ? JSON.stringify(draft, null, 2) : "");
-    const blob = new Blob([content], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${sourceName.replace(/[^a-zA-Z0-9]/g, "_")}_summary.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Summary report downloaded");
+    downloadClinicalSummaryPdf(
+      {
+        title: sourceName,
+        draft,
+        rawText: cleanedRaw,
+      },
+      sourceName
+    );
+    toast.success("Summary PDF downloaded");
   };
 
   const renderSectionIcon = (type: DocumentSection["iconType"]): ReactNode => {
@@ -369,7 +365,7 @@ export default function ClinicalSummaryView({
               size="icon"
               onClick={downloadReport}
               className="size-8 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer shadow-xs"
-              title="Download summary"
+              title="Download PDF summary"
             >
               <Download className="size-3.5" />
             </Button>
@@ -383,40 +379,65 @@ export default function ClinicalSummaryView({
         ) : (
           <div className="space-y-6">
             {draft && (
-              <div className="space-y-5">
-                {draft.diagnoses?.principal_diagnosis && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary border-b border-border/60 pb-1.5">
-                      <Activity className="size-3.5 text-blue-600" />
-                      <span>Principal Diagnosis</span>
-                    </div>
-                    <p className="text-xs sm:text-sm font-semibold text-foreground pt-1">
-                      {draft.diagnoses.principal_diagnosis}
-                    </p>
-                    {draft.diagnoses.secondary_diagnoses && draft.diagnoses.secondary_diagnoses.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1.5">
-                        {draft.diagnoses.secondary_diagnoses.map((sec, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-[10px] px-2 py-0.5 font-normal">
-                            {sec}
-                          </Badge>
-                        ))}
+              <div className="space-y-6">
+                {draft.patient_info && Object.keys(draft.patient_info).length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-lg bg-muted/40 border border-border/70">
+                    {Object.entries(draft.patient_info).map(([key, val]) => (
+                      <div key={key} className="space-y-0.5">
+                        <span className="text-[10px] uppercase font-semibold text-muted-foreground block tracking-wider">
+                          {key.replace(/_/g, " ")}
+                        </span>
+                        <span className="text-xs font-semibold text-foreground block truncate">
+                          {String(val)}
+                        </span>
                       </div>
-                    )}
+                    ))}
                   </div>
                 )}
 
                 {conflicts && conflicts.length > 0 && (
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold text-xs">
-                      <AlertTriangle className="size-3.5" />
+                  <div className="p-3.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold">
+                      <AlertTriangle className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
                       <span>Reconciliation Alerts</span>
                     </div>
-                    <div className="space-y-1 pl-5">
+                    <ul className="text-xs space-y-0.5 pl-5 list-disc text-amber-800 dark:text-amber-300">
                       {conflicts.map((c, i) => (
-                        <p key={i} className="text-xs text-muted-foreground">
-                          • {c.field}: {c.description || "Conflict detected in record values"}
-                        </p>
+                        <li key={i}>{typeof c === "string" ? c : JSON.stringify(c)}</li>
                       ))}
+                    </ul>
+                  </div>
+                )}
+
+                {draft.diagnoses && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary border-b border-border/60 pb-1.5">
+                      <Activity className="size-3.5 text-blue-600" />
+                      <span>Diagnoses</span>
+                    </div>
+                    <div className="space-y-1.5 text-xs">
+                      {draft.diagnoses.principal_diagnosis && (
+                        <div className="flex items-start gap-2">
+                          <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30 shrink-0 mt-0.5">
+                            Principal
+                          </Badge>
+                          <span className="font-semibold text-foreground">
+                            {draft.diagnoses.principal_diagnosis}
+                          </span>
+                        </div>
+                      )}
+                      {draft.diagnoses.secondary_diagnoses && draft.diagnoses.secondary_diagnoses.length > 0 && (
+                        <div className="space-y-1 pl-1">
+                          <span className="text-[11px] text-muted-foreground font-medium block">Secondary:</span>
+                          <ul className="space-y-1 pl-3">
+                            {draft.diagnoses.secondary_diagnoses.map((sec, i) => (
+                              <li key={i} className="text-foreground/90 list-disc">
+                                {sec}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

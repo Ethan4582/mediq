@@ -300,3 +300,36 @@ export async function createFolderAction(name: string): Promise<Folder | null> {
     return null;
   }
 }
+
+export async function renameFolderAction(id: string, newName: string): Promise<void> {
+  const user = await getAuthUser();
+
+  if (!user) {
+    return;
+  }
+
+  try {
+    await db
+      .update(folders)
+      .set({
+        name: newName,
+      })
+      .where(and(eq(folders.id, id), eq(folders.userId, user.id)));
+  } catch {
+  }
+}
+
+export async function deleteFolderAction(id: string): Promise<void> {
+  const user = await getAuthUser();
+
+  if (!user) {
+    return;
+  }
+
+  try {
+    await db
+      .delete(folders)
+      .where(and(eq(folders.id, id), eq(folders.userId, user.id)));
+  } catch {
+  }
+}

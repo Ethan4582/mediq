@@ -6,7 +6,7 @@ export type Enums<T extends keyof Database['public']['Enums']> = Database['publi
 
 export type KeyType = "ocr" | "llm"
 
-export type LLMProvider = "groq" | "openai" | "anthropic" | "mistral" | "gemini"
+export type LLMProvider = "groq" | "openai" | "anthropic" | "mistral" | "gemini" | "meta" | "deepseek" | "grok"
 
 export type SessionStatus = "pending" | "processing" | "done" | "error"
 

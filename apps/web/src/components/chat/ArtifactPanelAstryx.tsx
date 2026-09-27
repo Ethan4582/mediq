@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import type { ClinicalDraft, OcrResultData } from "@/types/app";
+import { downloadClinicalSummaryPdf } from "@/lib/pdfGenerator";
 import DocumentThumbnailCard from "./DocumentThumbnailCard";
 import AddRawNoteDialog from "./AddRawNoteDialog";
 import ShareSessionDialog from "./ShareSessionDialog";
@@ -265,16 +266,16 @@ export default function ArtifactPanelAstryx({
   };
 
   const handleDownload = () => {
-    const textToDownload = selectedDocText || rawTextContent || "No content";
-    const blob = new Blob([textToDownload], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(selectedDocName || title || "discharge_summary").replace(/[^a-zA-Z0-9]/g, "_")}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadClinicalSummaryPdf(
+      {
+        title: selectedDocName || title || "Clinical Discharge Summary",
+        draft: selectedDocText ? null : draft,
+        rawText: selectedDocText || rawTextContent,
+      },
+      selectedDocName || title || "discharge_summary"
+    );
     toast.success("Document downloaded", {
-      description: "Markdown file saved.",
+      description: "PDF summary file saved.",
     });
   };
 
@@ -364,7 +365,7 @@ export default function ArtifactPanelAstryx({
             size="icon"
             onClick={handleDownload}
             className="size-7.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
-            title="Download markdown"
+            title="Download PDF"
           >
             <Download className="size-3.5" />
           </Button>

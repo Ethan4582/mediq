@@ -1,6 +1,6 @@
 "use client";
 
-import type { AppSession } from "@/types/app";
+import type { AppSession, Folder } from "@/types/app";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,6 +31,16 @@ interface SidebarDialogsProps {
   setCreateFolderValue: (val: string) => void;
   onCloseCreateFolder: () => void;
   onConfirmCreateFolder: () => void;
+
+  folderRenameTarget?: Folder | null;
+  folderRenameValue?: string;
+  setFolderRenameValue?: (val: string) => void;
+  onCloseFolderRename?: () => void;
+  onConfirmFolderRename?: () => void;
+
+  folderDeleteTarget?: Folder | null;
+  onCloseFolderDelete?: () => void;
+  onConfirmFolderDelete?: () => void;
 }
 
 export default function SidebarDialogs({
@@ -47,10 +57,17 @@ export default function SidebarDialogs({
   setCreateFolderValue,
   onCloseCreateFolder,
   onConfirmCreateFolder,
+  folderRenameTarget,
+  folderRenameValue = "",
+  setFolderRenameValue,
+  onCloseFolderRename,
+  onConfirmFolderRename,
+  folderDeleteTarget,
+  onCloseFolderDelete,
+  onConfirmFolderDelete,
 }: SidebarDialogsProps) {
   return (
     <>
-      {/* Rename Dialog */}
       <Dialog open={!!renameTarget} onOpenChange={(open) => !open && onCloseRename()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -72,7 +89,6 @@ export default function SidebarDialogs({
         </DialogContent>
       </Dialog>
 
-      {/* Delete Alert Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && onCloseDelete()}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -93,7 +109,6 @@ export default function SidebarDialogs({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Create Folder Dialog */}
       <Dialog open={isCreateFolderOpen} onOpenChange={(open) => !open && onCloseCreateFolder()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -114,6 +129,47 @@ export default function SidebarDialogs({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!folderRenameTarget} onOpenChange={(open) => !open && onCloseFolderRename?.()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename Folder</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Input
+              value={folderRenameValue}
+              onChange={(e) => setFolderRenameValue?.(e.target.value)}
+              placeholder="Folder name"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && onConfirmFolderRename?.()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={onCloseFolderRename}>Cancel</Button>
+            <Button onClick={onConfirmFolderRename}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!folderDeleteTarget} onOpenChange={(open) => !open && onCloseFolderDelete?.()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Folder</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{folderDeleteTarget?.name || "this folder"}&quot;? Sessions inside will be moved to unorganized consultations.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onConfirmFolderDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

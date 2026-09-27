@@ -35,6 +35,29 @@ async def _validate_key(provider: str, key: str):
                 r = await client.get(
                     f"https://generativelanguage.googleapis.com/v1beta/models?key={key.strip()}"
                 )
+            elif provider == "deepseek":
+                r = await client.get(
+                    "https://api.deepseek.com/models",
+                    headers={"Authorization": f"Bearer {key}"},
+                )
+            elif provider == "grok":
+                r = await client.get(
+                    "https://api.x.ai/v1/models",
+                    headers={"Authorization": f"Bearer {key}"},
+                )
+            elif provider == "meta":
+                if not key or len(key) < 8:
+                    raise HTTPException(400, {"error": "invalid_key", "provider": provider})
+                try:
+                    r = await client.get(
+                        "https://api.llama.com/models",
+                        headers={"Authorization": f"Bearer {key}"},
+                    )
+                    if r.status_code >= 400 and r.status_code != 404:
+                        raise HTTPException(400, {"error": "invalid_key", "provider": provider})
+                except Exception:
+                    pass
+                return
             else:
                 raise HTTPException(400, {"error": "invalid_provider"})
             if r.status_code >= 400:
@@ -106,7 +129,6 @@ async def list_keys(request: Request):
         )
         for r in (rows.data or [])
     ]
-    print(f"DEBUG: Returning keys for user {user['user_id']}: {keys_res}")
     return keys_res
 
 

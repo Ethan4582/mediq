@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, Search, PanelLeftClose, PanelLeft } from "lucide-react";
+import { Plus, Search, PanelLeftClose, PanelLeft, Pin } from "lucide-react";
 import { useSessions } from "@/hooks/useSessions";
 import { useSessionStore } from "@/stores/sessionStore";
-import type { AppSession } from "@/types/app";
+import type { AppSession, Folder } from "@/types/app";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SidebarSessionList from "./SidebarSessionList";
@@ -32,6 +32,8 @@ export default function Sidebar({
     togglePin,
     moveSessionToFolder,
     createFolder,
+    renameFolder,
+    deleteFolder,
   } = useSessions();
 
   const { isSidebarOpen, toggleSidebar } = useSessionStore();
@@ -41,6 +43,10 @@ export default function Sidebar({
   const [deleteTarget, setDeleteTarget] = useState<AppSession | null>(null);
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [createFolderValue, setCreateFolderValue] = useState("");
+
+  const [folderRenameTarget, setFolderRenameTarget] = useState<Folder | null>(null);
+  const [folderRenameValue, setFolderRenameValue] = useState("");
+  const [folderDeleteTarget, setFolderDeleteTarget] = useState<Folder | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -75,11 +81,28 @@ export default function Sidebar({
     }
   };
 
+  const handleFolderRenameConfirm = async () => {
+    if (folderRenameTarget && folderRenameValue.trim()) {
+      await renameFolder(folderRenameTarget.id, folderRenameValue.trim());
+      setFolderRenameTarget(null);
+    }
+  };
+
+  const handleFolderDeleteConfirm = async () => {
+    if (folderDeleteTarget) {
+      await deleteFolder(folderDeleteTarget.id);
+      setFolderDeleteTarget(null);
+    }
+  };
+
   const filteredSessions = (sessions || []).filter((s) => {
     if (!search.trim()) return true;
     const query = search.toLowerCase();
     return s.title?.toLowerCase().includes(query) || s.patient_name?.toLowerCase().includes(query);
   });
+
+  const pinnedSessions = filteredSessions.filter((s) => s.is_pinned);
+  const recentSessions = filteredSessions.filter((s) => !s.is_pinned);
 
   return (
     <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none overflow-hidden">
@@ -141,6 +164,28 @@ export default function Sidebar({
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 pt-1">
+            {pinnedSessions.length > 0 && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  <Pin className="size-3 text-primary rotate-45" />
+                  <span>Pinned</span>
+                </div>
+                <SidebarSessionList
+                  sessions={pinnedSessions}
+                  activeSessionId={activeSessionId}
+                  folders={folders}
+                  onRename={(session: AppSession) => {
+                    setRenameTarget(session);
+                    setRenameValue(session.title || "");
+                  }}
+                  onDelete={(session: AppSession) => setDeleteTarget(session)}
+                  onTogglePin={togglePin}
+                  onMoveToFolder={moveSessionToFolder}
+                  onCreateFolder={() => setIsCreateFolderOpen(true)}
+                />
+              </div>
+            )}
+
             {(folders || []).length > 0 && (
               <div className="space-y-1">
                 <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
@@ -152,6 +197,11 @@ export default function Sidebar({
                     folder={folder}
                     sessions={filteredSessions}
                     activeSessionId={activeSessionId}
+                    onRenameFolder={(f) => {
+                      setFolderRenameTarget(f);
+                      setFolderRenameValue(f.name);
+                    }}
+                    onDeleteFolder={(f) => setFolderDeleteTarget(f)}
                     onRenameSession={(s) => {
                       setRenameTarget(s);
                       setRenameValue(s.title || "");
@@ -163,13 +213,13 @@ export default function Sidebar({
             )}
 
             <div className="space-y-1">
-              {folders.length > 0 && (
+              {(folders.length > 0 || pinnedSessions.length > 0) && (
                 <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
                   Recent Consultations
                 </span>
               )}
               <SidebarSessionList
-                sessions={filteredSessions}
+                sessions={recentSessions}
                 activeSessionId={activeSessionId}
                 folders={folders}
                 onRename={(session: AppSession) => {
@@ -226,6 +276,14 @@ export default function Sidebar({
           setCreateFolderValue("");
         }}
         onConfirmCreateFolder={handleCreateFolderConfirm}
+        folderRenameTarget={folderRenameTarget}
+        folderRenameValue={folderRenameValue}
+        setFolderRenameValue={setFolderRenameValue}
+        onCloseFolderRename={() => setFolderRenameTarget(null)}
+        onConfirmFolderRename={handleFolderRenameConfirm}
+        folderDeleteTarget={folderDeleteTarget}
+        onCloseFolderDelete={() => setFolderDeleteTarget(null)}
+        onConfirmFolderDelete={handleFolderDeleteConfirm}
       />
     </aside>
   );

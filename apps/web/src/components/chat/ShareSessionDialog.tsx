@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Copy, Check, Printer, FileDown, ShieldCheck, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import type { AppSession, ClinicalDraft } from "@/types/app";
+import { downloadClinicalSummaryPdf } from "@/lib/pdfGenerator";
 
 interface ShareSessionDialogProps {
   isOpen: boolean;
@@ -91,18 +92,20 @@ export default function ShareSessionDialog({
   };
 
   const handleDownload = () => {
-    if (!formattedSummaryText) {
+    if (!draft && !formattedSummaryText) {
       toast.error("No summary available to download");
       return;
     }
-    const blob = new Blob([formattedSummaryText], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(session?.title || "clinical_summary").replace(/[^a-zA-Z0-9]/g, "_")}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Clinical summary downloaded");
+    downloadClinicalSummaryPdf(
+      {
+        title: session?.title || session?.patient_name || "Clinical Discharge Summary",
+        patientName: session?.patient_name || undefined,
+        draft,
+        rawText: formattedSummaryText,
+      },
+      session?.title || "clinical_summary"
+    );
+    toast.success("Clinical summary PDF downloaded");
   };
 
   const handlePrint = () => {
@@ -183,13 +186,14 @@ export default function ShareSessionDialog({
               className="flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl hover:bg-muted/80 text-xs"
             >
               <FileDown className="size-4" />
-              <span>Download MD</span>
+              <span>Download PDF</span>
             </Button>
 
             <Button
               variant="outline"
               size="sm"
               onClick={handlePrint}
+              disabled={!draft}
               className="flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl hover:bg-muted/80 text-xs"
             >
               <Printer className="size-4" />

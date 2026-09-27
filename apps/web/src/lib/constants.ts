@@ -15,11 +15,14 @@ export const PROVIDERS = {
   anthropic: { name: "Anthropic", type: "llm",  docsUrl: "https://platform.claude.com/dashboard" },
   mistral:   { name: "Mistral",   type: "both", docsUrl: "https://console.mistral.ai/api-keys" },
   gemini:    { name: "Gemini",    type: "llm",  docsUrl: "https://aistudio.google.com/app/apikey" },
+  meta:      { name: "Meta",      type: "llm",  docsUrl: "https://www.llama.com" },
+  deepseek:  { name: "DeepSeek",  type: "llm",  docsUrl: "https://platform.deepseek.com/api_keys" },
+  grok:      { name: "Grok",      type: "llm",  docsUrl: "https://console.x.ai" },
 } as const
 
 export const REQUIRED_KEYS = {
   ocr: "mistral",
-  llm: ["groq", "openai", "anthropic", "mistral", "gemini"],
+  llm: ["groq", "openai", "anthropic", "mistral", "gemini", "meta", "deepseek", "grok"],
 } as const
 
 export const UPLOAD_LIMITS = {
