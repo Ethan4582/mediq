@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   createFolderAction,
+  deleteFolderAction,
   deleteSessionAction,
   getSessionsAndFoldersAction,
   moveSessionToFolderAction,
+  renameFolderAction,
   renameSessionAction,
   togglePinAction,
 } from '@/actions/sessions';
@@ -65,9 +67,9 @@ export function useSessions() {
 
   const togglePin = async (id: string, isPinned: boolean) => {
     setSessions((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, is_pinned: !isPinned } : s))
+      prev.map((s) => (s.id === id ? { ...s, is_pinned: isPinned } : s))
     );
-    await togglePinAction(id, !isPinned);
+    await togglePinAction(id, isPinned);
   };
 
   const createFolder = async (name: string) => {
@@ -76,6 +78,19 @@ export function useSessions() {
     if (created) {
       setFolders((prev) => [...prev, created]);
     }
+  };
+
+  const renameFolder = async (id: string, newName: string) => {
+    setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name: newName } : f)));
+    await renameFolderAction(id, newName);
+  };
+
+  const deleteFolder = async (id: string) => {
+    setFolders((prev) => prev.filter((f) => f.id !== id));
+    setSessions((prev) =>
+      prev.map((s) => (s.folder_id === id ? { ...s, folder_id: null } : s))
+    );
+    await deleteFolderAction(id);
   };
 
   const moveSessionToFolder = async (sessionId: string, folderId: string | null) => {
@@ -94,6 +109,8 @@ export function useSessions() {
     deleteSession,
     togglePin,
     createFolder,
+    renameFolder,
+    deleteFolder,
     moveToFolder: moveSessionToFolder,
     moveSessionToFolder,
   };

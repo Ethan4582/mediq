@@ -20,43 +20,47 @@ class ChatRequest(BaseModel):
     session_id: str
     message: str
     message_history: list[dict] = []
+    model: str | None = None
+    provider: str | None = None
 
 
 @router.post("/chat")
 async def chat(req: ChatRequest, user: dict = Depends(get_current_user)):
     user_id = user["user_id"]
 
-    # Verify session belongs to user
     session = db.table("sessions").select("id, status").eq("id", req.session_id).eq("user_id", user_id).maybe_single().execute()
     if not session.data:
         raise HTTPException(status_code=403, detail="Session not found")
     if session.data.get("status") != "done":
         raise HTTPException(status_code=400, detail={"error": "session_not_ready", "message": "Document still processing"})
 
-    # Fetch keys
     keys_res = db.table("api_keys").select("*").eq("user_id", user_id).execute()
-    keys = keys_res.data
+    keys = keys_res.data or []
 
     mistral_key_obj = next((k for k in keys if k["key_type"] == "ocr" and k.get("is_active")), None)
     if not mistral_key_obj:
         raise HTTPException(status_code=400, detail="Missing OCR API key")
     mistral_key = decrypt(mistral_key_obj["key_encrypted"])
 
-    llm_key_obj = next((k for k in keys if k["key_type"] == "llm" and k.get("is_active")), None)
+    llm_key_obj = None
+    if req.provider:
+        llm_key_obj = next((k for k in keys if k["key_type"] == "llm" and k["provider"] == req.provider and k.get("is_active")), None)
+        if not llm_key_obj:
+            llm_key_obj = next((k for k in keys if k["key_type"] == "llm" and k["provider"] == req.provider), None)
+    if not llm_key_obj:
+        llm_key_obj = next((k for k in keys if k["key_type"] == "llm" and k.get("is_active")), None)
+
     if not llm_key_obj:
         raise HTTPException(status_code=400, detail="Missing LLM API key")
     llm_key = decrypt(llm_key_obj["key_encrypted"])
-    llm_provider = llm_key_obj["provider"]
+    llm_provider = req.provider or llm_key_obj["provider"]
 
-    # Retrieve context
     rag_result = retrieve_context(req.message, req.session_id, mistral_key)
-    
-    # Layer 3: Expand context window for vital signs
+
     vitals_triggers = ["vital", "bp", "pulse", "temperature", "spo2", "hr", "rr", "map", "weight", "height"]
     if any(word in req.message.lower() for word in vitals_triggers):
         page_nums = list(set(c.get("page_num") for c in rag_result.get("chunks", []) if c.get("page_num")))
         if page_nums:
-            # Fetch extra chunks from these pages
             extra = db.table("chunks").select("id, text, page_num, metadata, chunk_text, content")\
                 .eq("session_id", req.session_id)\
                 .in_("page_num", page_nums)\
@@ -66,14 +70,14 @@ async def chat(req: ChatRequest, user: dict = Depends(get_current_user)):
             for c in extra_chunks:
                 if c["id"] not in existing_ids:
                     rag_result["chunks"].append(c)
-                    
+
             def extract_text(c: dict) -> str:
                 return c.get("text") or c.get("chunk_text") or c.get("content") or ""
-                
+
             rag_result["context_text"] = "\n---\n".join(extract_text(c) for c in rag_result["chunks"] if extract_text(c))
-    
+
     context_text = rag_result["context_text"]
-    
+
     detailed_sources = [
         {
             "chunk_id": c["id"],
@@ -94,7 +98,7 @@ async def chat(req: ChatRequest, user: dict = Depends(get_current_user)):
             {"role": "user", "content": f"Document context:\n{context_text}\n\nQuestion: {req.message}"}
         ]
 
-        model = get_llm_model(llm_provider)
+        model = req.model if req.model and req.model != "default" else get_llm_model(llm_provider)
 
         def make_plain_client(provider: str, api_key: str):
             if provider == "mistral":
@@ -104,6 +108,12 @@ async def chat(req: ChatRequest, user: dict = Depends(get_current_user)):
             elif provider == "groq":
                 from groq import Groq
                 return Groq(api_key=api_key)
+            elif provider == "deepseek":
+                return OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+            elif provider == "grok":
+                return OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
+            elif provider == "meta":
+                return OpenAI(api_key=api_key, base_url="https://api.llama.com/v1")
             elif provider == "anthropic":
                 import anthropic
                 client = anthropic.Anthropic(api_key=api_key)
@@ -125,7 +135,6 @@ async def chat(req: ChatRequest, user: dict = Depends(get_current_user)):
             answer = response.choices[0].message.content
         sources = detailed_sources
 
-    # Persist messages
     db.table("messages").insert({
         "session_id": req.session_id,
         "role": "user",

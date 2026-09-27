@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import { ChatLayout, ChatMessageList, ChatMessage, ChatToolCalls, ChatSystemMessage } from "@astryxdesign/core/Chat";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +13,7 @@ import { useChat } from "@/hooks/useChat";
 import { useDocumentUpload } from "@/hooks/useDocumentUpload";
 import { useClinicalAgent } from "@/hooks/useClinicalAgent";
 import { createSessionAction } from "@/actions/sessions";
+import { DEFAULT_MODEL, type ModelInfo } from "@/lib/modelsRegistry";
 import type { Message, ClinicalDraft, AppSession } from "@/types/app";
 import ChatComposerAstryx from "./ChatComposerAstryx";
 import ChatMessageItemAstryx from "./ChatMessageItemAstryx";
@@ -79,14 +78,13 @@ export default function ChatPanelAstryx({
 
   const [optimisticMessages, setAllOptimistic] = useState<Message[]>([]);
   const toggleSidebar = useSessionStore((state) => state.toggleSidebar);
-  const selectedProvider = useSessionStore((state) => state.selectedProvider);
-  const setSelectedProvider = useSessionStore((state) => state.setSelectedProvider);
   const isRightPanelOpen = useSessionStore((state) => state.isRightPanelOpen);
   const setRightPanelOpen = useSessionStore((state) => state.setRightPanelOpen);
 
   const [artifactTab, setArtifactTab] = useState<string>("content");
   const [isArtifactDialogOpen, setIsArtifactDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelInfo>(DEFAULT_MODEL);
   const [panelSize, setPanelSize] = useState(520);
   const isDraggingRef = useRef(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -109,7 +107,7 @@ export default function ChatPanelAstryx({
     executeAgentRun,
   } = useClinicalAgent({
     sessionId,
-    selectedProvider,
+    selectedProvider: selectedModel.provider,
     refetchMessages,
     onDraftReady: () => handleArtifactOpen("summary"),
   });
@@ -155,9 +153,9 @@ export default function ChatPanelAstryx({
     const pendingPrompt = sessionStorage.getItem(`pending_prompt_${sessionId}`);
     if (pendingPrompt) {
       sessionStorage.removeItem(`pending_prompt_${sessionId}`);
-      sendMessage(pendingPrompt, sessionId);
+      sendMessage(pendingPrompt, sessionId, selectedModel.id, selectedModel.provider);
     }
-  }, [sessionId, sendMessage]);
+  }, [sessionId, sendMessage, selectedModel]);
 
   const allMessages = [...messages, ...optimisticMessages];
   const isUploadingOrProcessing =
@@ -171,10 +169,10 @@ export default function ChatPanelAstryx({
   const handleSend = async (text: string) => {
     if (isUploadingOrProcessing || isSending) return;
     if (text.trim().startsWith("/summarize")) {
-      await sendMessage(text, sessionId);
+      await sendMessage(text, sessionId, selectedModel.id, selectedModel.provider);
       await executeAgentRun(sessionId, activeDocumentId);
     } else {
-      await sendMessage(text, sessionId);
+      await sendMessage(text, sessionId, selectedModel.id, selectedModel.provider);
     }
   };
 
@@ -236,20 +234,6 @@ export default function ChatPanelAstryx({
             >
               <PanelLeft className="size-4" />
             </Button>
-            <Link
-              href="/"
-              className="flex items-center gap-2 hover:opacity-85 transition-opacity shrink-0"
-              title="MediQ"
-            >
-              <Image
-                src="/logo.png"
-                alt="MediQ"
-                width={20}
-                height={20}
-                className="size-5 object-contain shrink-0"
-                priority
-              />
-            </Link>
             <div className="flex items-center gap-2 min-w-0">
               <h2 className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md">
                 {sessionTitle}
@@ -316,8 +300,8 @@ export default function ChatPanelAstryx({
               onUpload={upload}
               disabled={isUploadingOrProcessing || isSending}
               isSending={isSending}
-              selectedProvider={selectedProvider}
-              onProviderChange={setSelectedProvider}
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
               attachedFiles={attachedNames}
             />
           }
