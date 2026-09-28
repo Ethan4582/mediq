@@ -110,7 +110,7 @@ export default function Sidebar({
         {isSidebarOpen ? (
           <>
             <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
-              <Image src="/logo.png" alt="MediQ" width={20} height={20} className="w-5 h-5 object-contain shrink-0" priority />
+              <Image src="/logo.png" alt="MediQ" width={20} height={20} style={{ width: "20px", height: "auto" }} className="object-contain shrink-0" priority />
               <span className="font-semibold text-sm tracking-tight text-foreground">MediQ</span>
             </Link>
             <Button
@@ -134,7 +134,8 @@ export default function Sidebar({
               alt="MediQ"
               width={22}
               height={22}
-              className="size-5.5 object-contain shrink-0"
+              style={{ width: "22px", height: "auto" }}
+              className="object-contain shrink-0"
               priority
             />
           </Link>

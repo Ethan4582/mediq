@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Paperclip, ArrowUp, ChevronDown, X, Loader2 } from "lucide-react";
 import { useKeyStatus } from "@/hooks/useKeyStatus";
 import { DEFAULT_MODEL, MODEL_REGISTRY, type ModelInfo } from "@/lib/modelsRegistry";
-import ModelSelectorDialog from "./ModelSelectorDialog";
+import ModelSelectorPopover from "./ModelSelectorPopover";
 
 interface ChatComposerAstryxProps {
   onSend: (text: string) => void;
@@ -33,7 +33,7 @@ export default function ChatComposerAstryx({
   onRemoveAttachment,
 }: ChatComposerAstryxProps) {
   const [inputText, setInputText] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [internalModel, setInternalModel] = useState<ModelInfo>(DEFAULT_MODEL);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +53,7 @@ export default function ChatComposerAstryx({
   const activeModel: ModelInfo = useMemo(() => {
     if (controlledModel) return controlledModel;
     if (selectedProvider) {
-      const match = MODEL_REGISTRY.find((m) => m.provider === selectedProvider && !m.isDefault);
+      const match = MODEL_REGISTRY.find((m) => m.provider === selectedProvider);
       if (match) return match;
     }
     return internalModel;
@@ -151,24 +151,35 @@ export default function ChatComposerAstryx({
               <span>Attach</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              disabled={disabled}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80 rounded-lg transition-colors cursor-pointer border border-border/80 shadow-2xs disabled:opacity-50"
-            >
-              <Image
-                src={activeModel.providerIcon}
-                alt={activeModel.name}
-                width={14}
-                height={14}
-                className="w-3.5 h-3.5 object-contain"
-                unoptimized
-                onError={(e) => (e.currentTarget.style.display = "none")}
+            {/* Anchored Model Selector Popover */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsPopoverOpen((prev) => !prev)}
+                disabled={disabled}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80 rounded-lg transition-colors cursor-pointer border border-border/80 shadow-2xs disabled:opacity-50"
+              >
+                <Image
+                  src={activeModel.providerIcon}
+                  alt={activeModel.name}
+                  width={14}
+                  height={14}
+                  className="w-3.5 h-3.5 object-contain"
+                  unoptimized
+                  onError={(e) => (e.currentTarget.style.display = "none")}
+                />
+                <span className="max-w-[130px] truncate">{activeModel.name}</span>
+                <ChevronDown className="w-3 h-3 text-muted-foreground" />
+              </button>
+
+              <ModelSelectorPopover
+                isOpen={isPopoverOpen}
+                onClose={() => setIsPopoverOpen(false)}
+                selectedModelId={activeModel.id}
+                onSelectModel={handleSelectModel}
+                configuredProviders={configuredProviders}
               />
-              <span className="max-w-[130px] truncate">{activeModel.name}</span>
-              <ChevronDown className="w-3 h-3 text-muted-foreground" />
-            </button>
+            </div>
           </div>
 
           <button
@@ -189,14 +200,6 @@ export default function ChatComposerAstryx({
           </button>
         </div>
       </div>
-
-      <ModelSelectorDialog
-        isOpen={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        selectedModelId={activeModel.id}
-        onSelectModel={handleSelectModel}
-        configuredProviders={configuredProviders}
-      />
     </div>
   );
 }

@@ -320,19 +320,11 @@ export default function ArtifactPanelAstryx({
       <div className="px-4 py-3 border-b border-border/80 bg-background/95 backdrop-blur-xs flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="size-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shadow-xs shrink-0">
-            <DocumentTextIcon className="size-4" />
+            <Image src="/file_1.svg" alt="Project content" width={16} height={16} className="size-4 opacity-90" />
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="text-xs sm:text-sm font-semibold text-foreground tracking-tight truncate">
-                Project content
-              </h3>
-              <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" title="Active session" />
-            </div>
-            <p className="text-[11px] text-muted-foreground truncate">
-              Clinical records & session intelligence
-            </p>
-          </div>
+          <h3 className="text-xs sm:text-sm font-semibold text-foreground tracking-tight truncate">
+            Project content
+          </h3>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
@@ -412,7 +404,7 @@ export default function ArtifactPanelAstryx({
                 : "text-muted-foreground hover:text-foreground hover:bg-background/40"
             )}
           >
-            <DocumentTextIcon className="size-3.5 shrink-0" />
+            <Image src="/compress-pdf-flat.svg" alt="" width={14} height={14} className="size-3.5 shrink-0" />
             <span className="truncate">Summary</span>
           </button>
 
