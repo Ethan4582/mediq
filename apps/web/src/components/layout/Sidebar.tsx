@@ -110,7 +110,7 @@ export default function Sidebar({
         {isSidebarOpen ? (
           <>
             <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
-              <Image src="/logo.png" alt="MediQ" width={20} height={20} className="w-5 h-5 object-contain shrink-0" priority />
+              <Image src="/logo.png" alt="MediQ" width={20} height={20} style={{ width: "20px", height: "auto" }} className="object-contain shrink-0" priority />
               <span className="font-semibold text-sm tracking-tight text-foreground">MediQ</span>
             </Link>
             <Button
@@ -134,7 +134,8 @@ export default function Sidebar({
               alt="MediQ"
               width={22}
               height={22}
-              className="size-5.5 object-contain shrink-0"
+              style={{ width: "22px", height: "auto" }}
+              className="object-contain shrink-0"
               priority
             />
           </Link>
@@ -188,9 +189,20 @@ export default function Sidebar({
 
             {(folders || []).length > 0 && (
               <div className="space-y-1">
-                <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
-                  Folders
-                </span>
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    <Image src="/folder.svg" alt="" width={12} height={12} className="size-3 opacity-70" />
+                    <span>Folders</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateFolderOpen(true)}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                    title="New folder"
+                  >
+                    <Plus className="size-3" />
+                  </button>
+                </div>
                 {(folders || []).map((folder) => (
                   <SidebarFolderItem
                     key={folder.id}
@@ -214,9 +226,10 @@ export default function Sidebar({
 
             <div className="space-y-1">
               {(folders.length > 0 || pinnedSessions.length > 0) && (
-                <span className="text-[10px] font-semibold text-muted-foreground px-2 uppercase tracking-wider">
-                  Recent Consultations
-                </span>
+                <div className="flex items-center gap-1.5 px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  <Image src="/clock.svg" alt="" width={12} height={12} className="size-3 opacity-70" />
+                  <span>Recent Consultations</span>
+                </div>
               )}
               <SidebarSessionList
                 sessions={recentSessions}

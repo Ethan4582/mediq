@@ -50,7 +50,7 @@ async def _validate_key(provider: str, key: str):
                     raise HTTPException(400, {"error": "invalid_key", "provider": provider})
                 try:
                     r = await client.get(
-                        "https://api.llama.com/models",
+                        "https://api.meta.ai/v1/models",
                         headers={"Authorization": f"Bearer {key}"},
                     )
                     if r.status_code >= 400 and r.status_code != 404:

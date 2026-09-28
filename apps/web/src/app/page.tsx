@@ -16,7 +16,7 @@ export default function LandingPage() {
         {/* Left - Logo */}
         <Link href="/" className="flex items-center gap-2 group cursor-pointer">
           <div className="flex items-center justify-center w-7 h-7 shrink-0 transition-transform group-hover:scale-105">
-            <Image src="/logo.png" alt="MediQ logo" width={28} height={28} priority className="w-7 h-7 object-contain" />
+            <Image src="/logo.png" alt="MediQ logo" width={28} height={28} priority style={{ width: "28px", height: "auto" }} className="object-contain" />
           </div>
           <span className="font-bold text-gray-900 text-[16px] sm:text-[17px] tracking-tight">MediQ</span>
         </Link>

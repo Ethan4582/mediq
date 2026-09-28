@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { FolderClosed, FolderOpen, MessageSquare, MoreHorizontal, Edit3, Trash2 } from "lucide-react";
+import { MessageSquare, MoreHorizontal, Edit3, Trash2 } from "lucide-react";
 import type { AppSession, Folder } from "@/types/app";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,16 @@ export default function SidebarFolderItem({
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 flex-1 min-w-0 h-7 px-1 text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer text-left"
         >
-          {isOpen ? <FolderOpen className="size-3.5 text-primary shrink-0" /> : <FolderClosed className="size-3.5 shrink-0 text-muted-foreground" />}
+          <Image
+            src="/folder.svg"
+            alt=""
+            width={14}
+            height={14}
+            className={cn(
+              "size-3.5 shrink-0 transition-opacity",
+              isOpen ? "opacity-100" : "opacity-60"
+            )}
+          />
           <span className="truncate flex-1">{folder.name}</span>
           <span className="text-[10px] text-muted-foreground/70 shrink-0">{folderSessions.length}</span>
         </button>

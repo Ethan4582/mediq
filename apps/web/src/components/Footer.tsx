@@ -14,7 +14,7 @@ export function Footer() {
           {/* Brand Info */}
           <div className="flex flex-col w-full lg:w-[35%] lg:pr-8">
             <div className="flex items-center gap-2.5 mb-4 sm:mb-5">
-              <Image src="/logo.png" alt="MediQ logo" width={28} height={28} className="w-7 h-7 object-contain" />
+              <Image src="/logo.png" alt="MediQ logo" width={28} height={28} style={{ width: "28px", height: "auto" }} className="object-contain" />
               <span className="text-white text-[19px] sm:text-[20px] font-bold tracking-wide">MediQ</span>
             </div>
             <p className="text-[#8492a6] text-[13.5px] sm:text-[14px] leading-relaxed mb-5 sm:mb-6 max-w-[90%]">

@@ -3,9 +3,6 @@
 import { useState, useRef, useEffect, useCallback, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { ChatLayout, ChatMessageList, ChatMessage, ChatToolCalls, ChatSystemMessage } from "@astryxdesign/core/Chat";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FileText, Share2, Sparkles, PanelLeft } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useSession } from "@/hooks/useSession";
 import { useMessages } from "@/hooks/useMessages";
@@ -20,32 +17,9 @@ import ChatMessageItemAstryx from "./ChatMessageItemAstryx";
 import ChatArtifactDrawer from "./ChatArtifactDrawer";
 import ChatEmptyState from "./ChatEmptyState";
 import ShareSessionDialog from "./ShareSessionDialog";
+import ChatHeaderAstryx from "./ChatHeaderAstryx";
 
 const MOBILE_MAX_WIDTH = 768;
-
-const AI_CHAT_CSS = `
-.astryx-chat-layout {
-  width: 100% !important;
-  flex: 1 1 0% !important;
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-.astryx-chat-layout .xvueqy4 {
-  margin-inline: auto !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-.astryx-chat-layout * {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-.astryx-chat-layout *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-`;
 
 interface ChatPanelAstryxProps {
   sessionId: string;
@@ -200,11 +174,6 @@ export default function ChatPanelAstryx({
     ...(pendingUpload?.fileName ? [pendingUpload.fileName] : []),
   ];
 
-  const sessionTitle =
-    session?.title ||
-    session?.patient_name ||
-    (isNew ? "New Consultation" : sessionLoading ? "Loading session..." : "Clinical Session");
-
   const rootStyle: CSSProperties = {
     position: "relative",
     width: "100%",
@@ -221,75 +190,29 @@ export default function ChatPanelAstryx({
 
   return (
     <div ref={rootRef} style={rootStyle} className="flex flex-row w-full h-full">
-      <style>{AI_CHAT_CSS}</style>
       <div style={chatColStyle} className="flex-1 min-w-0 h-full flex flex-col w-full">
-        <header className="w-full flex items-center justify-between px-4 py-2 border-b border-border/80 bg-background/95 backdrop-blur-xs shrink-0 z-10">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className="size-8 text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-lg md:hidden"
-              title="Toggle sidebar (Ctrl+B)"
-            >
-              <PanelLeft className="size-4" />
-            </Button>
-            <div className="flex items-center gap-2 min-w-0">
-              <h2 className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md">
-                {sessionTitle}
-              </h2>
-              {latestDraft ? (
-                <Badge
-                  variant="secondary"
-                  onClick={() => handleArtifactOpen("summary")}
-                  className="hidden sm:inline-flex bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] px-1.5 py-0 cursor-pointer hover:bg-emerald-500/20"
-                >
-                  <Sparkles className="size-2.5 mr-1" />
-                  Draft Ready
-                </Badge>
-              ) : isUploadingOrProcessing ? (
-                <Badge variant="secondary" className="hidden sm:inline-flex bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-[10px] px-1.5 py-0 animate-pulse">
-                  Processing
-                </Badge>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsShareDialogOpen(true)}
-              className="gap-1.5 text-xs h-8 px-2.5 rounded-lg border-border hover:bg-muted/80 cursor-pointer"
-            >
-              <Share2 className="size-3.5" />
-              <span className="hidden sm:inline">Share</span>
-            </Button>
-
-            <Button
-              variant={isRightPanelOpen && artifactTab === "content" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                if (isRightPanelOpen && artifactTab === "content") {
-                  setRightPanelOpen(false);
-                } else {
-                  setArtifactTab("content");
-                  setRightPanelOpen(true);
-                }
-              }}
-              className="gap-1.5 text-xs h-8 px-2.5 rounded-lg font-medium shadow-xs cursor-pointer"
-            >
-              <FileText className={`size-3.5 ${isRightPanelOpen && artifactTab === "content" ? "text-primary-foreground" : "text-blue-500"}`} />
-              <span className="hidden sm:inline">Project content</span>
-              <Badge
-                variant={isRightPanelOpen && artifactTab === "content" ? "outline" : "secondary"}
-                className="text-[9px] px-1 py-0 h-4 min-w-4 flex items-center justify-center font-normal ml-0.5"
-              >
-                {ocrResult ? 1 : latestDraft ? 1 : 0}
-              </Badge>
-            </Button>
-          </div>
-        </header>
+        <ChatHeaderAstryx
+          session={session}
+          sessionId={sessionId}
+          isNew={isNew}
+          sessionLoading={sessionLoading}
+          latestDraft={latestDraft}
+          isUploadingOrProcessing={isUploadingOrProcessing}
+          isRightPanelOpen={isRightPanelOpen}
+          artifactTab={artifactTab}
+          onToggleSidebar={toggleSidebar}
+          onOpenArtifact={handleArtifactOpen}
+          onToggleRightPanel={(tab) => {
+            if (isRightPanelOpen && artifactTab === tab) {
+              setRightPanelOpen(false);
+            } else {
+              setArtifactTab(tab);
+              setRightPanelOpen(true);
+            }
+          }}
+          onOpenShareDialog={() => setIsShareDialogOpen(true)}
+          documentCount={ocrResult ? 1 : latestDraft ? 1 : 0}
+        />
 
         <ChatLayout
           density="spacious"

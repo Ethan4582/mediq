@@ -1,6 +1,7 @@
 "use client";
 
-import { Menu, FileText } from "lucide-react";
+import Image from "next/image";
+import { Menu } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { AppSession } from "@/types/app";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ export default function TopBar({
           }}
           className="gap-1.5 text-xs h-8"
         >
-          <FileText className="size-3.5" />
+          <Image src="/file_1.svg" alt="" width={14} height={14} className="size-3.5 opacity-80" />
           <span className="hidden sm:inline">Records & Summary</span>
         </Button>
       </div>
