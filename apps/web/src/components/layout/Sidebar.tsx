@@ -167,7 +167,7 @@ export default function Sidebar({
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 pt-1">
             {pinnedSessions.length > 0 && (
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                   <Pin className="size-3 text-primary rotate-45" />
                   <span>Pinned</span>
                 </div>
@@ -190,7 +190,7 @@ export default function Sidebar({
             {(folders || []).length > 0 && (
               <div className="space-y-1">
                 <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                     <Image src="/folder.svg" alt="" width={12} height={12} className="size-3 opacity-70" />
                     <span>Folders</span>
                   </div>
@@ -226,7 +226,7 @@ export default function Sidebar({
 
             <div className="space-y-1">
               {(folders.length > 0 || pinnedSessions.length > 0) && (
-                <div className="flex items-center gap-1.5 px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-muted-foreground">
                   <Image src="/clock.svg" alt="" width={12} height={12} className="size-3 opacity-70" />
                   <span>Recent Consultations</span>
                 </div>

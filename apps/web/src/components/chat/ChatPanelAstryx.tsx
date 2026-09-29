@@ -113,7 +113,6 @@ export default function ChatPanelAstryx({
 
   const { upload, pendingUpload, ocrResult } = useDocumentUpload(isNew ? "" : sessionId, (sessId, docId) => {
     setActiveDocumentId(docId);
-    handleArtifactOpen("files");
     if (sessId && sessId !== "new") {
       executeAgentRun(sessId, docId);
       if (isNew) router.push(`/chat/${sessId}`);
