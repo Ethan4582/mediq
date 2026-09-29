@@ -104,6 +104,20 @@ async def upload_documents(
         from tasks.ocr import process_document
         background_tasks.add_task(process_document, doc_id, session_id, mistral_key)
 
+        # Record upload in session chat stream so it renders on chat surface immediately
+        db.table("messages").insert({
+            "id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "role": "user",
+            "content": f"Uploaded medical document: {f.filename} ({pages} page{'s' if pages != 1 else ''})",
+            "metadata": {
+                "type": "document_upload",
+                "document_id": doc_id,
+                "file_name": f.filename,
+                "page_count": pages,
+            }
+        }).execute()
+
         if job_id is None:
             job_id = doc_id
 

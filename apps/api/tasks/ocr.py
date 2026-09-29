@@ -12,7 +12,7 @@ from core.progress import set_doc_progress
 
 def _ocr_pdf_batch(pages_bytes: bytes, mistral_key: str) -> str:
     b64 = base64.b64encode(pages_bytes).decode()
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             resp = httpx.post(
                 "https://api.mistral.ai/v1/ocr",
@@ -20,28 +20,49 @@ def _ocr_pdf_batch(pages_bytes: bytes, mistral_key: str) -> str:
                 json={"model": "mistral-ocr-latest", "document": {"type": "document_url", "document_url": f"data:application/pdf;base64,{b64}"}},
                 timeout=60,
             )
+            if resp.status_code == 429:
+                import time
+                wait_time = (attempt + 1) * 4
+                print(f"[OCR] 429 Rate limit hit, retrying in {wait_time}s (attempt {attempt + 1}/5)...", flush=True)
+                time.sleep(wait_time)
+                continue
             resp.raise_for_status()
             data = resp.json()
             return "\n\n".join(p.get("markdown", "") for p in data.get("pages", []))
-        except Exception:
-            if attempt == 2:
+        except Exception as e:
+            if attempt == 4:
                 raise
-            import time; time.sleep(2)
+            import time
+            time.sleep((attempt + 1) * 3)
     return ""
 
 
 def _ocr_image(img_bytes: bytes, content_type: str, mistral_key: str) -> str:
     b64 = base64.b64encode(img_bytes).decode()
     data_url = f"data:{content_type};base64,{b64}"
-    resp = httpx.post(
-        "https://api.mistral.ai/v1/ocr",
-        headers={"Authorization": f"Bearer {mistral_key}", "Content-Type": "application/json"},
-        json={"model": "mistral-ocr-latest", "document": {"type": "image_url", "image_url": data_url}},
-        timeout=60,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    return "\n\n".join(p.get("markdown", "") for p in data.get("pages", []))
+    for attempt in range(5):
+        try:
+            resp = httpx.post(
+                "https://api.mistral.ai/v1/ocr",
+                headers={"Authorization": f"Bearer {mistral_key}", "Content-Type": "application/json"},
+                json={"model": "mistral-ocr-latest", "document": {"type": "image_url", "image_url": data_url}},
+                timeout=60,
+            )
+            if resp.status_code == 429:
+                import time
+                wait_time = (attempt + 1) * 4
+                print(f"[OCR] 429 Rate limit hit, retrying in {wait_time}s (attempt {attempt + 1}/5)...", flush=True)
+                time.sleep(wait_time)
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            return "\n\n".join(p.get("markdown", "") for p in data.get("pages", []))
+        except Exception:
+            if attempt == 4:
+                raise
+            import time
+            time.sleep((attempt + 1) * 3)
+    return ""
 
 
 def _chunk_text(text: str) -> list[str]:
@@ -95,31 +116,49 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
         is_pdf = file_name.lower().endswith(".pdf")
         extracted_text = ""
 
+        print(f"=== [OCR STAGE] Processing Document: {document_id} (Session: {session_id}, File: {file_name}) ===", flush=True)
+
         if is_pdf:
-            print("Processing PDF...")
+            print(f"[OCR STAGE] Staged PDF parsing for {file_name} ({len(file_bytes)} bytes)...", flush=True)
             pdf = fitz.open(stream=file_bytes, filetype="pdf")
             page_count = pdf.page_count
             total_batches = math.ceil(page_count / 20)
-            for i in range(total_batches):
-                start = i * 20
-                end = min(start + 20, page_count)
-                batch_pdf = fitz.open()
-                batch_pdf.insert_pdf(pdf, from_page=start, to_page=end - 1)
-                batch_bytes = batch_pdf.tobytes()
-                batch_pdf.close()
-                print(f"Calling Mistral OCR for batch {i+1}/{total_batches}...")
-                extracted_text += _ocr_pdf_batch(batch_bytes, mistral_api_key)
-                progress = int((i + 1) / total_batches * 55) + 5
-                set_doc_progress(document_id, "processing", progress, "ocr")
+            print(f"[OCR STAGE] PDF Page Count: {page_count} in {total_batches} batches", flush=True)
+            try:
+                for i in range(total_batches):
+                    start = i * 20
+                    end = min(start + 20, page_count)
+                    batch_pdf = fitz.open()
+                    batch_pdf.insert_pdf(pdf, from_page=start, to_page=end - 1)
+                    batch_bytes = batch_pdf.tobytes()
+                    batch_pdf.close()
+                    print(f"[OCR STAGE] Calling Mistral OCR for batch {i+1}/{total_batches} (Pages {start+1}-{end})...", flush=True)
+                    batch_text = _ocr_pdf_batch(batch_bytes, mistral_api_key)
+                    extracted_text += batch_text
+                    progress = int((i + 1) / total_batches * 55) + 5
+                    set_doc_progress(document_id, "processing", progress, "ocr")
+            except Exception as ocr_err:
+                print(f"[OCR FALLBACK] Mistral API rate limit/error: {ocr_err}. Falling back to PyMuPDF text extraction...", flush=True)
+                extracted_text = "\n\n".join(page.get_text() for page in pdf)
             pdf.close()
-        else:
-            print("Processing image...")
-            content_type = "image/jpeg" if file_name.lower().endswith((".jpg", ".jpeg")) else "image/png"
-            print(f"Calling Mistral OCR for image ({content_type})...")
-            extracted_text = _ocr_image(file_bytes, content_type, mistral_api_key)
-            print("Mistral OCR finished. Text length:", len(extracted_text))
 
-        print("Cleaning text...")
+            if not extracted_text.strip():
+                print("[OCR FALLBACK] Empty OCR result. Using PyMuPDF direct text extraction...", flush=True)
+                pdf_fallback = fitz.open(stream=file_bytes, filetype="pdf")
+                extracted_text = "\n\n".join(page.get_text() for page in pdf_fallback)
+                pdf_fallback.close()
+        else:
+            print(f"[OCR STAGE] Staged image parsing for {file_name}...", flush=True)
+            content_type = "image/jpeg" if file_name.lower().endswith((".jpg", ".jpeg")) else "image/png"
+            print(f"[OCR STAGE] Calling Mistral OCR for image ({content_type})...", flush=True)
+            try:
+                extracted_text = _ocr_image(file_bytes, content_type, mistral_api_key)
+            except Exception as ocr_err:
+                print(f"[OCR ERROR] Image OCR failed: {ocr_err}", flush=True)
+                raise
+            print(f"[OCR STAGE] Mistral OCR finished. Text length: {len(extracted_text)} chars", flush=True)
+
+        print("[OCR STAGE] Cleaning extracted text...", flush=True)
         def clean_ocr_text(text: str) -> str:
             import re
             text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
@@ -129,13 +168,13 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
 
         extracted_text = clean_ocr_text(extracted_text)
 
-        print("Updating raw text in DB...")
+        print(f"[OCR STAGE] Saving raw text in DB for {document_id}...", flush=True)
         db.table("documents").update({"raw_text": extracted_text, "ocr_status": "processing"}).eq("id", document_id).execute()
         set_doc_progress(document_id, "processing", 65, "chunking")
 
-        print("Chunking text...")
+        print("[OCR STAGE] Chunking text into medical semantic segments...", flush=True)
         chunks = _chunk_text(extracted_text)
-        print(f"Created {len(chunks)} chunks.")
+        print(f"[OCR STAGE] Created {len(chunks)} chunks.", flush=True)
         
         chunk_rows = [
             {
@@ -150,15 +189,15 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
         ]
         
         if chunk_rows:
-            print("Inserting chunks into DB...")
+            print(f"[OCR STAGE] Storing {len(chunk_rows)} chunks in DB...", flush=True)
             db.table("chunks").insert(chunk_rows).execute()
             set_doc_progress(document_id, "processing", 75, "embedding")
 
-            print("Generating embeddings...")
+            print("[OCR STAGE] Generating Mistral vector embeddings...", flush=True)
             from core.embeddings import generate_embeddings
             chunk_texts = [c["text"] for c in chunk_rows]
             embeddings = generate_embeddings(chunk_texts, mistral_api_key)
-            print("Embeddings generated.")
+            print(f"[OCR STAGE] {len(embeddings)} Embeddings generated.", flush=True)
 
             inserted = db.table("chunks")\
                 .select("id, chunk_index")\
@@ -169,18 +208,17 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
 
             chunk_ids = [row["id"] for row in inserted.data]
             
-            print("Updating chunks with embeddings...")
+            print("[OCR STAGE] Updating vector embeddings in DB...", flush=True)
             for chunk_id, embedding in zip(chunk_ids, embeddings):
                 db.table("chunks")\
                     .update({"embedding": embedding})\
                     .eq("id", chunk_id)\
                     .execute()
 
-        print("Finalizing job...")
+        print("=== [OCR STAGE] FINISHED SUCCESSFULLY ===", flush=True)
         set_doc_progress(document_id, "done", 100, "ready")
         db.table("sessions").update({"status": "done", "updated_at": datetime.now(timezone.utc).isoformat()}).eq("id", session_id).execute()
         db.table("documents").update({"ocr_status": "done"}).eq("id", document_id).execute()
-        print("=== OCR TASK FINISHED ===")
 
     except Exception as e:
         print(f"Exception caught in process_document: {e}")

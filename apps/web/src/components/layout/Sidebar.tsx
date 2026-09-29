@@ -68,8 +68,13 @@ export default function Sidebar({
 
   const handleDeleteConfirm = async () => {
     if (deleteTarget) {
+      const isCurrentActive = activeSessionId === deleteTarget.id;
       await deleteSession(deleteTarget.id);
       setDeleteTarget(null);
+      if (isCurrentActive) {
+        useSessionStore.getState().setRightPanelOpen(false);
+        router.push("/chat");
+      }
     }
   };
 
