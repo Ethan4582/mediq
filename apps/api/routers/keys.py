@@ -194,3 +194,18 @@ async def validate_key_only(body: AddKeyRequest, request: Request):
     await get_current_user(request)
     await _validate_key(body.provider, body.key)
     return {"valid": True}
+
+
+@router.get("/config")
+async def get_system_config(request: Request):
+    user = await get_current_user(request)
+    profile_res = db.table("profiles").select("active_llm_provider").eq("id", user["user_id"]).maybe_single().execute()
+    active_provider = (profile_res.data.get("active_llm_provider") if profile_res.data else None) or "openai"
+    is_vision = active_provider in ("openai", "anthropic", "gemini")
+
+    return {
+        "selected_model": "gpt-4o-mini" if active_provider == "openai" else f"{active_provider}-default",
+        "provider": active_provider,
+        "supports_native_ocr": is_vision,
+        "ocr_strategy": "native_vision" if is_vision else "mistral_fallback"
+    }

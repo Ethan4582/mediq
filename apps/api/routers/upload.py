@@ -63,7 +63,7 @@ async def upload_documents(
     else:
         db.table("sessions").update({"status": "processing"}).eq("id", session_id).execute()
 
-    # Get OCR key
+    # Get OCR key (optional in single-model workflow)
     ocr_key_row = (
         db.table("api_keys")
         .select("key_encrypted")
@@ -73,7 +73,22 @@ async def upload_documents(
         .limit(1)
         .execute()
     )
-    mistral_key = decrypt(ocr_key_row.data[0]["key_encrypted"])
+    mistral_key = None
+    if ocr_key_row.data and len(ocr_key_row.data) > 0:
+        mistral_key = decrypt(ocr_key_row.data[0]["key_encrypted"])
+    else:
+        # Check if user has mistral LLM key as fallback
+        mistral_llm = (
+            db.table("api_keys")
+            .select("key_encrypted")
+            .eq("user_id", user_id)
+            .eq("provider", "mistral")
+            .eq("is_active", True)
+            .limit(1)
+            .execute()
+        )
+        if mistral_llm.data and len(mistral_llm.data) > 0:
+            mistral_key = decrypt(mistral_llm.data[0]["key_encrypted"])
 
     document_ids = []
     job_id = None

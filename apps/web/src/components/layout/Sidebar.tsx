@@ -37,6 +37,7 @@ export default function Sidebar({
   } = useSessions();
 
   const { isSidebarOpen, toggleSidebar } = useSessionStore();
+  const isCollapsed = !isSidebarOpen;
   const [search, setSearch] = useState("");
   const [renameTarget, setRenameTarget] = useState<AppSession | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -112,7 +113,7 @@ export default function Sidebar({
   return (
     <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none overflow-hidden">
       <div className="flex items-center justify-between p-2.5 border-b border-sidebar-border/60 shrink-0">
-        {isSidebarOpen ? (
+        {!isCollapsed ? (
           <>
             <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
               <Image src="/logo.png" alt="MediQ" width={20} height={20} style={{ width: "20px", height: "auto" }} className="object-contain shrink-0" priority />
@@ -147,7 +148,7 @@ export default function Sidebar({
         )}
       </div>
 
-      {isSidebarOpen ? (
+      {!isCollapsed ? (
         <div className="flex flex-col flex-1 min-h-0 px-2.5 py-3 gap-2.5 overflow-hidden">
           <Button
             variant="outline"
@@ -275,7 +276,7 @@ export default function Sidebar({
         </div>
       )}
 
-      <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
+      <SidebarUserMenu user={user} isCollapsed={isCollapsed} />
 
       <SidebarDialogs
         renameTarget={renameTarget}

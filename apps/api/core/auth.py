@@ -32,9 +32,7 @@ async def get_current_user(request: Request) -> dict:
 async def require_keys(request: Request) -> dict:
     user = await get_current_user(request)
     missing = []
-    if not user["has_mistral_key"]:
-        missing.append("mistral")
-    if not user["has_llm_key"]:
+    if not user["has_llm_key"] and not user["has_mistral_key"]:
         missing.append("llm_provider")
     if missing:
         raise HTTPException(

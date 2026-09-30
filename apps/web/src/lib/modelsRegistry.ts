@@ -9,6 +9,8 @@ export interface ModelInfo {
   description?: string;
   tag?: string;
   isDefault?: boolean;
+  isVisionCapable?: boolean;
+  ocrFallbackProvider?: string;
 }
 
 export interface ProviderGroup {

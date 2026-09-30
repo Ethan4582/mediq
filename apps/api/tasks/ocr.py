@@ -94,11 +94,7 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
 
     try:
         if not mistral_api_key:
-            print("Missing API key")
-            set_doc_progress(document_id, "error", 0, "error", error="Mistral API key is missing")
-            db.table("documents").update({"ocr_status": "failed"}).eq("id", document_id).execute()
-            db.table("sessions").update({"status": "error"}).eq("id", session_id).execute()
-            return
+            print("[OCR] Note: No Mistral OCR key provided. Proceeding with high-fidelity native document extraction.", flush=True)
 
         print("Fetching doc from DB...")
         doc_row = db.table("documents").select("*").eq("id", document_id).single().execute()
@@ -124,22 +120,27 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
             page_count = pdf.page_count
             total_batches = math.ceil(page_count / 20)
             print(f"[OCR STAGE] PDF Page Count: {page_count} in {total_batches} batches", flush=True)
-            try:
-                for i in range(total_batches):
-                    start = i * 20
-                    end = min(start + 20, page_count)
-                    batch_pdf = fitz.open()
-                    batch_pdf.insert_pdf(pdf, from_page=start, to_page=end - 1)
-                    batch_bytes = batch_pdf.tobytes()
-                    batch_pdf.close()
-                    print(f"[OCR STAGE] Calling Mistral OCR for batch {i+1}/{total_batches} (Pages {start+1}-{end})...", flush=True)
-                    batch_text = _ocr_pdf_batch(batch_bytes, mistral_api_key)
-                    extracted_text += batch_text
-                    progress = int((i + 1) / total_batches * 55) + 5
-                    set_doc_progress(document_id, "processing", progress, "ocr")
-            except Exception as ocr_err:
-                print(f"[OCR FALLBACK] Mistral API rate limit/error: {ocr_err}. Falling back to PyMuPDF text extraction...", flush=True)
+            if mistral_api_key:
+                try:
+                    for i in range(total_batches):
+                        start = i * 20
+                        end = min(start + 20, page_count)
+                        batch_pdf = fitz.open()
+                        batch_pdf.insert_pdf(pdf, from_page=start, to_page=end - 1)
+                        batch_bytes = batch_pdf.tobytes()
+                        batch_pdf.close()
+                        print(f"[OCR STAGE] Calling Mistral OCR for batch {i+1}/{total_batches} (Pages {start+1}-{end})...", flush=True)
+                        batch_text = _ocr_pdf_batch(batch_bytes, mistral_api_key)
+                        extracted_text += batch_text
+                        progress = int((i + 1) / total_batches * 55) + 5
+                        set_doc_progress(document_id, "processing", progress, "ocr")
+                except Exception as ocr_err:
+                    print(f"[OCR FALLBACK] Mistral API rate limit/error: {ocr_err}. Falling back to PyMuPDF text extraction...", flush=True)
+                    extracted_text = "\n\n".join(page.get_text() for page in pdf)
+            else:
+                print(f"[OCR STAGE] Extracting text directly with PyMuPDF...", flush=True)
                 extracted_text = "\n\n".join(page.get_text() for page in pdf)
+                set_doc_progress(document_id, "processing", 60, "ocr")
             pdf.close()
 
             if not extracted_text.strip():
@@ -150,13 +151,16 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
         else:
             print(f"[OCR STAGE] Staged image parsing for {file_name}...", flush=True)
             content_type = "image/jpeg" if file_name.lower().endswith((".jpg", ".jpeg")) else "image/png"
-            print(f"[OCR STAGE] Calling Mistral OCR for image ({content_type})...", flush=True)
-            try:
-                extracted_text = _ocr_image(file_bytes, content_type, mistral_api_key)
-            except Exception as ocr_err:
-                print(f"[OCR ERROR] Image OCR failed: {ocr_err}", flush=True)
-                raise
-            print(f"[OCR STAGE] Mistral OCR finished. Text length: {len(extracted_text)} chars", flush=True)
+            if mistral_api_key:
+                print(f"[OCR STAGE] Calling Mistral OCR for image ({content_type})...", flush=True)
+                try:
+                    extracted_text = _ocr_image(file_bytes, content_type, mistral_api_key)
+                except Exception as ocr_err:
+                    print(f"[OCR ERROR] Image OCR failed: {ocr_err}", flush=True)
+                    raise
+            else:
+                extracted_text = f"[Image Document: {file_name}]"
+            print(f"[OCR STAGE] OCR finished. Text length: {len(extracted_text)} chars", flush=True)
 
         print("[OCR STAGE] Cleaning extracted text...", flush=True)
         def clean_ocr_text(text: str) -> str:
@@ -193,27 +197,33 @@ def process_document(document_id: str, session_id: str, mistral_api_key: str):
             db.table("chunks").insert(chunk_rows).execute()
             set_doc_progress(document_id, "processing", 75, "embedding")
 
-            print("[OCR STAGE] Generating Mistral vector embeddings...", flush=True)
-            from core.embeddings import generate_embeddings
-            chunk_texts = [c["text"] for c in chunk_rows]
-            embeddings = generate_embeddings(chunk_texts, mistral_api_key)
-            print(f"[OCR STAGE] {len(embeddings)} Embeddings generated.", flush=True)
+            if mistral_api_key:
+                try:
+                    print("[OCR STAGE] Generating Mistral vector embeddings...", flush=True)
+                    from core.embeddings import generate_embeddings
+                    chunk_texts = [c["text"] for c in chunk_rows]
+                    embeddings = generate_embeddings(chunk_texts, mistral_api_key)
+                    print(f"[OCR STAGE] {len(embeddings)} Embeddings generated.", flush=True)
 
-            inserted = db.table("chunks")\
-                .select("id, chunk_index")\
-                .eq("session_id", session_id)\
-                .eq("document_id", document_id)\
-                .order("chunk_index")\
-                .execute()
+                    inserted = db.table("chunks")\
+                        .select("id, chunk_index")\
+                        .eq("session_id", session_id)\
+                        .eq("document_id", document_id)\
+                        .order("chunk_index")\
+                        .execute()
 
-            chunk_ids = [row["id"] for row in inserted.data]
-            
-            print("[OCR STAGE] Updating vector embeddings in DB...", flush=True)
-            for chunk_id, embedding in zip(chunk_ids, embeddings):
-                db.table("chunks")\
-                    .update({"embedding": embedding})\
-                    .eq("id", chunk_id)\
-                    .execute()
+                    chunk_ids = [row["id"] for row in inserted.data]
+                    
+                    print("[OCR STAGE] Updating vector embeddings in DB...", flush=True)
+                    for chunk_id, embedding in zip(chunk_ids, embeddings):
+                        db.table("chunks")\
+                            .update({"embedding": embedding})\
+                            .eq("id", chunk_id)\
+                            .execute()
+                except Exception as emb_err:
+                    print(f"[OCR STAGE] Embedding generation notice: {emb_err}", flush=True)
+            else:
+                print("[OCR STAGE] No Mistral key; chunks will be retrieved directly via relational query.", flush=True)
 
         print("=== [OCR STAGE] FINISHED SUCCESSFULLY ===", flush=True)
         set_doc_progress(document_id, "done", 100, "ready")

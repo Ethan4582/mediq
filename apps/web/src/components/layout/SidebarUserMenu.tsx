@@ -64,7 +64,7 @@ export default function SidebarUserMenu({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg cursor-pointer">
+          <Link href="/settings" className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg cursor-pointer">
             <Settings className="size-4 text-muted-foreground" />
             <span>Settings</span>
           </Link>
