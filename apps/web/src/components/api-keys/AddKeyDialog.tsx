@@ -11,15 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import Spinner from "@/components/shared/Spinner";
 import { createClient } from "@/lib/supabase/client";
 import { PROVIDERS, API_URL } from "@/lib/constants";
 import type { LLMProvider } from "@/types/app";
 import { cn } from "@/lib/utils";
 
-type Step = 1 | 2 | 3;
-type KeyType = "ocr" | "llm";
+type Step = 1 | 2;
 
 export default function AddKeyDialog({
   open,
@@ -31,7 +29,6 @@ export default function AddKeyDialog({
   onSaved?: () => void;
 }) {
   const [step, setStep] = useState<Step>(1);
-  const [keyType, setKeyType] = useState<KeyType>("ocr");
   const [provider, setProvider] = useState<LLMProvider>("openai");
   const [key, setKey] = useState("");
   const [show, setShow] = useState(false);
@@ -42,7 +39,6 @@ export default function AddKeyDialog({
 
   const reset = () => {
     setStep(1);
-    setKeyType("ocr");
     setProvider("openai");
     setKey("");
     setShow(false);
@@ -56,8 +52,6 @@ export default function AddKeyDialog({
     reset();
     onOpenChange(false);
   };
-
-  const effectiveProvider: LLMProvider = keyType === "ocr" ? "mistral" : provider;
 
   const validateKey = async () => {
     if (!key.trim()) return;
@@ -76,16 +70,16 @@ export default function AddKeyDialog({
           Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
-          provider: effectiveProvider,
+          provider,
           key,
-          key_type: keyType,
+          key_type: "llm",
         }),
       });
       setValidState(res.ok ? "valid" : "invalid");
       if (!res.ok) setError("Invalid API key. Please check and try again.");
     } catch {
       setValidState("invalid");
-      setError("Validation failed. Check your internet connection.");
+      setError("Validation failed. Check your connection.");
     } finally {
       setValidating(false);
     }
@@ -110,9 +104,9 @@ export default function AddKeyDialog({
           Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
-          provider: effectiveProvider,
+          provider,
           key,
-          key_type: keyType,
+          key_type: "llm",
         }),
       });
       if (!res.ok) {
@@ -127,66 +121,22 @@ export default function AddKeyDialog({
     }
   };
 
+  const currentProviderConfig = PROVIDERS[provider];
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && close()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg rounded-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="text-base">Add API Key</DialogTitle>
+          <DialogTitle className="text-base font-semibold">
+            {step === 1 ? "Select AI Model Provider" : `Configure ${currentProviderConfig?.name || "Provider"} Key`}
+          </DialogTitle>
         </DialogHeader>
 
         {step === 1 && (
-          <div className="space-y-3 py-1">
-            <p className="text-xs text-muted-foreground">Select the type of key to connect:</p>
-            <div className="space-y-2.5">
-              {[
-                {
-                  type: "ocr" as KeyType,
-                  title: "Mistral OCR Key",
-                  desc: "Extracts clinical text from scanned records & charts.",
-                  badge: "Required",
-                },
-                {
-                  type: "llm" as KeyType,
-                  title: "AI Reasoning Provider Key",
-                  desc: "Synthesizes structured discharge summaries.",
-                  badge: "Required",
-                },
-              ].map((opt) => (
-                <button
-                  key={opt.type}
-                  onClick={() => {
-                    setKeyType(opt.type);
-                    setStep(opt.type === "ocr" ? 3 : 2);
-                  }}
-                  className="w-full text-left border rounded-xl p-3.5 transition-colors hover:border-primary/50 hover:bg-muted/40"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-xs text-foreground">{opt.title}</span>
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] bg-destructive/10 text-destructive border-destructive/20"
-                    >
-                      {opt.badge}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-3 py-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setStep(1)}
-              className="gap-1 text-xs -ml-2 h-7"
-            >
-              <ArrowLeft className="size-3.5" /> Back
-            </Button>
-            <p className="text-xs text-muted-foreground">Choose your LLM provider:</p>
+          <div className="space-y-4 py-1">
+            <p className="text-xs text-muted-foreground">
+              Choose your model provider. This unified key powers both medical document vision extraction and clinical reasoning.
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {(
                 Object.entries(PROVIDERS) as [
@@ -198,106 +148,128 @@ export default function AddKeyDialog({
                   key={pKey}
                   onClick={() => setProvider(pKey)}
                   className={cn(
-                    "border rounded-xl p-3 text-xs font-medium transition-all flex flex-col items-center gap-2",
+                    "border rounded-xl p-3 text-xs font-medium transition-all flex flex-col items-center gap-2 cursor-pointer",
                     provider === pKey
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border hover:bg-muted/40"
+                      ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
+                      : "border-border hover:bg-muted/40 text-foreground"
                   )}
                 >
                   <Image
                     src={`/${pKey}.svg`}
                     alt={val.name}
-                    width={20}
-                    height={20}
+                    width={22}
+                    height={22}
                     className="object-contain"
                     onError={(e) => (e.currentTarget.style.display = "none")}
                   />
-                  <span className="truncate max-w-full">{val.name}</span>
+                  <span className="text-[11px] font-semibold">{val.name}</span>
                 </button>
               ))}
             </div>
+
             <div className="flex justify-end pt-2">
-              <Button size="sm" onClick={() => setStep(3)}>
-                Next
+              <Button
+                onClick={() => setStep(2)}
+                className="h-9 px-5 text-xs font-semibold rounded-xl"
+              >
+                Continue
               </Button>
             </div>
           </div>
         )}
 
-        {step === 3 && (
-          <div className="space-y-3 py-1">
+        {step === 2 && (
+          <div className="space-y-4 py-1">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setStep(keyType === "ocr" ? 1 : 2)}
-              className="gap-1 text-xs -ml-2 h-7"
+              onClick={() => setStep(1)}
+              className="gap-1 text-xs -ml-2 h-7 rounded-lg"
             >
-              <ArrowLeft className="size-3.5" /> Back
+              <ArrowLeft className="size-3.5" /> Back to Providers
             </Button>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium">
-                  {keyType === "ocr"
-                    ? "Mistral API Key"
-                    : `${PROVIDERS[effectiveProvider]?.name} API Key`}
-                </span>
-                <a
-                  href={PROVIDERS[effectiveProvider]?.docsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary hover:underline flex items-center gap-1"
-                >
-                  Get key <ExternalLink className="size-3" />
-                </a>
+
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-border/70 bg-muted/20">
+              <Image
+                src={`/${provider}.svg`}
+                alt={currentProviderConfig?.name || provider}
+                width={24}
+                height={24}
+                className="object-contain"
+              />
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-semibold text-foreground">{currentProviderConfig?.name}</span>
+                <p className="text-[11px] text-muted-foreground">Unified OCR vision & clinical reasoning model</p>
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-foreground">API Key</label>
               <div className="relative">
                 <Input
                   type={show ? "text" : "password"}
-                  placeholder="sk-..."
                   value={key}
                   onChange={(e) => {
                     setKey(e.target.value);
                     setValidState("idle");
-                    setError("");
                   }}
-                  onBlur={validateKey}
-                  className="pr-20 font-mono text-xs"
+                  placeholder={currentProviderConfig?.placeholder || "Enter API key"}
+                  className="pr-16 text-xs h-9 rounded-xl font-mono"
                 />
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                  {validating && <Spinner className="size-3.5" />}
-                  {!validating && validState === "valid" && (
-                    <CheckCircle2 className="size-4 text-emerald-500" />
-                  )}
-                  {!validating && validState === "invalid" && (
-                    <XCircle className="size-4 text-destructive" />
-                  )}
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => setShow(!show)}
-                    className="size-6 text-muted-foreground"
+                    className="size-6 text-muted-foreground rounded-md"
                   >
                     {show ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                   </Button>
+                  {validState === "valid" && <CheckCircle2 className="size-4 text-emerald-500" />}
+                  {validState === "invalid" && <XCircle className="size-4 text-destructive" />}
                 </div>
               </div>
               {error && <p className="text-xs text-destructive">{error}</p>}
-              {validState === "valid" && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">✓ Key validated</p>
-              )}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button size="sm" variant="outline" onClick={close}>
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={saving || validating || !key.trim()}
-              >
-                {saving ? "Saving…" : "Save Key"}
-              </Button>
+
+            <div className="flex items-center justify-between pt-2">
+              {currentProviderConfig?.docsUrl && (
+                <a
+                  href={currentProviderConfig.docsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-[11px] text-primary hover:underline font-medium"
+                >
+                  Get API key <ExternalLink className="size-3" />
+                </a>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <Button variant="outline" size="sm" onClick={close} className="text-xs h-8 rounded-xl">
+                  Cancel
+                </Button>
+                {validState !== "valid" ? (
+                  <Button
+                    size="sm"
+                    onClick={validateKey}
+                    disabled={validating || !key.trim()}
+                    className="text-xs h-8 rounded-xl font-semibold"
+                  >
+                    {validating && <Spinner className="size-3 mr-1" />}
+                    {validating ? "Validating…" : "Validate"}
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="text-xs h-8 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    {saving && <Spinner className="size-3 mr-1" />}
+                    {saving ? "Saving…" : "Save Key"}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}

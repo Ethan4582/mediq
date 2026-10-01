@@ -32,6 +32,9 @@ export default function ChatMessageItemAstryx({
   const isSummaryCard = metadata?.type === "summary" || !!metadata?.draft_id;
 
   if (isUser) {
+    const isDocUpload = (message.metadata as { type?: string })?.type === "document_upload";
+    const docMeta = message.metadata as { file_name?: string; page_count?: number } | null;
+
     return (
       <ChatMessage sender="user">
         <ChatMessageBubble
@@ -43,9 +46,25 @@ export default function ChatMessageItemAstryx({
             ) : undefined
           }
         >
-          <div className="text-[14.5px] leading-relaxed text-foreground font-normal">
-            {message.content ?? ""}
-          </div>
+          {isDocUpload ? (
+            <div className="flex items-center gap-2.5 py-1">
+              <div className="size-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center shrink-0">
+                <Image src="/pdf.svg" alt="" width={16} height={16} className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground truncate">
+                  {docMeta?.file_name || "Clinical Document.pdf"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {docMeta?.page_count ? `${docMeta.page_count} page${docMeta.page_count > 1 ? "s" : ""}` : "PDF Document"}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-[14.5px] leading-relaxed text-foreground font-normal">
+              {message.content ?? ""}
+            </div>
+          )}
         </ChatMessageBubble>
       </ChatMessage>
     );

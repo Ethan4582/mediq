@@ -69,11 +69,14 @@ function AuthForm() {
         <div className="mb-6 text-center">
           <div className="flex justify-center mb-3">
             <div className="size-12 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center">
-              <img
+              <Image
                 src="/logo.png"
                 alt="MediQ"
-                className="w-6 h-6 object-contain"
-                style={{ width: "24px", height: "24px" }}
+                width={24}
+                height={24}
+                style={{ width: "24px", height: "auto" }}
+                className="object-contain"
+                priority
               />
             </div>
           </div>

@@ -102,8 +102,8 @@ export default function KeyTableClient() {
                   </TableCell>
                   <TableCell className="font-mono text-muted-foreground">···· {k.key_last4}</TableCell>
                   <TableCell>
-                    <Badge variant={k.key_type === "ocr" ? "secondary" : "outline"} className="text-[10px]">
-                      {k.key_type === "ocr" ? "OCR Extraction" : "LLM Reasoning"}
+                    <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">
+                      OCR & Reasoning
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -111,7 +111,7 @@ export default function KeyTableClient() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      {k.key_type === "llm" && (
+                      {true && (
                         <Button
                           size="sm"
                           variant={k.is_active ? "secondary" : "outline"}

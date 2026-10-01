@@ -29,16 +29,16 @@ export default function DangerZone() {
   };
 
   return (
-    <Card className="border-destructive/30 bg-destructive/5 shadow-sm">
+    <Card className="rounded-2xl border border-destructive/25 bg-destructive/5 shadow-xs">
       <CardHeader>
-        <CardTitle className="text-base text-destructive">Danger Zone</CardTitle>
+        <CardTitle className="text-sm font-semibold text-destructive">Danger Zone</CardTitle>
         <CardDescription className="text-xs">
           Irreversible actions related to your clinical profile and account data.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="size-9 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
+          <div className="size-9 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
             <Trash2 className="size-4" />
           </div>
           <div>
@@ -51,7 +51,7 @@ export default function DangerZone() {
 
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="sm" className="text-xs">
+            <Button variant="destructive" size="sm" className="rounded-xl h-9 px-4 text-xs font-semibold">
               Delete Account
             </Button>
           </AlertDialogTrigger>

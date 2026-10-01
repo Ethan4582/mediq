@@ -9,6 +9,8 @@ export interface ModelInfo {
   description?: string;
   tag?: string;
   isDefault?: boolean;
+  isVisionCapable?: boolean;
+  ocrFallbackProvider?: string;
 }
 
 export interface ProviderGroup {
@@ -20,18 +22,19 @@ export interface ProviderGroup {
 }
 
 export const DEFAULT_MODEL: ModelInfo = {
-  id: "gemini-3.7-flash",
-  name: "Gemini 3.7 Flash",
-  provider: "gemini",
-  providerName: "Google Gemini",
-  providerIcon: "/gemini.svg",
-  description: "High-speed multimodal clinical intelligence",
-  tag: "Fast",
+  id: "gpt-4o-mini",
+  name: "GPT-4o mini",
+  provider: "openai",
+  providerName: "OpenAI",
+  providerIcon: "/openai.svg",
+  description: "Original ultra-low-cost default model for fast testing",
+  tag: "Default",
   isDefault: true,
 };
 
 export const MODEL_REGISTRY: ModelInfo[] = [
   // OpenAI
+  { id: "gpt-4o-mini", name: "GPT-4o mini", provider: "openai", providerName: "OpenAI", providerIcon: "/openai.svg", description: "Original ultra-low-cost default model", tag: "Default", isDefault: true },
   { id: "gpt-5.6-sol", name: "GPT-5.6 Sol", provider: "openai", providerName: "OpenAI", providerIcon: "/openai.svg", description: "Flagship intelligence for clinical synthesis", tag: "Flagship" },
   { id: "gpt-5.6-terra", name: "GPT-5.6 Terra", provider: "openai", providerName: "OpenAI", providerIcon: "/openai.svg", description: "Balanced grounded reasoning for clinical notes", tag: "Balanced" },
   { id: "gpt-5.6-luna", name: "GPT-5.6 Luna", provider: "openai", providerName: "OpenAI", providerIcon: "/openai.svg", description: "Fast lightweight clinical parsing", tag: "Fast" },

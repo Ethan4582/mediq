@@ -31,14 +31,9 @@ async def get_current_user(request: Request) -> dict:
 
 async def require_keys(request: Request) -> dict:
     user = await get_current_user(request)
-    missing = []
-    if not user["has_mistral_key"]:
-        missing.append("mistral")
     if not user["has_llm_key"]:
-        missing.append("llm_provider")
-    if missing:
         raise HTTPException(
             status_code=403,
-            detail={"error": "keys_required", "missing": missing, "redirect": "/api-keys"},
+            detail={"error": "keys_required", "missing": ["llm_provider"], "redirect": "/api-keys"},
         )
     return user

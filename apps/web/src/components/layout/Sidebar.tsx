@@ -37,6 +37,7 @@ export default function Sidebar({
   } = useSessions();
 
   const { isSidebarOpen, toggleSidebar } = useSessionStore();
+  const isCollapsed = !isSidebarOpen;
   const [search, setSearch] = useState("");
   const [renameTarget, setRenameTarget] = useState<AppSession | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -68,8 +69,13 @@ export default function Sidebar({
 
   const handleDeleteConfirm = async () => {
     if (deleteTarget) {
+      const isCurrentActive = activeSessionId === deleteTarget.id;
       await deleteSession(deleteTarget.id);
       setDeleteTarget(null);
+      if (isCurrentActive) {
+        useSessionStore.getState().setRightPanelOpen(false);
+        router.push("/chat");
+      }
     }
   };
 
@@ -107,7 +113,7 @@ export default function Sidebar({
   return (
     <aside className="flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground select-none overflow-hidden">
       <div className="flex items-center justify-between p-2.5 border-b border-sidebar-border/60 shrink-0">
-        {isSidebarOpen ? (
+        {!isCollapsed ? (
           <>
             <Link href="/" className="flex items-center gap-2 px-1 font-semibold text-sm">
               <Image src="/logo.png" alt="MediQ" width={20} height={20} style={{ width: "20px", height: "auto" }} className="object-contain shrink-0" priority />
@@ -142,7 +148,7 @@ export default function Sidebar({
         )}
       </div>
 
-      {isSidebarOpen ? (
+      {!isCollapsed ? (
         <div className="flex flex-col flex-1 min-h-0 px-2.5 py-3 gap-2.5 overflow-hidden">
           <Button
             variant="outline"
@@ -167,7 +173,7 @@ export default function Sidebar({
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 pt-1">
             {pinnedSessions.length > 0 && (
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                   <Pin className="size-3 text-primary rotate-45" />
                   <span>Pinned</span>
                 </div>
@@ -190,7 +196,7 @@ export default function Sidebar({
             {(folders || []).length > 0 && (
               <div className="space-y-1">
                 <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                     <Image src="/folder.svg" alt="" width={12} height={12} className="size-3 opacity-70" />
                     <span>Folders</span>
                   </div>
@@ -226,7 +232,7 @@ export default function Sidebar({
 
             <div className="space-y-1">
               {(folders.length > 0 || pinnedSessions.length > 0) && (
-                <div className="flex items-center gap-1.5 px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-muted-foreground">
                   <Image src="/clock.svg" alt="" width={12} height={12} className="size-3 opacity-70" />
                   <span>Recent Consultations</span>
                 </div>
@@ -270,7 +276,7 @@ export default function Sidebar({
         </div>
       )}
 
-      <SidebarUserMenu user={user} isCollapsed={!isSidebarOpen} />
+      <SidebarUserMenu user={user} isCollapsed={isCollapsed} />
 
       <SidebarDialogs
         renameTarget={renameTarget}

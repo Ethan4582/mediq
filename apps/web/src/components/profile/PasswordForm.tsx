@@ -36,10 +36,10 @@ export default function PasswordForm() {
   };
 
   return (
-    <Card className="shadow-sm">
+    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs">
       <CardHeader>
-        <CardTitle className="text-base">Password & Security</CardTitle>
-        <CardDescription className="text-xs">Update your credentials to keep your clinical account secure.</CardDescription>
+        <CardTitle className="text-sm font-semibold text-foreground">Password & Security</CardTitle>
+        <CardDescription className="text-xs text-muted-foreground">Update your credentials to keep your clinical account secure.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
@@ -97,7 +97,7 @@ export default function PasswordForm() {
             </p>
           )}
 
-          <Button type="submit" size="sm" disabled={loading} className="text-xs shadow-sm">
+          <Button type="submit" size="sm" disabled={loading} className="rounded-xl h-9 px-4 text-xs font-semibold shadow-xs">
             {loading ? <Spinner className="size-3.5 mr-1.5" /> : null}
             {loading ? "Updating…" : "Update Password"}
           </Button>
