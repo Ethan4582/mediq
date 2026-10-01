@@ -63,32 +63,25 @@ async def upload_documents(
     else:
         db.table("sessions").update({"status": "processing"}).eq("id", session_id).execute()
 
-    # Get OCR key (optional in single-model workflow)
-    ocr_key_row = (
+    # Retrieve user's active model provider & decrypted API key for unified OCR + reasoning
+    profile_row = db.table("profiles").select("active_llm_provider").eq("id", user_id).maybe_single().execute()
+    active_provider = (profile_row.data.get("active_llm_provider") if profile_row.data else None)
+
+    keys_resp = (
         db.table("api_keys")
-        .select("key_encrypted")
+        .select("provider, key_encrypted")
         .eq("user_id", user_id)
-        .eq("key_type", "ocr")
         .eq("is_active", True)
-        .limit(1)
         .execute()
     )
-    mistral_key = None
-    if ocr_key_row.data and len(ocr_key_row.data) > 0:
-        mistral_key = decrypt(ocr_key_row.data[0]["key_encrypted"])
-    else:
-        # Check if user has mistral LLM key as fallback
-        mistral_llm = (
-            db.table("api_keys")
-            .select("key_encrypted")
-            .eq("user_id", user_id)
-            .eq("provider", "mistral")
-            .eq("is_active", True)
-            .limit(1)
-            .execute()
-        )
-        if mistral_llm.data and len(mistral_llm.data) > 0:
-            mistral_key = decrypt(mistral_llm.data[0]["key_encrypted"])
+    keys_list = keys_resp.data or []
+    chosen_provider = active_provider or (keys_list[0]["provider"] if keys_list else "openai")
+    matching = [k for k in keys_list if k.get("provider") == chosen_provider]
+    active_record = matching[0] if matching else (keys_list[0] if keys_list else None)
+
+    decrypted_key = decrypt(active_record["key_encrypted"]) if active_record else ""
+    if active_record:
+        chosen_provider = active_record["provider"]
 
     document_ids = []
     job_id = None
@@ -117,7 +110,7 @@ async def upload_documents(
         document_ids.append(doc_id)
 
         from tasks.ocr import process_document
-        background_tasks.add_task(process_document, doc_id, session_id, mistral_key)
+        background_tasks.add_task(process_document, doc_id, session_id, chosen_provider, decrypted_key)
 
         # Record upload in session chat stream so it renders on chat surface immediately
         db.table("messages").insert({

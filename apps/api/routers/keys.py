@@ -182,7 +182,7 @@ async def activate_key(key_id: str, request: Request):
         .maybe_single()
         .execute()
     )
-    if not key_row.data or key_row.data["key_type"] != "llm":
+    if not key_row.data:
         raise HTTPException(404, {"error": "not_found"})
     provider = key_row.data["provider"]
     db.table("profiles").update({"active_llm_provider": provider}).eq("id", user["user_id"]).execute()

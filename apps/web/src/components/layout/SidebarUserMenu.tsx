@@ -70,12 +70,6 @@ export default function SidebarUserMenu({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/analytics" className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg cursor-pointer">
-            <BarChart3 className="size-4 text-muted-foreground" />
-            <span>Analytics</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
           <Link href="/api-keys" className="flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg cursor-pointer">
             <Key className="size-4 text-muted-foreground" />
             <span>API Keys</span>

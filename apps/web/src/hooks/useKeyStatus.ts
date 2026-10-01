@@ -74,7 +74,7 @@ export function useKeyStatus() {
   return {
     keys,
     ...status,
-    isReady: status.has_mistral_key && status.has_llm_key,
+    isReady: status.has_llm_key || keys.some((k) => k.is_active),
     loading,
     refetch,
   };

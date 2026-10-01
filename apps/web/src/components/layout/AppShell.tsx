@@ -19,7 +19,6 @@ export default function AppShell({
   const isSettingsPage =
     pathname?.startsWith("/profile") ||
     pathname?.startsWith("/api-keys") ||
-    pathname?.startsWith("/analytics") ||
     pathname?.startsWith("/settings");
 
   return (
