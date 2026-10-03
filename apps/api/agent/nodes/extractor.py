@@ -95,6 +95,7 @@ def run(state: AgentState) -> AgentState:
             "model": model,
             "response_model": model_class,
             "max_retries": 3,
+            "max_tokens": 4096,
             "messages": [
                 {"role": "system", "content": EXTRACTION_SYSTEM_PROMPT},
                 {"role": "user", "content": f"Context:\n{context}\n\nExtract the {section} section."}

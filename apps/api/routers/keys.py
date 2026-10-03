@@ -8,64 +8,59 @@ from models.keys import AddKeyRequest, KeyResponse
 router = APIRouter(tags=["keys"])
 
 async def _validate_key(provider: str, key: str):
+    prov = (provider or "").lower()
     try:
+        if prov == "gemini":
+            import google.generativeai as genai
+            genai.configure(api_key=key.strip())
+            next(iter(genai.list_models()))
+            return
+
         async with httpx.AsyncClient(timeout=10) as client:
-            if provider in ("groq",):
+            if prov == "groq":
                 r = await client.get(
                     "https://api.groq.com/openai/v1/models",
                     headers={"Authorization": f"Bearer {key}"},
                 )
-            elif provider == "openai":
+            elif prov == "openai":
                 r = await client.get(
                     "https://api.openai.com/v1/models",
                     headers={"Authorization": f"Bearer {key}"},
                 )
-            elif provider == "anthropic":
+            elif prov == "anthropic":
                 r = await client.post(
                     "https://api.anthropic.com/v1/messages",
                     headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
-                    json={"model": "claude-3-haiku-20240307", "max_tokens": 1, "messages": [{"role": "user", "content": "hi"}]},
+                    json={
+                        "model": "claude-haiku-4-5-20251001",
+                        "max_tokens": 1,
+                        "messages": [{"role": "user", "content": "hi"}],
+                    },
                 )
-            elif provider == "mistral":
+            elif prov == "mistral":
                 r = await client.get(
                     "https://api.mistral.ai/v1/models",
                     headers={"Authorization": f"Bearer {key}"},
                 )
-            elif provider == "gemini":
-                r = await client.get(
-                    f"https://generativelanguage.googleapis.com/v1beta/models?key={key.strip()}"
-                )
-            elif provider == "deepseek":
+            elif prov == "deepseek":
                 r = await client.get(
                     "https://api.deepseek.com/models",
                     headers={"Authorization": f"Bearer {key}"},
                 )
-            elif provider == "grok":
+            elif prov in ("xai", "grok"):
                 r = await client.get(
                     "https://api.x.ai/v1/models",
                     headers={"Authorization": f"Bearer {key}"},
                 )
-            elif provider == "meta":
-                if not key or len(key) < 8:
-                    raise HTTPException(400, {"error": "invalid_key", "provider": provider})
-                try:
-                    r = await client.get(
-                        "https://api.meta.ai/v1/models",
-                        headers={"Authorization": f"Bearer {key}"},
-                    )
-                    if r.status_code >= 400 and r.status_code != 404:
-                        raise HTTPException(400, {"error": "invalid_key", "provider": provider})
-                except Exception:
-                    pass
-                return
             else:
                 raise HTTPException(400, {"error": "invalid_provider"})
+
             if r.status_code >= 400:
                 raise HTTPException(400, {"error": "invalid_key", "provider": provider})
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(400, {"error": "invalid_key", "provider": provider})
+    except Exception as e:
+        raise HTTPException(400, {"error": "invalid_key", "provider": provider, "detail": str(e)})
 
 
 @router.post("/keys", response_model=KeyResponse)
