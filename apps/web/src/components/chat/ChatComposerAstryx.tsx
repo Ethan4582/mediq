@@ -43,7 +43,7 @@ export default function ChatComposerAstryx({
   const configuredProviders = useMemo(() => {
     const set = new Set<string>();
     for (const k of keys) {
-      if (k.is_active || k.key_type === "llm") {
+      if (k.key_type === "llm") {
         set.add(k.provider);
       }
     }

@@ -12,8 +12,7 @@ export default function ChatEmptyState() {
           width={40}
           height={40}
           priority
-          style={{ width: "40px", height: "auto" }}
-          className="object-contain"
+          className="w-10 h-10 object-contain"
         />
       </div>
       <div className="space-y-1.5 max-w-sm">

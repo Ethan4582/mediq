@@ -74,8 +74,7 @@ function AuthForm() {
                 alt="MediQ"
                 width={24}
                 height={24}
-                style={{ width: "24px", height: "auto" }}
-                className="object-contain"
+                className="w-6 h-6 object-contain"
                 priority
               />
             </div>

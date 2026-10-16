@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "@astryxdesign/core/astryx.css";
 import "./globals.css";
 import SupabaseProvider from "@/components/providers/SupabaseProvider";
 import DevtoolsMeme from "@/components/DevtoolsMeme";
 
-const inter = Inter({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
@@ -29,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`dark ${inter.variable}`}>
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning className={`dark ${jetbrainsMono.variable}`}>
+      <body className={`${jetbrainsMono.className} font-sans antialiased`}>
         <SupabaseProvider>
           {children}
           <GlobalSearch />

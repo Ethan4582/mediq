@@ -98,6 +98,7 @@ export interface ActivityEntry {
   date: string
   runs: number
   pages: number
+  documents?: number
 }
 
 export interface RecentSession {
@@ -155,6 +156,7 @@ export interface ClinicalPatientInfo {
 
 export interface ClinicalDraft {
   id?: string
+  content?: unknown
   created_at?: string
   patient_info?: ClinicalPatientInfo
   diagnoses?: {

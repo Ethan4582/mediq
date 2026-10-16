@@ -71,10 +71,18 @@ export function useKeyStatus() {
     };
   }, []);
 
+  const ocrKey = keys.find((k) => k.key_type === "ocr" && k.is_active) || null;
+  const activeLlmKey =
+    keys.find((k) => k.key_type === "llm" && k.provider === status.active_llm_provider && k.is_active) ||
+    keys.find((k) => k.key_type === "llm" && k.is_active) ||
+    null;
+
   return {
     keys,
+    ocrKey,
+    activeLlmKey,
     ...status,
-    isReady: status.has_llm_key || keys.some((k) => k.is_active),
+    isReady: status.has_mistral_key && status.has_llm_key,
     loading,
     refetch,
   };

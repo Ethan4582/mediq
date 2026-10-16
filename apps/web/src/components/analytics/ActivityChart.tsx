@@ -29,8 +29,8 @@ const chartConfig = {
     label: "Agent Runs",
     color: "#2563eb",
   },
-  documents: {
-    label: "Docs Processed",
+  pages: {
+    label: "Pages Processed",
     color: "#10b981",
   },
 } satisfies ChartConfig;
@@ -49,12 +49,13 @@ export default function ActivityChart({
   const formatted = useMemo(() => {
     return data.map((d) => ({
       ...d,
+      pages: d.pages ?? d.documents ?? 0,
       label: format(parseISO(d.date), "MMM d"),
     }));
   }, [data]);
 
   const totalRuns = useMemo(() => data.reduce((acc, d) => acc + (d.runs || 0), 0), [data]);
-  const totalDocs = useMemo(() => data.reduce((acc, d) => acc + (d.documents || 0), 0), [data]);
+  const totalPages = useMemo(() => data.reduce((acc, d) => acc + (d.pages ?? d.documents ?? 0), 0), [data]);
 
   return (
     <Card className="border border-border/80 bg-card shadow-sm rounded-2xl overflow-hidden">
@@ -63,7 +64,7 @@ export default function ActivityChart({
           <CardTitle className="text-base font-semibold tracking-tight text-foreground flex items-center gap-2">
             Activity Progression
             <span className="text-[11px] font-normal text-muted-foreground px-2 py-0.5 rounded-full bg-muted/70">
-              {totalRuns} runs • {totalDocs} docs
+              {totalRuns} runs • {totalPages} pages
             </span>
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground mt-0.5">
@@ -105,9 +106,9 @@ export default function ActivityChart({
                   <stop offset="5%" stopColor="var(--color-runs)" stopOpacity={0.35} />
                   <stop offset="95%" stopColor="var(--color-runs)" stopOpacity={0.02} />
                 </linearGradient>
-                <linearGradient id="fillDocs" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-documents)" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="var(--color-documents)" stopOpacity={0.02} />
+                <linearGradient id="fillPages" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-pages)" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="var(--color-pages)" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border/40" />
@@ -142,10 +143,10 @@ export default function ActivityChart({
               />
               <Area
                 type="monotone"
-                dataKey="documents"
-                stroke="var(--color-documents)"
+                dataKey="pages"
+                stroke="var(--color-pages)"
                 strokeWidth={2.2}
-                fill="url(#fillDocs)"
+                fill="url(#fillPages)"
                 dot={formatted.length <= 1}
               />
             </AreaChart>
