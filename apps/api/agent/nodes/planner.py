@@ -35,6 +35,7 @@ def run(state: AgentState) -> AgentState:
             "model": model,
             "response_model": PlannerResult,
             "max_retries": 3,
+            "max_tokens": 1024,
             "messages": [
                 {"role": "system", "content": "You are a clinical planner. Given these document excerpts, list which clinical sections are present from this exact list: diagnoses, medications_admission, medications_discharge, vitals, labs, course, procedures, follow_up, allergies. If you are unsure, include it to be safe."},
                 {"role": "user", "content": f"Context:\n{context}\n\nList the sections."}

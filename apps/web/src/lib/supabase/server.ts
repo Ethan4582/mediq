@@ -21,15 +21,6 @@ export async function createClient() {
           }
         },
       },
-      global: {
-        fetch: (url: RequestInfo | URL, init?: RequestInit) => {
-          const timeoutSignal = AbortSignal.timeout(6000);
-          const signal = init?.signal
-            ? AbortSignal.any([init.signal, timeoutSignal])
-            : timeoutSignal;
-          return fetch(url, { ...init, signal });
-        },
-      },
     }
   );
 }

@@ -119,10 +119,10 @@ export default function ModelSelectorPopover({
                 onClick={() => setSelectedProvider(provider)}
                 title={meta.name}
                 className={cn(
-                  "size-8 rounded-xl flex items-center justify-center transition-all cursor-pointer relative",
+                  "size-8 rounded-xl flex items-center justify-center cursor-pointer relative",
                   isSelected
                     ? "bg-white shadow-xs border border-gray-200"
-                    : "opacity-60 hover:opacity-100 hover:bg-gray-200/60"
+                    : "bg-transparent hover:bg-gray-200/60"
                 )}
               >
                 <Image

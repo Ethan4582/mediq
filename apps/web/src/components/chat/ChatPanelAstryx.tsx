@@ -113,7 +113,6 @@ export default function ChatPanelAstryx({
 
   const { upload, pendingUpload, ocrResult } = useDocumentUpload(isNew ? "" : sessionId, (sessId, docId) => {
     setActiveDocumentId(docId);
-    handleArtifactOpen("files");
     if (sessId && sessId !== "new") {
       executeAgentRun(sessId, docId);
       if (isNew) router.push(`/chat/${sessId}`);
@@ -135,13 +134,21 @@ export default function ChatPanelAstryx({
   const isUploadingOrProcessing =
     pendingUpload?.status === "uploading" || pendingUpload?.status === "processing" || isAgentRunning;
 
+  // Pass 7: Chat input enables strictly when draft.content !== null after intake
+  const hasIntakeStarted =
+    allMessages.some((m) => (m.metadata as { type?: string })?.type === "document_upload") ||
+    Boolean(activeDocumentId || pendingUpload);
+  const isDraftReady = Boolean(latestDraft && latestDraft.content !== null);
+  const isChatDisabled =
+    isUploadingOrProcessing || isSending || (hasIntakeStarted ? !isDraftReady : false);
+
   const openArtifact = (draftOrId?: ClinicalDraft | string) => {
     if (typeof draftOrId === "object" && draftOrId !== null) setLatestDraft(draftOrId);
     handleArtifactOpen("summary");
   };
 
   const handleSend = async (text: string) => {
-    if (isUploadingOrProcessing || isSending) return;
+    if (isChatDisabled) return;
     if (text.trim().startsWith("/summarize")) {
       await sendMessage(text, sessionId, selectedModel.id, selectedModel.provider);
       await executeAgentRun(sessionId, activeDocumentId);
@@ -221,7 +228,7 @@ export default function ChatPanelAstryx({
             <ChatComposerAstryx
               onSend={isNew ? handleInitialSend : handleSend}
               onUpload={upload}
-              disabled={isUploadingOrProcessing || isSending}
+              disabled={isChatDisabled}
               isSending={isSending}
               selectedModel={selectedModel}
               onModelChange={setSelectedModel}

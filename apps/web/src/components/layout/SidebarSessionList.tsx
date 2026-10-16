@@ -46,7 +46,7 @@ export default function SidebarSessionList({
           <div
             key={session.id}
             className={cn(
-              "group relative flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors",
+              "group relative flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg text-xs",
               isActive
                 ? "bg-primary/10 text-primary font-medium"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/60"

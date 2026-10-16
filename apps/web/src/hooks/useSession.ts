@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getSessionAction } from '@/actions/sessions';
 import type { AppSession } from '@/types/app';
 
 export function useSession(sessionId: string) {
+  const router = useRouter();
   const [session, setSession] = useState<AppSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentSessionId, setCurrentSessionId] = useState(sessionId);
@@ -19,7 +21,7 @@ export function useSession(sessionId: string) {
   }
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || sessionId === 'new') return;
 
     let ignore = false;
 
@@ -28,7 +30,15 @@ export function useSession(sessionId: string) {
         const data = await getSessionAction(sessionId);
 
         if (!ignore) {
+          if (!data) {
+            router.replace('/chat');
+            return;
+          }
           setSession(data);
+        }
+      } catch {
+        if (!ignore) {
+          router.replace('/chat');
         }
       } finally {
         if (!ignore) {
@@ -42,7 +52,7 @@ export function useSession(sessionId: string) {
     return () => {
       ignore = true;
     };
-  }, [sessionId]);
+  }, [sessionId, router]);
 
   return { session: currentSession, loading: currentLoading };
 }

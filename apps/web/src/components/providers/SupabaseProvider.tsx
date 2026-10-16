@@ -22,7 +22,7 @@ export default function SupabaseProvider({
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_, session) => {
+    } = supabase.auth.onAuthStateChange((_event: unknown, session: Session | null) => {
       setSession(session);
     });
 

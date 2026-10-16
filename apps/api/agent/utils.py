@@ -1,58 +1,55 @@
 import instructor
 from openai import OpenAI
 
+PROVIDER_MODEL_DEFAULTS = {
+    "openai": "gpt-4o-mini",
+    "anthropic": "claude-haiku-4-5-20251001",
+    "gemini": "gemini-2.5-flash",
+    "groq": "llama-3.3-70b-versatile",
+    "mistral": "mistral-small-latest",
+    "xai": "grok-4.6",
+    "grok": "grok-4.6",
+    "deepseek": "deepseek-chat",
+}
+
 def get_llm_client(provider: str, api_key: str):
-    if provider == "groq":
+    prov = (provider or "").lower()
+    if prov == "groq":
         from groq import Groq
         return instructor.from_groq(Groq(api_key=api_key))
-    elif provider == "openai":
+    elif prov == "openai":
         return instructor.from_openai(OpenAI(api_key=api_key))
-    elif provider == "anthropic":
+    elif prov == "anthropic":
         import anthropic
         return instructor.from_anthropic(anthropic.Anthropic(api_key=api_key))
-    elif provider == "mistral":
+    elif prov == "mistral":
         return instructor.from_openai(OpenAI(
             api_key=api_key,
             base_url="https://api.mistral.ai/v1"
         ))
-    elif provider == "gemini":
-        return instructor.from_openai(OpenAI(
-            api_key=api_key,
-            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-        ))
-    elif provider == "deepseek":
+    elif prov == "gemini":
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        client = instructor.from_gemini(client=genai.GenerativeModel("models/gemini-2.5-flash"))
+        orig_create = client.chat.completions.create
+        def _gemini_create(*args, **kwargs):
+            clean_kw = {k: v for k, v in kwargs.items() if k != "model"}
+            return orig_create(*args, **clean_kw)
+        client.chat.completions.create = _gemini_create
+        return client
+    elif prov == "deepseek":
         return instructor.from_openai(OpenAI(
             api_key=api_key,
             base_url="https://api.deepseek.com"
         ))
-    elif provider == "grok":
+    elif prov in ("xai", "grok"):
         return instructor.from_openai(OpenAI(
             api_key=api_key,
             base_url="https://api.x.ai/v1"
-        ))
-    elif provider == "meta":
-        return instructor.from_openai(OpenAI(
-            api_key=api_key,
-            base_url="https://api.llama.com/v1"
         ))
     else:
         return instructor.from_openai(OpenAI(api_key=api_key))
 
 def get_llm_model(provider: str) -> str:
-    prov = provider.lower()
-    if prov == "groq":
-        return "llama-3.3-70b-versatile"
-    elif prov == "anthropic":
-        return "claude-3-5-sonnet-20241022"
-    elif prov == "mistral":
-        return "mistral-large-latest"
-    elif prov == "gemini":
-        return "gemini-2.0-flash"
-    elif prov == "deepseek":
-        return "deepseek-chat"
-    elif prov == "grok":
-        return "grok-2-latest"
-    elif prov == "meta":
-        return "llama-3.3-70b-instruct"
-    else:
-        return "gpt-4o-mini"
+    prov = (provider or "").lower()
+    return PROVIDER_MODEL_DEFAULTS.get(prov, "llama-3.3-70b-versatile")

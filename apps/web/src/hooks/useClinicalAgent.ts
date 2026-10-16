@@ -38,14 +38,14 @@ export function useClinicalAgent({
         };
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || ""}/api/agent/run`,
+          `${process.env.NEXT_PUBLIC_API_URL || ""}/api/patient/${sessId}/run`,
           {
             method: "POST",
             headers,
             body: JSON.stringify({
               session_id: sessId,
               document_id: docId,
-              provider: selectedProvider,
+              llm_provider: selectedProvider || "openai",
             }),
           }
         );

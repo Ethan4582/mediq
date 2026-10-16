@@ -6,7 +6,7 @@ export type Enums<T extends keyof Database['public']['Enums']> = Database['publi
 
 export type KeyType = "ocr" | "llm"
 
-export type LLMProvider = "groq" | "openai" | "anthropic" | "mistral" | "gemini" | "meta" | "deepseek" | "grok"
+export type LLMProvider = "groq" | "openai" | "anthropic" | "mistral" | "gemini" | "deepseek" | "grok" | "xai"
 
 export type SessionStatus = "pending" | "processing" | "done" | "error"
 
@@ -98,6 +98,7 @@ export interface ActivityEntry {
   date: string
   runs: number
   pages: number
+  documents?: number
 }
 
 export interface RecentSession {
@@ -155,6 +156,7 @@ export interface ClinicalPatientInfo {
 
 export interface ClinicalDraft {
   id?: string
+  content?: unknown
   created_at?: string
   patient_info?: ClinicalPatientInfo
   diagnoses?: {

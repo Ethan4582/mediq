@@ -43,7 +43,7 @@ export function useMessages(sessionId: string) {
 
     const channel = supabase
       .channel(`messages-${sessionId}`)
-      .on<Message>(
+      .on(
         'postgres_changes',
         {
           event: 'INSERT',
@@ -51,8 +51,11 @@ export function useMessages(sessionId: string) {
           table: 'messages',
           filter: `session_id=eq.${sessionId}`,
         },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
+        (payload: { new: Message }) => {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === payload.new.id)) return prev;
+            return [...prev, payload.new];
+          });
         }
       )
       .subscribe();
